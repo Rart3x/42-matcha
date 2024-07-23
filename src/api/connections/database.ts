@@ -36,6 +36,15 @@ export async function ready() {
 }
 
 /**
+ * Close the database connection.
+ *
+ * @returns {Promise<void>}
+ */
+export async function close() {
+    await pool.end();
+}
+
+/**
  * Execute a SQL query. Uses a connection from the pool,
  * or the current transaction if running within a transaction context.
  *

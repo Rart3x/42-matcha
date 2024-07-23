@@ -4,6 +4,8 @@ import express from 'express';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import bootstrap from './src/main.server';
+import { ApiRouter } from './src/api/api';
+import db from './src/api/connections/database';
 
 // The Express app is exported so that it can be used by serverless Functions.
 export function app(): express.Express {
@@ -18,6 +20,9 @@ export function app(): express.Express {
     server.set('views', browserDistFolder);
 
     // Example Express Rest API endpoints
+
+    server.use('/api', ApiRouter);
+
     // server.get('/api/**', (req, res) => { });
     // Serve static files from /browser
     server.get(
@@ -47,16 +52,24 @@ export function app(): express.Express {
     return server;
 }
 
-function run(): void {
+async function run(): Promise<void> {
     const port = process.env['PORT'] || 4000;
 
     // Start up the Node server
     const server = app();
+
+    await db.ready();
+
     server.listen(port, () => {
         console.log(
             `Node Express server listening on http://localhost:${port}`,
         );
     });
+
+    process.on('SIGINT', async () => {
+        await db.close();
+        process.exit();
+    });
 }
 
-run();
+void run();

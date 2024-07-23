@@ -23,7 +23,7 @@ const pgClientAsyncLocalStorage = new AsyncLocalStorage<PoolClient>();
  *
  * @returns {Promise<void>}
  */
-export async function ready() {
+async function ready() {
     while (true) {
         try {
             await pool.query('SELECT 1');
@@ -40,7 +40,7 @@ export async function ready() {
  *
  * @returns {Promise<void>}
  */
-export async function close() {
+async function close() {
     await pool.end();
 }
 
@@ -53,7 +53,7 @@ export async function close() {
  * @param params The query parameters
  * @returns {Promise<Array<T>>}
  */
-export async function sql<T extends Record<string, any>>(
+async function sql<T extends Record<string, any>>(
     query: string,
     ...params: any[]
 ): Promise<Array<T>> {
@@ -75,7 +75,7 @@ export async function sql<T extends Record<string, any>>(
  * @param callback The callback to execute within the transaction
  * @returns {Promise<T>} The result of the callback
  */
-export function transaction<T>(callback: () => Promise<T>): Promise<T> {
+function transaction<T>(callback: () => Promise<T>): Promise<T> {
     const client = pgClientAsyncLocalStorage.getStore();
 
     if (client) {
@@ -101,3 +101,10 @@ export function transaction<T>(callback: () => Promise<T>): Promise<T> {
         }
     });
 }
+
+export default {
+    ready,
+    close,
+    sql,
+    transaction,
+};

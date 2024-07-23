@@ -8,6 +8,7 @@ import {
     withI18nSupport,
 } from '@angular/platform-browser';
 import { provideHttpClient, withFetch } from '@angular/common/http';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
 export const appConfig: ApplicationConfig = {
     providers: [
@@ -15,5 +16,6 @@ export const appConfig: ApplicationConfig = {
         provideRouter(routes, withComponentInputBinding()),
         provideClientHydration(withEventReplay(), withI18nSupport()),
         provideHttpClient(withFetch()),
+        provideAnimationsAsync(),
     ],
 };

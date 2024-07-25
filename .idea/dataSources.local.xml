@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="dataSourceStorageLocal" created-in="IU-241.18034.62">
+    <data-source name="matcha@localhost" uuid="0d0c93c4-91bd-4bc4-8d27-0d376b67a75b">
+      <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" dbms="POSTGRES" />
+      <secret-storage>master_key</secret-storage>
+      <user-name>matcha</user-name>
+      <schema-mapping />
+    </data-source>
+  </component>
+</project>

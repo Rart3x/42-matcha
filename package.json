@@ -1,14 +1,12 @@
 {
-    "name": "matcha-v2",
+    "name": "matcha",
     "version": "0.0.0",
     "scripts": {
-        "ng": "ng",
         "start": "ng serve",
         "build": "ng build",
-        "watch": "ng build --watch --configuration development",
         "test": "ng test",
         "format": "prettier --write .",
-        "serve:ssr:matcha-v2": "node dist/matcha-v2/server/server.mjs"
+        "serve:ssr:matcha": "node dist/matcha-v2/server/server.mjs"
     },
     "private": true,
     "dependencies": {

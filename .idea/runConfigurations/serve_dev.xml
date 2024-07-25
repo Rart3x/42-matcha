@@ -1,5 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="serve:dev" type="CompoundRunConfigurationType">
+    <toRun name="compose:dev [remove volumes on down]" type="docker-deploy" />
     <toRun name="start:api" type="js.build_tools.npm" />
     <toRun name="start:client" type="js.build_tools.npm" />
     <method v="2" />

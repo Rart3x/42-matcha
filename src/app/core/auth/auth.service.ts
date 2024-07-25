@@ -27,7 +27,7 @@ export class AuthService {
      * Observable that emits the authentication status.
      */
     isAuthenticated$: Observable<boolean> = merge(
-        this.#ping(),
+        this.#verify(),
         this.#isAuthenticatedSubject,
     ).pipe(shareReplay(1));
 
@@ -60,8 +60,8 @@ export class AuthService {
      *
      * @private
      */
-    #ping(): Observable<boolean> {
-        return this.#http.get('/api/ping').pipe(
+    #verify(): Observable<boolean> {
+        return this.#http.get('/api/auth/verify').pipe(
             map(() => true),
             catchError(() => of(false)),
         );

@@ -1,6 +1,7 @@
 import express from 'express';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
+import { SessionMiddleware } from '@api/middlewares/session.middleware';
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Configure root api router with global middlewares                                                                ///
@@ -13,30 +14,37 @@ ApiRouter.use(cookieParser()); // parse cookies
 ApiRouter.use(express.json()); // parse json body
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Configure public api routes                                                                                      ///
+/// Configure api routes                                                                                             ///
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const PublicApiRouter = express.Router();
-
 /**
- * @api {get} /ping Test the server connection
+ * @api {post} /auth/login Exchange username and password from request body for a session cookie
  */
-PublicApiRouter.get('/ping', (req, res) => {
-    res.json({ message: 'pong' });
-});
-
-/**
- * @api {post} /login Exchange username and password from request body for a session cookie
- */
-PublicApiRouter.post('/login', (req, res) => {
+ApiRouter.post('/auth/login', (req, res) => {
     // TODO: implement login
     res.json({ message: 'login' });
 });
 
 /**
+ * @api {get} /auth/logout Clear the session cookie
+ */
+ApiRouter.get('/auth/logout', SessionMiddleware, (req, res) => {
+    // TODO: implement logout
+    res.json({ message: 'logout' });
+});
+
+/**
+ * @api {get} /auth/verify Check if the session cookie is valid
+ */
+ApiRouter.get('/auth/verify', SessionMiddleware, (req, res) => {
+    res.sendStatus(401);
+    // res.send({ message: 'OK' });
+});
+
+/**
  * @api {post} /register Create a new user registration, sending a confirmation email
  */
-PublicApiRouter.post('/register', (req, res) => {
+ApiRouter.post('/account/register', (req, res) => {
     // TODO: implement registration
     res.json({ message: 'register' });
 });
@@ -44,12 +52,10 @@ PublicApiRouter.post('/register', (req, res) => {
 /**
  * @api {post} /confirm/:token Confirm a user registration with a token, creating the user account
  */
-PublicApiRouter.post('/confirm/:token', (req, res) => {
+ApiRouter.post('/account/confirm/:token', (req, res) => {
     // TODO: implement email confirmation
     res.json({ message: 'confirm' });
 });
-
-ApiRouter.use('/', PublicApiRouter);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Configure session protected api routes                                                                           ///
@@ -57,17 +63,7 @@ ApiRouter.use('/', PublicApiRouter);
 
 const SessionProtectedApiRouter = express.Router();
 
-SessionProtectedApiRouter.use((req, res, next) => {
-    // TODO: implement session protection
-});
-
-/**
- * @api {get} /logout Clear the session cookie
- */
-SessionProtectedApiRouter.get('/logout', (req, res) => {
-    // TODO: implement logout
-    res.json({ message: 'logout' });
-});
+SessionProtectedApiRouter.use(SessionMiddleware);
 
 // TODO: implement session protected routes here
 

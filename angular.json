@@ -7,26 +7,33 @@
             "projectType": "application",
             "schematics": {
                 "@schematics/angular:component": {
-                    "style": "scss",
+                    "style": "none",
+                    "changeDetection": "OnPush",
+                    "standalone": true,
                     "skipTests": true
                 },
                 "@schematics/angular:class": {
                     "skipTests": true
                 },
                 "@schematics/angular:directive": {
-                    "skipTests": true
+                    "skipTests": true,
+                    "standalone": true
                 },
                 "@schematics/angular:guard": {
-                    "skipTests": true
+                    "skipTests": true,
+                    "functional": true
                 },
                 "@schematics/angular:interceptor": {
-                    "skipTests": true
+                    "skipTests": true,
+                    "functional": true
                 },
                 "@schematics/angular:pipe": {
-                    "skipTests": true
+                    "skipTests": true,
+                    "standalone": true
                 },
                 "@schematics/angular:resolver": {
-                    "skipTests": true
+                    "skipTests": true,
+                    "functional": true
                 },
                 "@schematics/angular:service": {
                     "skipTests": true

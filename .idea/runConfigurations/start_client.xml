@@ -1,9 +1,9 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="preview [no build]" type="js.build_tools.npm" folderName="serve:preview">
+  <configuration default="false" name="start:client" type="js.build_tools.npm" folderName="serve:dev">
     <package-json value="$PROJECT_DIR$/package.json" />
     <command value="run" />
     <scripts>
-      <script value="serve:ssr:matcha" />
+      <script value="start:client" />
     </scripts>
     <node-interpreter value="project" />
     <envs />

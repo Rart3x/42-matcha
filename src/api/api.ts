@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import { SessionMiddleware } from '@api/middlewares/session.middleware';
@@ -73,8 +73,9 @@ ApiRouter.use('/', SessionProtectedApiRouter);
 /// Register global error handler.                                                                                   ///
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ApiRouter.use(() => {
-    // TODO: implement error handler
+ApiRouter.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+    console.error(err);
+    res.sendStatus(400);
 });
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

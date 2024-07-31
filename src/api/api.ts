@@ -2,6 +2,8 @@ import { json, NextFunction, Request, Response, Router } from 'express';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import { SessionMiddleware } from '@api/middlewares/session.middleware';
+import { UnauthorizedError } from '@api/exceptions/UnauthorizedError';
+import { AuthController } from '@api/controllers/auth.controller';
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Configure root api router with global middlewares                                                                ///
@@ -17,30 +19,7 @@ ApiRouter.use(json()); // parse json body
 /// Configure api routes                                                                                             ///
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/**
- * @api {post} /auth/login Exchange username and password from request body for a session cookie
- */
-ApiRouter.post('/auth/login', (req, res, next) => {
-    try
-    // TODO: implement login
-    res.json({ message: 'login' });
-});
-
-/**
- * @api {get} /auth/logout Clear the session cookie
- */
-ApiRouter.get('/auth/logout', SessionMiddleware, (req, res) => {
-    // TODO: implement logout
-    res.json({ message: 'logout' });
-});
-
-/**
- * @api {get} /auth/verify Check if the session cookie is valid
- */
-ApiRouter.get('/auth/verify', SessionMiddleware, (req, res) => {
-    res.sendStatus(401);
-    // res.send({ message: 'OK' });
-});
+ApiRouter.use(AuthController);
 
 /**
  * @api {post} /register Create a new user registration, sending a confirmation email
@@ -75,8 +54,12 @@ ApiRouter.use('/', SessionProtectedApiRouter);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ApiRouter.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-    console.error(err);
-    res.sendStatus(400);
+    if (err instanceof UnauthorizedError) {
+        return next(
+            res.status(401).json({ type: err.name, message: err.message }),
+        );
+    }
+    return next(res.sendStatus(400));
 });
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

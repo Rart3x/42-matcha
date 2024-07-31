@@ -12,7 +12,7 @@ AuthController.post('/auth/login', async (req, res, next) => {
     };
 
     if (!username || !password) {
-        return new UnauthorizedError('Missing username or password');
+        return next(new UnauthorizedError('Missing username or password'));
     }
 
     try {

@@ -1,4 +1,4 @@
-import express, { NextFunction, Request, Response } from 'express';
+import { json, NextFunction, Request, Response, Router } from 'express';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import { SessionMiddleware } from '@api/middlewares/session.middleware';
@@ -7,11 +7,11 @@ import { SessionMiddleware } from '@api/middlewares/session.middleware';
 /// Configure root api router with global middlewares                                                                ///
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const ApiRouter = express.Router();
+const ApiRouter = Router();
 
 ApiRouter.use(morgan('tiny')); // logger
 ApiRouter.use(cookieParser()); // parse cookies
-ApiRouter.use(express.json()); // parse json body
+ApiRouter.use(json()); // parse json body
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Configure api routes                                                                                             ///
@@ -20,7 +20,8 @@ ApiRouter.use(express.json()); // parse json body
 /**
  * @api {post} /auth/login Exchange username and password from request body for a session cookie
  */
-ApiRouter.post('/auth/login', (req, res) => {
+ApiRouter.post('/auth/login', (req, res, next) => {
+    try
     // TODO: implement login
     res.json({ message: 'login' });
 });
@@ -61,7 +62,7 @@ ApiRouter.post('/account/confirm/:token', (req, res) => {
 /// Configure session protected api routes                                                                           ///
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const SessionProtectedApiRouter = express.Router();
+const SessionProtectedApiRouter = Router();
 
 SessionProtectedApiRouter.use(SessionMiddleware);
 

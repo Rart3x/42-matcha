@@ -3,7 +3,7 @@ import db from '@api/connections/database';
 import { UnauthorizedError } from '@api/exceptions/UnauthorizedError';
 import { SessionMiddleware } from '@api/middlewares/session.middleware';
 
-export const AuthController = Router();
+const AuthController = Router();
 
 AuthController.post('/auth/login', async (req, res, next) => {
     const { username, password } = req.body as {
@@ -47,3 +47,5 @@ AuthController.post('/auth/logout', SessionMiddleware, (req, res) => {
 AuthController.get('/auth/verify', SessionMiddleware, (req, res) => {
     res.sendStatus(200);
 });
+
+export { AuthController };

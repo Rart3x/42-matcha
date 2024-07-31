@@ -19,7 +19,7 @@ ApiRouter.use(json()); // parse json body
 /// Configure api routes                                                                                             ///
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ApiRouter.use(AuthController);
+ApiRouter.use('/', AuthController);
 
 /**
  * @api {post} /register Create a new user registration, sending a confirmation email

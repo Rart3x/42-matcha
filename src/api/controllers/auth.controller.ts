@@ -5,7 +5,7 @@ import { SessionMiddleware } from '@api/middlewares/session.middleware';
 
 const AuthController = Router();
 
-AuthController.post('/auth/login', async (req, res, next) => {
+AuthController.route('/auth/login').post(async (req, res, next) => {
     const { username, password } = req.body as {
         username?: string;
         password?: string;
@@ -39,12 +39,12 @@ AuthController.post('/auth/login', async (req, res, next) => {
     }
 });
 
-AuthController.post('/auth/logout', SessionMiddleware, (req, res) => {
+AuthController.route('/auth/logout').post(SessionMiddleware, (req, res) => {
     res.clearCookie('session');
     res.json({ message: 'logout successful' });
 });
 
-AuthController.get('/auth/verify', SessionMiddleware, (req, res) => {
+AuthController.route('/auth/verify').get(SessionMiddleware, (req, res) => {
     res.sendStatus(200);
 });
 

@@ -55,7 +55,7 @@ async function close() {
  */
 async function sql<T extends Record<string, any>>(
     query: string,
-    ...params: any[]
+    params: any[],
 ): Promise<Array<T>> {
     const client = pgClientAsyncLocalStorage.getStore();
 

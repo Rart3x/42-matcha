@@ -7,8 +7,13 @@ import { isLoggedInGuard } from '@app/core/auth/guards/is-logged-in.guard';
 export const routes: Routes = [
     {
         path: '',
+        pathMatch: 'full',
+        redirectTo: 'home',
+    },
+    {
+        path: '',
         children: auth,
-        canActivateChild: [isLoggedOutGuard],
+        canActivate: [isLoggedOutGuard],
     },
     {
         path: '',
@@ -21,7 +26,7 @@ export const routes: Routes = [
                     ),
             },
         ],
-        canActivateChild: [isLoggedInGuard],
+        canActivate: [isLoggedInGuard],
     },
     {
         path: '**',

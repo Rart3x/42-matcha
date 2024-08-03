@@ -1,14 +1,59 @@
 /* You can add global styles to this file, and also import other style files */
 
+@use '@angular/material' as mat;
+
+@include mat.core();
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-html,
-body {
+$theme: mat.define-theme((
+        color: (
+                primary: mat.$azure-palette,
+                tertiary: mat.$blue-palette
+        ),
+        density: (
+                scale: 0,
+        )
+));
+
+@layer base {
+  html,
+  body {
     height: 100%;
-}
-body {
+  }
+
+  body {
     margin: 0;
     font-family: Roboto, 'Helvetica Neue', sans-serif;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @include mat.button-color($theme, $color-variant: primary);
+  }
+}
+
+@layer utilities {
+  .rounded-xlarge {
+    @apply rounded-4xl;
+  }
+
+  .bg-surface-container {
+    background-color: mat.get-theme-color($theme, surface-container);
+  }
+
+  .text-on-surface {
+    color: mat.get-theme-color($theme, on-surface);
+  }
+
+  .text-outline {
+    color: mat.get-theme-color($theme, outline);
+  }
+
+  .text-outline-variant {
+    color: mat.get-theme-color($theme, outline-variant);
+  }
 }

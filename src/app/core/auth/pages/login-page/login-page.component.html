@@ -1,4 +1,69 @@
-<app-window class="grid h-screen w-screen grid-cols-2">
-    <div class="bg-red-200"></div>
-    <div class="bg-blue-200"></div>
-</app-window>
+<app-auth-layout>
+    <ng-container auth-layout-top>
+        <span class="flex items-baseline gap-1">
+            <span class="text-outline">Don't have an account?</span>
+            <a mat-button routerLink="/register">Sign up</a>
+        </span>
+    </ng-container>
+
+    <div class="grid medium:min-w-80">
+        <h1>Sign in</h1>
+
+        <p>Sign in with username</p>
+        <form class="grid gap-2" [formGroup]="loginForm">
+            <mat-form-field>
+                <mat-label>Username</mat-label>
+                <mat-icon matPrefix>person</mat-icon>
+                <input
+                    id="username"
+                    matInput
+                    [formControl]="loginForm.controls.username"
+                    placeholder="Username"
+                />
+
+                @if (!loginForm.controls.username.value) {
+                    <mat-hint>Enter your username</mat-hint>
+                }
+                <mat-error>Username is required</mat-error>
+            </mat-form-field>
+
+            <mat-form-field>
+                <mat-label>Password</mat-label>
+                <mat-icon matPrefix>password</mat-icon>
+                <input
+                    id="password"
+                    matInput
+                    [formControl]="loginForm.controls.password"
+                    [type]="isPasswordHidden() ? 'password' : 'text'"
+                    placeholder="Password"
+                />
+                <button
+                    matSuffix
+                    mat-icon-button
+                    type="button"
+                    (click)="isPasswordHiddenToggle()"
+                    [matTooltip]="
+                        isPasswordHidden() ? 'Show password' : 'Hide password'
+                    "
+                >
+                    <mat-icon>
+                        @if (isPasswordHidden()) {
+                            visibility_off
+                        } @else {
+                            visibility
+                        }
+                    </mat-icon>
+                </button>
+
+                @if (!loginForm.controls.password.value) {
+                    <mat-hint>Enter your password</mat-hint>
+                }
+                <mat-error>Password is required</mat-error>
+            </mat-form-field>
+
+            <button mat-flat-button class="btn-primary" matTooltip="Sign in">
+                Meet new people
+            </button>
+        </form>
+    </div>
+</app-auth-layout>

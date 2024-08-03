@@ -2,12 +2,17 @@
 module.exports = {
     content: ['./src/**/*.{html,ts}'],
     theme: {
+        borderRadius: {
+            '4xl': '1.75rem',
+        },
         screens: {
-            compact: { max: '600px' },
-            medium: { min: '600px', max: '840px' },
-            expanded: { min: '840px', max: '1200px' },
-            large: { min: '1200px', max: '1600px' },
+            medium: { min: '600px' },
+            expanded: { min: '840px' },
+            large: { min: '1200px' },
             xlarge: { min: '1600px' },
+            'web-landscape': {
+                raw: '(orientation: landscape) and (min-width: 600px)',
+            },
         },
     },
     plugins: [],

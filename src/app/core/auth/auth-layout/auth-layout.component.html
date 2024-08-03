@@ -2,60 +2,23 @@
     <!-- Left panel (visible on web landscape screens) -->
     <div class="web-landscape:block hidden overflow-hidden">
         <div class="rounded-xlarge bg-surface-container h-full w-11/12">
-            <div class="flex items-center gap-2 p-3">
-                <img
-                    ngSrc="/icon_square.png"
-                    width="623"
-                    height="594"
-                    alt="Logo"
-                    class="h-14 w-14"
-                />
-                <span class="inline-grid [&>*]:col-start-1 [&>*]:row-start-1">
-                    <span class="bg-logo blur-lg">MATCHA</span>
-                    <span class="bg-logo">MATCHA</span>
-                </span>
-            </div>
+            <app-logo />
         </div>
     </div>
 
     <!-- Right panel (main content) -->
     <div class="grid grid-rows-[auto_1fr]">
+        <!-- Top bar -->
         <div class="flex items-center">
-            <div class="web-landscape:hidden flex items-center gap-2 p-3">
-                <img
-                    ngSrc="/icon_square.png"
-                    width="623"
-                    height="594"
-                    alt="Logo"
-                    class="h-14 w-14"
-                />
-                <span class="inline-grid [&>*]:col-start-1 [&>*]:row-start-1">
-                    <span class="bg-logo blur-lg">MATCHA</span>
-                    <span class="bg-logo">MATCHA</span>
-                </span>
-            </div>
+            <app-logo class="web-landscape:hidden" />
             <div class="flex grow items-baseline justify-end">
                 <ng-content select="[auth-layout-top]" />
             </div>
         </div>
+
+        <!-- Main content -->
         <div class="grid place-content-center">
             <ng-content />
         </div>
     </div>
 </main>
-
-<style>
-    .bg-logo {
-        color: transparent;
-        background-clip: text;
-        font-size: x-large;
-        font-weight: bolder;
-        background-image: linear-gradient(
-            90deg,
-            #19d1e5,
-            #1dd7b6,
-            #1192f0,
-            #07d1ff
-        );
-    }
-</style>

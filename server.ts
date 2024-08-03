@@ -23,7 +23,6 @@ export function app(): express.Express {
 
     server.use('/api', ApiRouter);
 
-    // server.get('/api/**', (req, res) => { });
     // Serve static files from /browser
     server.get(
         '**',

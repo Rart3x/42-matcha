@@ -37,14 +37,16 @@ $theme: mat.define-theme((
 }
 
 @layer utilities {
-  .rounded-xlarge {
-    @apply rounded-4xl;
+  .bg-error {
+    background-color: mat.get-theme-color($theme, error-container);
   }
 
   .bg-surface-container {
     background-color: mat.get-theme-color($theme, surface-container);
   }
+}
 
+@layer utilities {
   .text-on-surface {
     color: mat.get-theme-color($theme, on-surface);
   }
@@ -55,5 +57,11 @@ $theme: mat.define-theme((
 
   .text-outline-variant {
     color: mat.get-theme-color($theme, outline-variant);
+  }
+}
+
+@layer utilities {
+  .rounded-xlarge {
+    @apply rounded-4xl;
   }
 }

@@ -2,8 +2,10 @@
 module.exports = {
     content: ['./src/**/*.{html,ts}'],
     theme: {
-        borderRadius: {
-            '4xl': '1.75rem',
+        extend: {
+            borderRadius: {
+                '4xl': '1.75rem',
+            },
         },
         screens: {
             medium: { min: '600px' },

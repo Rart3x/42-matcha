@@ -1,12 +1,14 @@
 import { inject, Injectable } from '@angular/core';
 import {
     catchError,
+    distinctUntilChanged,
     map,
     merge,
     Observable,
     of,
     ReplaySubject,
     shareReplay,
+    tap,
 } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { LoggerService } from '@app/core/services/logger.service';
@@ -29,7 +31,7 @@ export class AuthService {
     isAuthenticated$: Observable<boolean> = merge(
         this.#verify(),
         this.#isAuthenticatedSubject,
-    ).pipe(shareReplay(1));
+    ).pipe(distinctUntilChanged(), shareReplay(1));
 
     /**
      * Logs in the user.
@@ -39,9 +41,19 @@ export class AuthService {
      * @returns An observable that emits `true` if the login was successful, `false` otherwise.
      */
     login(username: string, password: string): Observable<boolean> {
-        this.#logger.info(`Logging in as ${username}...`);
-        // TODO: Implement the login logic
-        return of(true);
+        return this.#http.post('/api/auth/login', { username, password }).pipe(
+            map(() => true),
+            catchError(() => of(false)),
+            tap((isAuthenticated) => {
+                this.#isAuthenticatedSubject.next(isAuthenticated);
+
+                if (isAuthenticated) {
+                    this.#logger.info(`User ${username} logged in.`);
+                } else {
+                    this.#logger.warn(`User ${username} failed to log in.`);
+                }
+            }),
+        );
     }
 
     /**

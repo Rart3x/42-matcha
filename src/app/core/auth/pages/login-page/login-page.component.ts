@@ -19,6 +19,7 @@ import { AuthService } from '@app/core/auth/auth.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin, tap, timer } from 'rxjs';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { SnackBarServiceService } from '@app/core/services/snack-bar-service.service';
 
 @Component({
     selector: 'app-login-page',
@@ -43,6 +44,7 @@ export class LoginPageComponent {
     #router = inject(Router);
     #destroyRef = inject(DestroyRef);
     #authService = inject(AuthService);
+    #snackBarService = inject(SnackBarServiceService);
 
     loginForm = this.#fb.nonNullable.group({
         username: ['', Validators.required],
@@ -77,7 +79,7 @@ export class LoginPageComponent {
 
         forkJoin({
             result: this.#authService.login(username, password),
-            minimumDelay: timer(1000),
+            minimumDelay: timer(500),
         })
             .pipe(
                 takeUntilDestroyed(this.#destroyRef),
@@ -86,8 +88,12 @@ export class LoginPageComponent {
                     this.isSubmitting.set(false);
 
                     if (result) {
+                        this.#snackBarService.enqueueSnackBar(
+                            'Login successful',
+                        );
                         void this.#router.navigate(['/']);
                     } else {
+                        this.#snackBarService.enqueueSnackBar('Login failed');
                         this.invalidCredentials.set(true);
                     }
                 }),

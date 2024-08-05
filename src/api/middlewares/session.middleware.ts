@@ -31,7 +31,7 @@ export const SessionMiddleware = async (
         const user_id = rows[0].user_id;
 
         if (!user_id) {
-            return new UnauthorizedError('Invalid session token');
+            return next(new UnauthorizedError('Invalid session token'));
         }
 
         req.user_id = user_id;

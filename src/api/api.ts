@@ -55,13 +55,11 @@ ApiRouter.use('/', SessionProtectedApiRouter);
 
 ApiRouter.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     if (err instanceof UnauthorizedError) {
-        return next(
-            res
-                .status(401)
-                .json({ error: { name: err.name, message: err.message } }),
-        );
+        return res
+            .status(401)
+            .json({ error: { name: err.name, message: err.message } });
     }
-    return next(res.sendStatus(400));
+    return res.sendStatus(400);
 });
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

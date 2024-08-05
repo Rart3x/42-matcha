@@ -45,7 +45,7 @@ AuthController.route('/auth/logout').post(SessionMiddleware, (req, res) => {
 });
 
 AuthController.route('/auth/verify').get(SessionMiddleware, (req, res) => {
-    res.sendStatus(200);
+    res.status(200).json({ message: 'session verified' });
 });
 
 export { AuthController };

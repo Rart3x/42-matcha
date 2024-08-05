@@ -27,3 +27,27 @@ BEGIN
     RETURN l_token;
 END;
 $$ LANGUAGE plpgsql;
+
+DROP FUNCTION IF EXISTS verify_and_refresh_session(UUID);
+
+CREATE OR REPLACE FUNCTION verify_and_refresh_session(
+    p_token UUID
+)
+    RETURNS INTEGER AS
+$$
+DECLARE
+    l_user_id INTEGER;
+BEGIN
+    UPDATE sessions
+    SET updated_at = NOW()
+    WHERE sessions.token = p_token
+      AND sessions.expires_at > NOW()
+    RETURNING user_id INTO l_user_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Invalid session';
+    END IF;
+
+    RETURN l_user_id;
+END;
+$$ LANGUAGE plpgsql;

@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import { SessionMiddleware } from '@api/middlewares/session.middleware';
 import { UnauthorizedError } from '@api/exceptions/UnauthorizedError';
 import { AuthController } from '@api/controllers/auth.controller';
+import { AccountController } from '@api/controllers/account.controller';
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Configure root api router with global middlewares                                                                ///
@@ -21,21 +22,7 @@ ApiRouter.use(json()); // parse json body
 
 ApiRouter.use('/', AuthController);
 
-/**
- * @api {post} /register Create a new user registration, sending a confirmation email
- */
-ApiRouter.post('/account/register', (req, res) => {
-    // TODO: implement registration
-    res.json({ message: 'register' });
-});
-
-/**
- * @api {post} /confirm/:token Confirm a user registration with a token, creating the user account
- */
-ApiRouter.post('/account/confirm/:token', (req, res) => {
-    // TODO: implement email confirmation
-    res.json({ message: 'confirm' });
-});
+ApiRouter.use('/', AccountController);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Configure session protected api routes                                                                           ///

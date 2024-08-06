@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS users_registrations
     last_name  TEXT NOT NULL CHECK (length(last_name) < 255),
 
     created_at TIMESTAMP            DEFAULT now(),
-    updated_at TIMESTAMP            DEFAULT now()
+    updated_at TIMESTAMP            DEFAULT now(),
+    expires_at TIMESTAMP            GENERATED ALWAYS AS ( created_at + INTERVAL '10 minutes' ) STORED
 );
 
 CREATE INDEX IF NOT EXISTS idx_token ON users_registrations (token);

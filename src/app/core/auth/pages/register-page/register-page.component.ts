@@ -3,9 +3,11 @@ import { AuthLayoutComponent } from '@app/core/auth/auth-layout/auth-layout.comp
 import { MatButtonModule } from '@angular/material/button';
 import { RouterModule } from '@angular/router';
 import { MatStepperModule } from '@angular/material/stepper';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { fromApiValidator } from '@app/shared/validators/from-api-validator';
+import { usernameValidators } from '@api/validators/username.validators';
 
 @Component({
     selector: 'app-register-page',
@@ -27,16 +29,20 @@ export class RegisterPageComponent {
 
     registerForm = this.#fb.nonNullable.group({
         loginInfoStep: this.#fb.nonNullable.group({
-            email: this.#fb.nonNullable.control(''),
-            username: this.#fb.nonNullable.control(''),
+            email: ['', [Validators.required]],
+            username: [
+                '',
+                [Validators.required, fromApiValidator(usernameValidators)],
+            ],
         }),
         passwordStep: this.#fb.nonNullable.group({
-            password: this.#fb.nonNullable.control(''),
-            confirmPassword: this.#fb.nonNullable.control(''),
+            password: ['', [Validators.required]],
+            confirmPassword: ['', [Validators.required]],
         }),
         personalInfoStep: this.#fb.nonNullable.group({
-            firstName: this.#fb.nonNullable.control(''),
-            lastName: this.#fb.nonNullable.control(''),
+            firstName: ['', [Validators.required]],
+            lastName: ['', [Validators.required]],
         }),
     });
+    protected readonly Object = Object;
 }

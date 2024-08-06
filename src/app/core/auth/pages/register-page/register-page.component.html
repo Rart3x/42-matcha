@@ -14,7 +14,7 @@
         <p>Rapidly sign up with a few steps</p>
 
         <form [formGroup]="registerForm">
-            <mat-stepper orientation="vertical">
+            <mat-stepper orientation="vertical" linear>
                 <!-- Step 1 -->
                 <mat-step [stepControl]="registerForm.controls.loginInfoStep">
                     <ng-template matStepLabel
@@ -44,6 +44,19 @@
                                         .username
                                 "
                             />
+                            <mat-error>
+                                @if (
+                                    registerForm.controls.loginInfoStep.controls
+                                        .username.errors
+                                ) {
+                                    {{
+                                        Object.values(
+                                            registerForm.controls.loginInfoStep
+                                                .controls.username.errors
+                                        )[0]
+                                    }}
+                                }
+                            </mat-error>
                         </mat-form-field>
                     </div>
 
@@ -140,6 +153,12 @@
                             Sign up
                         </button>
                     </div>
+                </mat-step>
+
+                <mat-step>
+                    <ng-template matStepLabel>Success</ng-template>
+                    <p>Your account has been created successfully!</p>
+                    <p>An email has been sent to you to verify your account.</p>
                 </mat-step>
             </mat-stepper>
         </form>

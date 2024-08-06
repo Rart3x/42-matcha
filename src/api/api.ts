@@ -5,6 +5,7 @@ import { SessionMiddleware } from '@api/middlewares/session.middleware';
 import { UnauthorizedError } from '@api/exceptions/UnauthorizedError';
 import { AuthController } from '@api/controllers/auth.controller';
 import { AccountController } from '@api/controllers/account.controller';
+import { ValidationError } from '@api/exceptions/ValidationError';
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Configure root api router with global middlewares                                                                ///
@@ -44,6 +45,11 @@ ApiRouter.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     if (err instanceof UnauthorizedError) {
         return res
             .status(401)
+            .json({ error: { name: err.name, message: err.message } });
+    }
+    if (err instanceof ValidationError) {
+        return res
+            .status(400)
             .json({ error: { name: err.name, message: err.message } });
     }
     return res.sendStatus(400);

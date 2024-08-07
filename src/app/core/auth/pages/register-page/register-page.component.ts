@@ -3,11 +3,21 @@ import { AuthLayoutComponent } from '@app/core/auth/auth-layout/auth-layout.comp
 import { MatButtonModule } from '@angular/material/button';
 import { RouterModule } from '@angular/router';
 import { MatStepperModule } from '@angular/material/stepper';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+    AbstractControl,
+    FormBuilder,
+    FormGroup,
+    ReactiveFormsModule,
+    Validators,
+} from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { fromApiValidator } from '@app/shared/validators/from-api-validator';
 import { usernameValidators } from '@api/validators/username.validators';
+import { AsyncPipe } from '@angular/common';
+import { ValidationPipe } from '@app/shared/pipes/validation.pipe';
+import { map, merge, Observable } from 'rxjs';
+import { ApiValidationError } from '@api/validators/ApiValidator';
 
 @Component({
     selector: 'app-register-page',
@@ -20,6 +30,8 @@ import { usernameValidators } from '@api/validators/username.validators';
         MatFormFieldModule,
         MatInputModule,
         ReactiveFormsModule,
+        AsyncPipe,
+        ValidationPipe,
     ],
     templateUrl: './register-page.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -44,5 +56,33 @@ export class RegisterPageComponent {
             lastName: ['', [Validators.required]],
         }),
     });
-    protected readonly Object = Object;
+
+    loginInfoStep = this.registerForm.controls.loginInfoStep;
+    passwordStep = this.registerForm.controls.passwordStep;
+    personalInfoStep = this.registerForm.controls.personalInfoStep;
+
+    formatError$(control: AbstractControl, group: FormGroup) {
+        return merge([control.statusChanges, group.statusChanges]).pipe(
+            map((): string | null => {
+                if (control.hasError('required')) {
+                    return 'This field is required';
+                }
+
+                if (control.hasError('fromApi')) {
+                    const errors = control.getError('fromApi') as
+                        | Partial<ApiValidationError>[]
+                        | null;
+
+                    if (
+                        errors instanceof Array &&
+                        errors.length > 0 &&
+                        errors[0].message
+                    ) {
+                        return errors[0].message;
+                    }
+                }
+                return null;
+            }),
+        );
+    }
 }

@@ -16,22 +16,22 @@
         <form [formGroup]="registerForm">
             <mat-stepper orientation="vertical" linear>
                 <!-- Step 1 -->
-                <mat-step [stepControl]="registerForm.controls.loginInfoStep">
+                <mat-step [stepControl]="loginInfoStep">
                     <ng-template matStepLabel
                         >Fill out your login information
                     </ng-template>
 
-                    <div class="grid pt-2">
+                    <div class="grid gap-1">
                         <mat-form-field>
                             <mat-label>Email</mat-label>
                             <input
                                 matInput
                                 type="text"
-                                [formControl]="
-                                    registerForm.controls.loginInfoStep.controls
-                                        .email
-                                "
+                                [formControl]="loginInfoStep.controls.email"
                             />
+                            <mat-hint>
+                                Email will be used to verify your account
+                            </mat-hint>
                         </mat-form-field>
 
                         <mat-form-field>
@@ -39,23 +39,13 @@
                             <input
                                 matInput
                                 type="text"
-                                [formControl]="
-                                    registerForm.controls.loginInfoStep.controls
-                                        .username
-                                "
+                                [formControl]="loginInfoStep.controls.username"
                             />
+                            <mat-hint>
+                                Your username will be used to login
+                            </mat-hint>
                             <mat-error>
-                                @if (
-                                    registerForm.controls.loginInfoStep.controls
-                                        .username.errors
-                                ) {
-                                    {{
-                                        Object.values(
-                                            registerForm.controls.loginInfoStep
-                                                .controls.username.errors
-                                        )[0]
-                                    }}
-                                }
+                                {{ loginInfoStep | validation: 'username' }}
                             </mat-error>
                         </mat-form-field>
                     </div>

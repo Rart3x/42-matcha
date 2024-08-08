@@ -30,3 +30,19 @@ BEGIN
     RETURN l_token;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION username_exists(p_username TEXT) RETURNS BOOLEAN AS
+$$
+BEGIN
+    RETURN EXISTS (SELECT 1 FROM users WHERE username = p_username)
+        OR EXISTS (SELECT 1 FROM users_registrations WHERE username = p_username AND expires_at > now());
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION email_exists(p_email TEXT) RETURNS BOOLEAN AS
+$$
+BEGIN
+    RETURN EXISTS (SELECT 1 FROM users WHERE email = p_email)
+        OR EXISTS (SELECT 1 FROM users_registrations WHERE email = p_email AND expires_at > now());
+END;
+$$ LANGUAGE plpgsql;

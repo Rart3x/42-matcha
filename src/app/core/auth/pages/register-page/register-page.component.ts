@@ -13,6 +13,8 @@ import { MatInputModule } from '@angular/material/input';
 import { AsyncPipe } from '@angular/common';
 import { regexpValidator } from '@app/shared/validators/regexp.validator';
 import { controlsMatchValidator } from '@app/shared/validators/controls-match.validator';
+import { emailExistsValidator } from '@app/shared/validators/email-exists.validator';
+import { usernameExistsValidator } from '@app/shared/validators/username-exists.validator';
 
 @Component({
     selector: 'app-register-page',
@@ -35,7 +37,11 @@ export class RegisterPageComponent {
 
     registerForm = this.#fb.group({
         loginInfoStep: this.#fb.group({
-            email: ['', [Validators.required, Validators.email]],
+            email: [
+                '',
+                [Validators.required, Validators.email],
+                [emailExistsValidator()],
+            ],
             username: [
                 '',
                 [
@@ -44,6 +50,7 @@ export class RegisterPageComponent {
                     Validators.maxLength(20),
                     Validators.pattern(/^[a-zA-Z0-9]+$/),
                 ],
+                [usernameExistsValidator()],
             ],
         }),
         personalInfoStep: this.#fb.group({

@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { UnauthorizedError } from '@api/exceptions/UnauthorizedError';
 import db from '@api/connections/database';
+import { Validators } from '@angular/forms';
+import { ValidationError } from '@api/exceptions/ValidationError';
 
 export const AccountController = Router();
 
@@ -64,6 +66,72 @@ AccountController.route('/account/confirm/:token').get(
     },
 );
 
+AccountController.route('/account/exists/username/:username').get(
+    async (req, res, next) => {
+        const username = req.params.username as string | undefined;
+
+        if (!username) {
+            return next(new ValidationError('Username is required'));
+        }
+
+        if (!isValidUsernameFormat(username)) {
+            return next(new ValidationError('Invalid username format'));
+        }
+
+        try {
+            const rows = await db.sql<{
+                exists: boolean;
+            }>('SELECT username_exists($1) AS exists', [username]);
+
+            const exists = rows[0].exists;
+
+            if (exists === null || exists === undefined) {
+                return next(new UnauthorizedError());
+            }
+
+            res.json({ exists });
+        } catch (error) {
+            if (error instanceof Error) {
+                return next(new ValidationError(error.message));
+            }
+            return next(new ValidationError());
+        }
+    },
+);
+
+AccountController.route('/account/exists/email/:email').get(
+    async (req, res, next) => {
+        const email = req.params.email as string | undefined;
+
+        if (!email) {
+            return next(new ValidationError('Email is required'));
+        }
+
+        if (!isValidEmailFormat(email)) {
+            return next(new ValidationError('Invalid email format'));
+        }
+
+        try {
+            const rows = await db.sql<{
+                exists: boolean;
+            }>('SELECT email_exists($1) AS exists', [email]);
+
+            const exists = rows[0].exists;
+
+            if (exists === null || exists === undefined) {
+                return next(new UnauthorizedError());
+            }
+
+            res.json({ exists });
+        } catch (error) {
+            if (error instanceof Error) {
+                return next(new ValidationError(error.message));
+            }
+            return next(new ValidationError());
+        }
+    },
+);
+
 function isValidEmailFormat(email: string | undefined) {
     if (!email) {
         return false;
@@ -72,8 +140,7 @@ function isValidEmailFormat(email: string | undefined) {
     if (email.length < 5 || email.length > 100) {
         return false;
     }
-    // check contains @ and .
-    if (!email.includes('@') || !email.includes('.')) {
+    if (!email.includes('@')) {
         return false;
     }
     return true;

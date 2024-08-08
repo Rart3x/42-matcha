@@ -106,12 +106,12 @@ function isValidUsernameFormat(username: string | undefined) {
     if (!username) {
         return false;
     }
-    // check length, at least 5 characters, at most 20 characters
-    if (username.length < 5 || username.length > 20) {
+    // check length, at least 3 characters, at most 20 characters
+    if (username.length < 3 || 20 < username.length) {
         return false;
     }
-    // check if contains only alphanumeric characters
-    if (!username.match(/^[0-9a-zA-Z]+$/)) {
+    // check if contains only alpha characters and space
+    if (!username.match(/^[a-zA-Z ]+$/)) {
         return false;
     }
     return true;

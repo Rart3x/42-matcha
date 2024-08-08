@@ -4,20 +4,15 @@ import { MatButtonModule } from '@angular/material/button';
 import { RouterModule } from '@angular/router';
 import { MatStepperModule } from '@angular/material/stepper';
 import {
-    AbstractControl,
-    FormBuilder,
-    FormGroup,
+    NonNullableFormBuilder,
     ReactiveFormsModule,
     Validators,
 } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { fromApiValidator } from '@app/shared/validators/from-api-validator';
-import { usernameValidators } from '@api/validators/username.validators';
 import { AsyncPipe } from '@angular/common';
-import { ValidationPipe } from '@app/shared/pipes/validation.pipe';
-import { map, merge, Observable } from 'rxjs';
-import { ApiValidationError } from '@api/validators/ApiValidator';
+import { regexpValidator } from '@app/shared/validators/regexp.validator';
+import { controlsMatchValidator } from '@app/shared/validators/controls-match.validator';
 
 @Component({
     selector: 'app-register-page',
@@ -31,58 +26,83 @@ import { ApiValidationError } from '@api/validators/ApiValidator';
         MatInputModule,
         ReactiveFormsModule,
         AsyncPipe,
-        ValidationPipe,
     ],
     templateUrl: './register-page.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterPageComponent {
-    #fb = inject(FormBuilder);
+    #fb = inject(NonNullableFormBuilder);
 
-    registerForm = this.#fb.nonNullable.group({
-        loginInfoStep: this.#fb.nonNullable.group({
-            email: ['', [Validators.required]],
+    registerForm = this.#fb.group({
+        loginInfoStep: this.#fb.group({
+            email: ['', [Validators.required, Validators.email]],
             username: [
                 '',
-                [Validators.required, fromApiValidator(usernameValidators)],
+                [
+                    Validators.required,
+                    Validators.minLength(3),
+                    Validators.maxLength(20),
+                    Validators.pattern(/^[a-zA-Z0-9]+$/),
+                ],
             ],
         }),
-        passwordStep: this.#fb.nonNullable.group({
-            password: ['', [Validators.required]],
-            confirmPassword: ['', [Validators.required]],
+        personalInfoStep: this.#fb.group({
+            firstName: [
+                '',
+                [
+                    Validators.required,
+                    Validators.minLength(2),
+                    Validators.maxLength(20),
+                    regexpValidator(/^[a-zA-Z ]+$/, 'onlyAlpha'),
+                    regexpValidator(/^[^ ]/, 'noLeadingSpace'),
+                    regexpValidator(/[^ ]$/, 'noTrailingSpace'),
+                ],
+            ],
+            lastName: [
+                '',
+                [
+                    Validators.required,
+                    Validators.minLength(2),
+                    Validators.maxLength(20),
+                    regexpValidator(/^[a-zA-Z ]+$/, 'onlyAlpha'),
+                    regexpValidator(/^[^ ]/, 'noLeadingSpace'),
+                    regexpValidator(/[^ ]$/, 'noTrailingSpace'),
+                ],
+            ],
         }),
-        personalInfoStep: this.#fb.nonNullable.group({
-            firstName: ['', [Validators.required]],
-            lastName: ['', [Validators.required]],
-        }),
+        passwordStep: this.#fb.group(
+            {
+                password: [
+                    '',
+                    [
+                        Validators.required,
+                        Validators.minLength(8),
+                        Validators.maxLength(100),
+                        regexpValidator(/[a-z]/, 'noLowercase'),
+                        regexpValidator(/[A-Z]/, 'noUppercase'),
+                        regexpValidator(/\d/, 'noDigit'),
+                        regexpValidator(/[^a-zA-Z0-9]/, 'noSpecialCharacter'),
+                    ],
+                ],
+                confirmPassword: ['', [Validators.required]],
+            },
+            {
+                validators: [
+                    controlsMatchValidator('password', 'confirmPassword'),
+                ],
+            },
+        ),
     });
 
     loginInfoStep = this.registerForm.controls.loginInfoStep;
-    passwordStep = this.registerForm.controls.passwordStep;
+    email = this.loginInfoStep.controls.email;
+    username = this.loginInfoStep.controls.username;
+
     personalInfoStep = this.registerForm.controls.personalInfoStep;
+    firstName = this.personalInfoStep.controls.firstName;
+    lastName = this.personalInfoStep.controls.lastName;
 
-    formatError$(control: AbstractControl, group: FormGroup) {
-        return merge([control.statusChanges, group.statusChanges]).pipe(
-            map((): string | null => {
-                if (control.hasError('required')) {
-                    return 'This field is required';
-                }
-
-                if (control.hasError('fromApi')) {
-                    const errors = control.getError('fromApi') as
-                        | Partial<ApiValidationError>[]
-                        | null;
-
-                    if (
-                        errors instanceof Array &&
-                        errors.length > 0 &&
-                        errors[0].message
-                    ) {
-                        return errors[0].message;
-                    }
-                }
-                return null;
-            }),
-        );
-    }
+    passwordStep = this.registerForm.controls.passwordStep;
+    password = this.passwordStep.controls.password;
+    confirmPassword = this.passwordStep.controls.confirmPassword;
 }

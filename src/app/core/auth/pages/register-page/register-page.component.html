@@ -17,21 +17,24 @@
             <mat-stepper orientation="vertical" linear>
                 <!-- Step 1 -->
                 <mat-step [stepControl]="loginInfoStep">
-                    <ng-template matStepLabel
-                        >Fill out your login information
+                    <ng-template matStepLabel>
+                        Fill out your login information
                     </ng-template>
 
-                    <div class="grid gap-1">
+                    <div class="my-1 grid gap-1">
                         <mat-form-field>
                             <mat-label>Email</mat-label>
-                            <input
-                                matInput
-                                type="text"
-                                [formControl]="loginInfoStep.controls.email"
-                            />
+                            <input matInput type="text" [formControl]="email" />
                             <mat-hint>
                                 Email will be used to verify your account
                             </mat-hint>
+                            <mat-error>
+                                @if (email.hasError('required')) {
+                                    Email is required
+                                } @else if (email.hasError('email')) {
+                                    Email is invalid
+                                }
+                            </mat-error>
                         </mat-form-field>
 
                         <mat-form-field>
@@ -39,13 +42,22 @@
                             <input
                                 matInput
                                 type="text"
-                                [formControl]="loginInfoStep.controls.username"
+                                [formControl]="username"
                             />
                             <mat-hint>
                                 Your username will be used to login
                             </mat-hint>
                             <mat-error>
-                                {{ loginInfoStep | validation: 'username' }}
+                                @if (username.hasError('required')) {
+                                    Username is required
+                                } @else if (username.hasError('minlength')) {
+                                    Username must be at least 3 characters
+                                } @else if (username.hasError('maxlength')) {
+                                    Username must be at most 20 characters
+                                } @else if (username.hasError('pattern')) {
+                                    Username must contain only letters and
+                                    numbers
+                                }
                             </mat-error>
                         </mat-form-field>
                     </div>
@@ -65,17 +77,37 @@
                         >Fill out your personal information
                     </ng-template>
 
-                    <div class="grid pt-2">
+                    <div class="my-1 grid gap-1">
                         <mat-form-field>
                             <mat-label>First name</mat-label>
                             <input
                                 matInput
                                 type="text"
-                                [formControl]="
-                                    registerForm.controls.personalInfoStep
-                                        .controls.firstName
-                                "
+                                [formControl]="firstName"
                             />
+                            <mat-hint>
+                                Your first name will be used to address you
+                            </mat-hint>
+                            <mat-error>
+                                @if (firstName.hasError('required')) {
+                                    First name is required
+                                } @else if (firstName.hasError('minlength')) {
+                                    First name must be at least 2 characters
+                                } @else if (firstName.hasError('maxlength')) {
+                                    First name must be at most 50 characters
+                                } @else if (firstName.hasError('onlyAlpha')) {
+                                    First name must contain only letters and
+                                    spaces
+                                } @else if (
+                                    firstName.hasError('noLeadingSpace')
+                                ) {
+                                    First name must not contain leading spaces
+                                } @else if (
+                                    firstName.hasError('noTrailingSpace')
+                                ) {
+                                    First name must not contain trailing spaces
+                                }
+                            </mat-error>
                         </mat-form-field>
 
                         <mat-form-field>
@@ -83,11 +115,31 @@
                             <input
                                 matInput
                                 type="text"
-                                [formControl]="
-                                    registerForm.controls.personalInfoStep
-                                        .controls.lastName
-                                "
+                                [formControl]="lastName"
                             />
+                            <mat-hint>
+                                Your last name will be used to address you
+                            </mat-hint>
+                            <mat-error>
+                                @if (lastName.hasError('required')) {
+                                    Last name is required
+                                } @else if (lastName.hasError('minlength')) {
+                                    Last name must be at least 2 characters
+                                } @else if (lastName.hasError('maxlength')) {
+                                    Last name must be at most 50 characters
+                                } @else if (lastName.hasError('onlyAlpha')) {
+                                    Last name must contain only letters and
+                                    spaces
+                                } @else if (
+                                    lastName.hasError('noLeadingSpace')
+                                ) {
+                                    Last name must not contain leading spaces
+                                } @else if (
+                                    lastName.hasError('noTrailingSpace')
+                                ) {
+                                    Last name must not contain trailing spaces
+                                }
+                            </mat-error>
                         </mat-form-field>
                     </div>
 
@@ -105,17 +157,39 @@
                 <mat-step [stepControl]="registerForm.controls.passwordStep">
                     <ng-template matStepLabel>Create a password</ng-template>
 
-                    <div class="grid pt-2">
+                    <div class="my-1 grid gap-1">
                         <mat-form-field>
                             <mat-label>Password</mat-label>
                             <input
                                 matInput
                                 type="password"
-                                [formControl]="
-                                    registerForm.controls.passwordStep.controls
-                                        .password
-                                "
+                                [formControl]="password"
                             />
+                            <mat-hint>
+                                Choose a strong password to protect your account
+                            </mat-hint>
+                            <mat-error>
+                                @if (password.hasError('required')) {
+                                    Password is required
+                                } @else if (password.hasError('minlength')) {
+                                    Password must be at least 8 characters
+                                } @else if (password.hasError('maxlength')) {
+                                    Password must be at most 100 characters
+                                } @else if (password.hasError('noLowercase')) {
+                                    Password must contain at least one lowercase
+                                    letter
+                                } @else if (password.hasError('noUppercase')) {
+                                    Password must contain at least one uppercase
+                                    letter
+                                } @else if (password.hasError('noDigit')) {
+                                    Password must contain at least one digit
+                                } @else if (
+                                    password.hasError('noSpecialCharacter')
+                                ) {
+                                    Password must contain at least one special
+                                    character
+                                }
+                            </mat-error>
                         </mat-form-field>
 
                         <mat-form-field>
@@ -123,11 +197,18 @@
                             <input
                                 matInput
                                 type="password"
-                                [formControl]="
-                                    registerForm.controls.passwordStep.controls
-                                        .confirmPassword
-                                "
+                                [formControl]="confirmPassword"
                             />
+                            <mat-hint>Re-enter your password</mat-hint>
+                            <mat-error>
+                                @if (confirmPassword.hasError('required')) {
+                                    Confirm password is required
+                                } @else if (
+                                    confirmPassword.hasError('controlsMismatch')
+                                ) {
+                                    Passwords do not match
+                                }
+                            </mat-error>
                         </mat-form-field>
                     </div>
 

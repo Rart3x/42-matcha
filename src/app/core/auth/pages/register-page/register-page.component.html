@@ -13,8 +13,8 @@
 
         <p>Rapidly sign up with a few steps</p>
 
-        <form [formGroup]="registerForm">
-            <mat-stepper orientation="vertical" linear>
+        <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+            <mat-stepper orientation="vertical">
                 <!-- Step 1 -->
                 <mat-step [stepControl]="loginInfoStep">
                     <ng-template matStepLabel>
@@ -222,20 +222,19 @@
                         <button type="button" mat-button matStepperPrevious>
                             Back
                         </button>
-                        <button
-                            type="submit"
-                            mat-button
-                            [disabled]="registerForm.invalid"
+                        <span
+                            [matTooltip]="
+                                registerForm.invalid
+                                    ? 'Fill out all fields'
+                                    : 'Sign up'
+                            "
                         >
-                            Sign up
-                        </button>
+                            <button type="submit" mat-button>
+                                <!--								[disabled]="registerForm.invalid"-->
+                                Sign up
+                            </button>
+                        </span>
                     </div>
-                </mat-step>
-
-                <mat-step>
-                    <ng-template matStepLabel>Success</ng-template>
-                    <p>Your account has been created successfully!</p>
-                    <p>An email has been sent to you to verify your account.</p>
                 </mat-step>
             </mat-stepper>
         </form>

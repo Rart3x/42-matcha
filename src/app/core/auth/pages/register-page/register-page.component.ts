@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    effect,
+    inject,
+    signal,
+} from '@angular/core';
 import { AuthLayoutComponent } from '@app/core/auth/auth-layout/auth-layout.component';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterModule } from '@angular/router';
@@ -15,6 +21,10 @@ import { regexpValidator } from '@app/shared/validators/regexp.validator';
 import { controlsMatchValidator } from '@app/shared/validators/controls-match.validator';
 import { emailExistsValidator } from '@app/shared/validators/email-exists.validator';
 import { usernameExistsValidator } from '@app/shared/validators/username-exists.validator';
+import { STEPPER_GLOBAL_OPTIONS } from '@angular/cdk/stepper';
+import { AccountService } from '@app/shared/services/account.service';
+import { MatTooltip } from '@angular/material/tooltip';
+import { finalize, timer } from 'rxjs';
 
 @Component({
     selector: 'app-register-page',
@@ -28,12 +38,20 @@ import { usernameExistsValidator } from '@app/shared/validators/username-exists.
         MatInputModule,
         ReactiveFormsModule,
         AsyncPipe,
+        MatTooltip,
+    ],
+    providers: [
+        {
+            provide: STEPPER_GLOBAL_OPTIONS,
+            useValue: { showError: true },
+        },
     ],
     templateUrl: './register-page.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterPageComponent {
     #fb = inject(NonNullableFormBuilder);
+    #accountService = inject(AccountService);
 
     registerForm = this.#fb.group({
         loginInfoStep: this.#fb.group({
@@ -112,4 +130,32 @@ export class RegisterPageComponent {
     passwordStep = this.registerForm.controls.passwordStep;
     password = this.passwordStep.controls.password;
     confirmPassword = this.passwordStep.controls.confirmPassword;
+
+    loading = signal(false);
+
+    #loadingEffect = effect(() => {
+        console.log('loading', this.loading());
+        if (this.loading()) {
+            this.registerForm.disable();
+        } else {
+            this.registerForm.enable();
+        }
+    });
+
+    onSubmit() {
+        // if (this.registerForm.invalid) {
+        //     return;
+        // }
+        console.log(this.registerForm.value);
+
+        this.loading.set(true);
+
+        timer(1000)
+            .pipe(
+                finalize(() => {
+                    this.loading.set(false);
+                }),
+            )
+            .subscribe();
+    }
 }

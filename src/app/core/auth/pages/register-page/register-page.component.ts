@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { AuthLayoutComponent } from '@app/core/auth/auth-layout/auth-layout.component';
+import { AuthLayoutComponent } from '@app/core/auth/layouts/auth-layout.component';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterModule } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';

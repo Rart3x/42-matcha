@@ -14,7 +14,7 @@ import {
 } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
-import { AuthLayoutComponent } from '@app/core/auth/auth-layout/auth-layout.component';
+import { AuthLayoutComponent } from '@app/core/auth/layouts/auth-layout.component';
 import { Router, RouterModule } from '@angular/router';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';

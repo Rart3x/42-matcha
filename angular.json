@@ -7,10 +7,12 @@
             "projectType": "application",
             "schematics": {
                 "@schematics/angular:component": {
-                    "style": "none",
+                    "style": "scss",
                     "changeDetection": "OnPush",
                     "standalone": true,
-                    "skipTests": true
+                    "skipTests": true,
+                    "inlineStyle": true,
+                    "inlineTemplate": true
                 },
                 "@schematics/angular:class": {
                     "skipTests": true
@@ -59,7 +61,6 @@
                             }
                         ],
                         "styles": [
-                            "@angular/material/prebuilt-themes/azure-blue.css",
                             "src/styles.scss"
                         ],
                         "scripts": [],
@@ -124,7 +125,6 @@
                             }
                         ],
                         "styles": [
-                            "@angular/material/prebuilt-themes/azure-blue.css",
                             "src/styles.scss"
                         ],
                         "scripts": []

@@ -2,21 +2,56 @@
 
 @use '@angular/material' as mat;
 
-@include mat.core();
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-$theme: mat.define-theme((
+$light-theme: mat.define-theme((
         color: (
+                theme-type: light,
                 primary: mat.$azure-palette,
-                tertiary: mat.$blue-palette
+                tertiary: mat.$blue-palette,
         ),
         density: (
                 scale: 0,
-        )
+        ),
 ));
+
+$dark-theme: mat.define-theme((
+        color: (
+                theme-type: dark,
+                primary: mat.$azure-palette,
+                tertiary: mat.$blue-palette,
+        ),
+        density: (
+                scale: 0,
+        ),
+));
+
+@include mat.core();
+
+html {
+  @include mat.core-theme($light-theme);
+  @include mat.all-component-themes($light-theme);
+  @include mat.system-level-colors($light-theme);
+  @include mat.system-level-typography($light-theme);
+
+  @media (prefers-color-scheme: dark) {
+    @include mat.core-color($dark-theme);
+    @include mat.all-component-colors($dark-theme);
+    @include mat.system-level-colors($dark-theme);
+  }
+}
+
+@include mat.typography-hierarchy($light-theme);
+@media (prefers-color-scheme: dark) {
+  @include mat.typography-hierarchy($dark-theme);
+}
+
+.mdc-notched-outline__notch {
+  border-right: none;
+}
+
 
 @layer base {
   html,
@@ -30,43 +65,55 @@ $theme: mat.define-theme((
   }
 }
 
+
 @layer components {
   .btn-primary {
-    @include mat.button-color($theme, $color-variant: primary);
+    @include mat.button-color($light-theme, $color-variant: primary);
+    @media (prefers-color-scheme: dark) {
+      @include mat.button-color($dark-theme, $color-variant: primary);
+    }
   }
 }
 
 @layer utilities {
   .bg-error {
-    background-color: mat.get-theme-color($theme, error-container);
+    background-color: mat.get-theme-color($light-theme, error-container);
+    @media (prefers-color-scheme: dark) {
+      background-color: mat.get-theme-color($dark-theme, error-container);
+    }
   }
 
   .bg-surface-container {
-    background-color: mat.get-theme-color($theme, surface-container);
+    background-color: mat.get-theme-color($light-theme, surface-container);
+    @media (prefers-color-scheme: dark) {
+      background-color: mat.get-theme-color($dark-theme, surface-container);
+    }
   }
 }
 
 @layer utilities {
   .text-on-surface {
-    color: mat.get-theme-color($theme, on-surface);
+    color: mat.get-theme-color($light-theme, on-surface);
+    @media (prefers-color-scheme: dark) {
+      color: mat.get-theme-color($dark-theme, on-surface);
+    }
   }
 
   .text-outline {
-    color: mat.get-theme-color($theme, outline);
+    color: mat.get-theme-color($light-theme, outline);
+    @media (prefers-color-scheme: dark) {
+      color: mat.get-theme-color($dark-theme, outline);
+    }
   }
 
   .text-outline-variant {
-    color: mat.get-theme-color($theme, outline-variant);
+    color: mat.get-theme-color($light-theme, outline-variant);
+    @media (prefers-color-scheme: dark) {
+      color: mat.get-theme-color($dark-theme, outline-variant);
+    }
   }
 }
 
-@layer utilities {
-  .rounded-xlarge {
-    @apply rounded-4xl;
-  }
-}
-
-.mdc-notched-outline__notch
-{
+.mdc-notched-outline__notch {
   border-right: none;
 }

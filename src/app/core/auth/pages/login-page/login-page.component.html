@@ -8,21 +8,20 @@
         </span>
     </ng-container>
 
-    <div class="grid medium:min-w-80">
+    <div class="grid medium:min-w-72 large:min-w-80 xlarge:min-w-96">
         <h1>Sign in</h1>
 
         <p>Sign in with username</p>
 
+        @if (invalidCredentials()) {
+            <div
+                class="bg-error mb-2 flex items-center gap-2 rounded border p-2"
+            >
+                <mat-icon>error</mat-icon>
+                Invalid credentials
+            </div>
+        }
         <form class="grid gap-2" [formGroup]="loginForm" (ngSubmit)="login()">
-            @if (invalidCredentials()) {
-                <div
-                    class="rounded bg-error mb-2 flex items-center gap-2 border p-2"
-                >
-                    <mat-icon>error</mat-icon>
-                    Invalid credentials
-                </div>
-            }
-
             <mat-form-field>
                 <mat-label>Username</mat-label>
                 <mat-icon matPrefix>person</mat-icon>
@@ -32,7 +31,6 @@
                     [formControl]="loginForm.controls.username"
                     placeholder="Username"
                 />
-
                 @if (!loginForm.controls.username.value) {
                     <mat-hint>Enter your username</mat-hint>
                 }
@@ -76,7 +74,7 @@
 
             <button
                 mat-flat-button
-                class="btn-primary"
+                class="btn-primary mt-2"
                 matTooltip="Sign in"
                 [disabled]="isSubmitting()"
             >

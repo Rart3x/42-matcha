@@ -65,3 +65,8 @@ $theme: mat.define-theme((
     @apply rounded-4xl;
   }
 }
+
+.mdc-notched-outline__notch
+{
+  border-right: none;
+}

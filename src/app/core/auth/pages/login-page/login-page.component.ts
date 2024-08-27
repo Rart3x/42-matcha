@@ -8,7 +8,10 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
+import {
+    MAT_FORM_FIELD_DEFAULT_OPTIONS,
+    MatFormFieldModule,
+} from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthLayoutComponent } from '@app/core/auth/auth-layout/auth-layout.component';
@@ -35,6 +38,12 @@ import { SnackBarServiceService } from '@app/core/services/snack-bar-service.ser
         MatTooltipModule,
         ReactiveFormsModule,
         MatProgressSpinnerModule,
+    ],
+    providers: [
+        {
+            provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
+            useValue: { appearance: 'outline' },
+        },
     ],
     templateUrl: './login-page.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,

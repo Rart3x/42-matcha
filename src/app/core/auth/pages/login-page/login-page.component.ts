@@ -63,7 +63,8 @@ export class LoginPageComponent {
     invalidCredentials = signal(false);
 
     isPasswordHidden = signal(true);
-    isPasswordHiddenToggle() {
+    isPasswordHiddenToggle(ev: MouseEvent) {
+        ev.stopPropagation();
         this.isPasswordHidden.set(!this.isPasswordHidden());
     }
 

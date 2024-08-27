@@ -50,8 +50,9 @@
                 <button
                     matSuffix
                     mat-icon-button
+                    class="mr-1"
                     type="button"
-                    (click)="isPasswordHiddenToggle()"
+                    (click)="isPasswordHiddenToggle($event)"
                     [matTooltip]="
                         isPasswordHidden() ? 'Show password' : 'Hide password'
                     "

@@ -28,12 +28,6 @@ $dark-theme: mat.define-theme((
                 tertiary: mat.$blue-palette,
                 use-system-variables: true,
         ),
-        density: (
-                scale: 0,
-        ),
-        typography: (
-                use-system-variables: true,
-        )
 ));
 
 @include mat.core();
@@ -45,10 +39,9 @@ $dark-theme: mat.define-theme((
   @include mat.system-level-typography($light-theme);
 
   @media (prefers-color-scheme: dark) {
-    @include mat.all-component-themes($dark-theme);
+    @include mat.all-component-colors($dark-theme);
     @include mat.color-variants-backwards-compatibility($dark-theme);
     @include mat.system-level-colors($dark-theme);
-    @include mat.system-level-typography($dark-theme);
   }
 }
 

@@ -1,7 +1,8 @@
 import { Router } from 'express';
-import db from '@api/connections/database';
 import { UnauthorizedError } from '@api/exceptions/UnauthorizedError';
 import { SessionMiddleware } from '@api/middlewares/session.middleware';
+import { sql } from '@api/connections/database';
+import { badRequestResponse, isErrorResponse } from '@api/lib/procedure';
 
 const AuthController = Router();
 
@@ -22,13 +23,35 @@ AuthController.route('/auth/login').post(async (req, res, next) => {
     }
 
     try {
-        const rows = await db.sql<{ session_token?: string }>(
-            // language=SQL
-            'SELECT create_session_from_credentials($1, $2) AS session_token',
-            [username, password],
-        );
+        const users = await sql.begin(async (sql) => {
+            const users = await sql<{ id: string }[]>`
+                SELECT id 
+                FROM users 
+                WHERE username = ${username} AND password = ${password}
+            `;
 
-        const token = rows[0].session_token;
+            if (users.length === 0) {
+                return badRequestResponse('Invalid username or password');
+            }
+
+            const sessions = await sql<{ token: string }[]>`
+                INSERT INTO sessions (user_id)
+                VALUES (${users[0].id})
+                RETURNING token
+            `;
+
+            if (sessions.length === 0) {
+                return badRequestResponse('Failed to create session');
+            }
+
+            return sessions[0].token;
+        });
+
+        if (isErrorResponse(users)) {
+            return users;
+        }
+
+        const token = users[0];
 
         if (!token) {
             return new UnauthorizedError('Invalid username or password');

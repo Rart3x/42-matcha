@@ -1,53 +1,74 @@
-import { json, NextFunction, Request, Response, Router } from 'express';
+import { json, Router } from 'express';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
-import { SessionMiddleware } from '@api/middlewares/session.middleware';
-import { UnauthorizedError } from '@api/exceptions/UnauthorizedError';
-import { AuthController } from '@api/controllers/auth.controller';
-import { AccountController } from '@api/controllers/account.controller';
+import { rpcRouter } from '@api/lib/procedure';
+import {
+    goodbyeProcedure,
+    greetingProcedure,
+    helloProcedure,
+} from '@api/procedures/dummy.procedures';
+import { loginProcedure } from '@api/procedures/auth.procedures';
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Configure root api router with global middlewares                                                                ///
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const ApiRouter = Router();
+export const apiRouter = Router();
 
-ApiRouter.use(morgan('tiny')); // logger
-ApiRouter.use(cookieParser()); // parse cookies
-ApiRouter.use(json()); // parse json body
+const NODE_ENV = process.env?.['NODE_ENV'] || 'development';
+
+if (NODE_ENV === 'development') {
+    apiRouter.use(morgan('dev')); // colorful logger
+}
+
+if (NODE_ENV === 'production') {
+    apiRouter.use(morgan('combined')); // logger
+}
+
+apiRouter.use(cookieParser()); // parse cookies
+apiRouter.use(json()); // parse json body
+
+apiRouter.use(
+    rpcRouter([
+        greetingProcedure,
+        helloProcedure,
+        goodbyeProcedure,
+        loginProcedure,
+    ]).router,
+);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Configure api routes                                                                                             ///
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ApiRouter.use('/', AuthController);
-
-ApiRouter.use('/', AccountController);
+// ApiRouter.use('/', AuthController);
+//
+// ApiRouter.use('/', AccountController);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Configure session protected api routes                                                                           ///
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const SessionProtectedApiRouter = Router();
-
-SessionProtectedApiRouter.use(SessionMiddleware);
-
-// TODO: implement session protected routes here
-
-ApiRouter.use('/', SessionProtectedApiRouter);
+// const SessionProtectedApiRouter = Router();
+//
+// SessionProtectedApiRouter.use(SessionMiddleware);
+//
+// // TODO: implement session protected routes here
+//
+// ApiRouter.use('/', SessionProtectedApiRouter);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Register global error handler.                                                                                   ///
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ApiRouter.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-    if (err instanceof UnauthorizedError) {
-        return res
-            .status(401)
-            .json({ error: { name: err.name, message: err.message } });
-    }
-    return res.sendStatus(400);
-});
+// ApiRouter.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+//     if (err instanceof UnauthorizedError) {
+//         return res
+//             .status(401)
+//             .json({ error: { name: err.name, message: err.message } });
+//     }
+//     return res.sendStatus(400);
+// });
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Configure api connections                                                                                        ///
@@ -60,5 +81,3 @@ ApiRouter.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Export the configured api router                                                                                 ///
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-export { ApiRouter };

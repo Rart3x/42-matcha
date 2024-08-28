@@ -41,7 +41,7 @@ export class AuthService {
      * @returns An observable that emits `true` if the login was successful, `false` otherwise.
      */
     login(username: string, password: string): Observable<boolean> {
-        return this.#http.post('/api/auth/login', { username, password }).pipe(
+        return this.#http.post('/api/login', { username, password }).pipe(
             map(() => true),
             catchError(() => of(false)),
             tap((isAuthenticated) => {

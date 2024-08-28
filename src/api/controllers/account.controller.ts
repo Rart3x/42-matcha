@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { UnauthorizedError } from '@api/exceptions/UnauthorizedError';
-import db from '@api/connections/database';
+import { db } from '@api/connections/_database';
 
 export const AccountController = Router();
 

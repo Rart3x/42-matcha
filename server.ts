@@ -4,10 +4,10 @@ import express from 'express';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import bootstrap from './src/main.server';
-import { ApiRouter } from '@api/api';
-import db from './src/api/connections/database';
 import cookieParser from 'cookie-parser';
 import { SESSION_TOKEN } from '@app/core/auth/session.injection-token';
+import { apiRouter } from '@api/api';
+import { sql } from '@api/connections/database';
 
 // The Express app is exported so that it can be used by serverless Functions.
 export function app(): express.Express {
@@ -23,7 +23,7 @@ export function app(): express.Express {
 
     // Example Express Rest API endpoints
 
-    server.use('/api', ApiRouter);
+    server.use('/api', apiRouter);
 
     // Serve static files from /browser
     server.get(
@@ -70,7 +70,7 @@ async function run(): Promise<void> {
     // Start up the Node server
     const server = app();
 
-    await db.ready();
+    // await db.ready();
 
     server.listen(port, () => {
         console.log(
@@ -79,7 +79,8 @@ async function run(): Promise<void> {
     });
 
     process.on('SIGINT', async () => {
-        await db.close();
+        await sql.end();
+        // await db.close();
         process.exit();
     });
 }

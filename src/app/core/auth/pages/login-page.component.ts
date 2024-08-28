@@ -7,13 +7,20 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
+import {
+    MAT_FORM_FIELD_DEFAULT_OPTIONS,
+    MatFormFieldModule,
+} from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthLayoutComponent } from '@app/core/auth/layouts/auth-layout.component';
 import { Router, RouterModule } from '@angular/router';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+    NonNullableFormBuilder,
+    ReactiveFormsModule,
+    Validators,
+} from '@angular/forms';
 import { AuthService } from '@app/core/auth/auth.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { tap } from 'rxjs';
@@ -41,6 +48,12 @@ import { FormDisabledDirective } from '@app/shared/directives/form-disabled.dire
         FormDisabledDirective,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    providers: [
+        {
+            provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
+            useValue: { appearance: 'outline' },
+        },
+    ],
     template: `
         <h1>Sign in</h1>
         <p>Sign in with username</p>
@@ -59,7 +72,7 @@ import { FormDisabledDirective } from '@app/shared/directives/form-disabled.dire
                 </div>
             }
 
-            <mat-form-field appearance="outline">
+            <mat-form-field>
                 <mat-label>Username</mat-label>
                 <mat-icon matPrefix>person</mat-icon>
                 <input
@@ -74,7 +87,7 @@ import { FormDisabledDirective } from '@app/shared/directives/form-disabled.dire
                 <mat-error>Username is required</mat-error>
             </mat-form-field>
 
-            <mat-form-field appearance="outline">
+            <mat-form-field>
                 <mat-label>Password</mat-label>
                 <mat-icon matPrefix>password</mat-icon>
                 <input
@@ -121,13 +134,13 @@ import { FormDisabledDirective } from '@app/shared/directives/form-disabled.dire
     host: { class: 'grid medium:min-w-72 large:min-w-80 xlarge:min-w-96' },
 })
 export class LoginPageComponent {
-    #fb = inject(FormBuilder);
+    #fb = inject(NonNullableFormBuilder);
     #router = inject(Router);
     #destroyRef = inject(DestroyRef);
     #authService = inject(AuthService);
     #snackBarService = inject(SnackBarServiceService);
 
-    loginForm = this.#fb.nonNullable.group({
+    loginForm = this.#fb.group({
         username: ['', Validators.required],
         password: [''],
     });

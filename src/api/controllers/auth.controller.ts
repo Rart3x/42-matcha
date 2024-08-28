@@ -5,11 +5,17 @@ import { SessionMiddleware } from '@api/middlewares/session.middleware';
 
 const AuthController = Router();
 
+function wait(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 AuthController.route('/auth/login').post(async (req, res, next) => {
     const { username, password } = req.body as {
         username?: string;
         password?: string;
     };
+
+    await wait(4000);
 
     if (!username || !password) {
         return next(new UnauthorizedError('Missing username or password'));

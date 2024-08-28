@@ -80,7 +80,7 @@ import { distinctUntilChanged, filter, map } from 'rxjs';
 
             <!-- Main content -->
             <div class="grid place-content-center">
-                <router-outlet #outlet />
+                <router-outlet />
             </div>
         </div>
     `,

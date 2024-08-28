@@ -2,17 +2,26 @@ import { Routes } from '@angular/router';
 
 export const routes: Routes = [
     {
-        path: 'login',
+        path: '',
         loadComponent: () =>
-            import('./pages/login-page/login-page.component').then(
-                (m) => m.LoginPageComponent,
+            import('./layouts/auth-layout.component').then(
+                (m) => m.AuthLayoutComponent,
             ),
-    },
-    {
-        path: 'register',
-        loadComponent: () =>
-            import('./pages/register-page/register-page.component').then(
-                (m) => m.RegisterPageComponent,
-            ),
+        children: [
+            {
+                path: 'login',
+                loadComponent: () =>
+                    import('./pages/login-page.component').then(
+                        (m) => m.LoginPageComponent,
+                    ),
+            },
+            {
+                path: 'register',
+                loadComponent: () =>
+                    import(
+                        './pages/register-page/register-page.component'
+                    ).then((m) => m.RegisterPageComponent),
+            },
+        ],
     },
 ];

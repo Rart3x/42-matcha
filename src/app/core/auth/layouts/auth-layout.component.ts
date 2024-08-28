@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -6,6 +6,14 @@ import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { LogoComponent } from '@app/shared/components/logo/logo.component';
 import { animate, style, transition, trigger } from '@angular/animations';
+import {
+    NavigationEnd,
+    Router,
+    RouterLink,
+    RouterOutlet,
+} from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { distinctUntilChanged, filter, map } from 'rxjs';
 
 @Component({
     selector: 'app-auth-layout',
@@ -18,6 +26,8 @@ import { animate, style, transition, trigger } from '@angular/animations';
         MatInputModule,
         MatIconModule,
         LogoComponent,
+        RouterLink,
+        RouterOutlet,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
@@ -52,14 +62,25 @@ import { animate, style, transition, trigger } from '@angular/animations';
             <!-- Top bar -->
             <div class="flex items-center">
                 <app-logo class="web-landscape:hidden" />
-                <div class="flex grow justify-end">
-                    <ng-content select="[auth-layout-top]" />
+                <div class="flex grow items-baseline justify-end gap-1">
+                    @if (page() === 'login') {
+                        <span class="text-outline hidden medium:inline">
+                            Don't have an account?
+                        </span>
+                        <a mat-button routerLink="/register">Sign up</a>
+                    }
+                    @if (page() === 'register') {
+                        <span class="text-outline hidden medium:inline">
+                            Got an account?
+                        </span>
+                        <a mat-button routerLink="/login">Sign in</a>
+                    }
                 </div>
             </div>
 
             <!-- Main content -->
             <div class="grid place-content-center">
-                <ng-content />
+                <router-outlet #outlet />
             </div>
         </div>
     `,
@@ -77,4 +98,12 @@ import { animate, style, transition, trigger } from '@angular/animations';
         ]),
     ],
 })
-export class AuthLayoutComponent {}
+export class AuthLayoutComponent {
+    readonly page = toSignal(
+        inject(Router).events.pipe(
+            filter((event) => event instanceof NavigationEnd),
+            map(({ url }) => url.split('/').pop()),
+            distinctUntilChanged(),
+        ),
+    );
+}

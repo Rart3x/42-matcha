@@ -14,6 +14,7 @@ export const routes: Routes = [
         path: '',
         children: auth,
         canActivate: [isLoggedOutGuard],
+        data: { animation: 'auth' },
     },
     {
         path: '',
@@ -24,6 +25,7 @@ export const routes: Routes = [
                     import('@app/features/home-page/home-page.component').then(
                         (m) => m.HomePageComponent,
                     ),
+                data: { animation: 'home' },
             },
         ],
         canActivate: [isLoggedInGuard],

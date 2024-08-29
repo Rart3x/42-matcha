@@ -5,7 +5,14 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { LogoComponent } from '@app/shared/components/logo/logo.component';
-import { animate, style, transition, trigger } from '@angular/animations';
+import {
+    animate,
+    group,
+    query,
+    style,
+    transition,
+    trigger,
+} from '@angular/animations';
 import {
     NavigationEnd,
     Router,
@@ -33,6 +40,7 @@ import { distinctUntilChanged, filter, map } from 'rxjs';
     template: `
         <!-- Left panel (visible on web landscape screens) -->
         <div
+            @slideIn
             class="hidden w-[500px] overflow-x-hidden web-landscape:grid [&>*]:[grid-area:1/1]"
             aria-hidden="true"
         >
@@ -44,7 +52,7 @@ import { distinctUntilChanged, filter, map } from 'rxjs';
                 <div class="relative grid place-content-center">
                     <div class="relative w-full">
                         <img
-                            [@slideIn]
+                            id="machine"
                             priority
                             ngSrc="/landscape.png"
                             width="1024"
@@ -92,8 +100,16 @@ import { distinctUntilChanged, filter, map } from 'rxjs';
         // slide-in-from-left
         trigger('slideIn', [
             transition('void => *', [
-                style({ transform: 'translateX(-10%)' }),
-                animate(300),
+                group([
+                    query(':self', [
+                        style({ transform: 'translateX(-3rem)' }),
+                        animate(400),
+                    ]),
+                    query('#machine', [
+                        style({ transform: 'translateX(-2rem)' }),
+                        animate(400),
+                    ]),
+                ]),
             ]),
         ]),
     ],

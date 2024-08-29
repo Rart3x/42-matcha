@@ -161,6 +161,8 @@ export class LoginPageComponent {
                 takeUntilDestroyed(this.#destroyRef),
                 tap((result) => this.displayResultSnackbar(result)),
                 tap((result) => {
+                    console.log('result');
+                    console.log(result);
                     if (result) {
                         void this.#router.navigate(['/']);
                     } else {

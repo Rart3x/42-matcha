@@ -1,13 +1,12 @@
 import { json, Router } from 'express';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
-import { rpcRouter } from '@api/lib/procedure';
+import { createRpcRouter } from '@api/lib/procedure';
 import {
-    goodbyeProcedure,
-    greetingProcedure,
-    helloProcedure,
-} from '@api/procedures/dummy.procedures';
-import { loginProcedure } from '@api/procedures/auth.procedures';
+    loginProcedure,
+    logoutProcedure,
+    verifySessionProcedure,
+} from '@api/procedures/auth.procedures';
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Configure root api router with global middlewares                                                                ///
@@ -28,14 +27,15 @@ if (NODE_ENV === 'production') {
 apiRouter.use(cookieParser()); // parse cookies
 apiRouter.use(json()); // parse json body
 
-apiRouter.use(
-    rpcRouter([
-        greetingProcedure,
-        helloProcedure,
-        goodbyeProcedure,
-        loginProcedure,
-    ]).router,
-);
+export const rpcRouter = createRpcRouter([
+    loginProcedure,
+    logoutProcedure,
+    verifySessionProcedure,
+]);
+
+export type Procedures = (typeof rpcRouter)['__procedures'][number];
+
+apiRouter.use(rpcRouter);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Configure api routes                                                                                             ///

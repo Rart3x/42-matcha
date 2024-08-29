@@ -1,60 +1,79 @@
-import {
-    badRequestResponse,
-    isErrorResponse,
-    successResponse,
-    unauthorizedProcedure,
-} from '@api/lib/procedure';
+import { procedure, useClearCookie, useSetCookie } from '@api/lib/procedure';
+import { err, ok, safeTry } from '@api/lib/result';
 import { sql } from '@api/connections/database';
+import { usePrincipalUser } from '@api/hooks/auth.hooks';
 
-export const loginProcedure = unauthorizedProcedure(
+export const loginProcedure = procedure(
     'login',
-    async (
-        { username, password }: { username: string; password: string },
-        { setCookie },
-    ) => {
-        if (!username || !password) {
-            return badRequestResponse('Invalid username or password');
-        }
-
-        const users = await sql.begin(async (sql) => {
-            const users = await sql<{ id: string }[]>`
-                SELECT id 
-                FROM users 
-                WHERE username = ${username} AND password = hash_password(${password})
-            `;
-
-            if (users.length === 0) {
-                return badRequestResponse('Invalid username or password');
+    ({ username, password }: { username: string; password: string }) => {
+        return safeTry(async function* () {
+            if (!username || !password) {
+                return err('Invalid username or password');
             }
 
-            const sessions = await sql<{ token: string }[]>`
-                INSERT INTO sessions (user_id)
-                VALUES (${users[0].id})
-                RETURNING token
-            `;
+            const token = yield* (
+                await sql.begin((sql) =>
+                    safeTry(async function* () {
+                        const users = await sql<{ id: string }[]>`
+                            SELECT id 
+                            FROM users 
+                            WHERE username = ${username} AND password = hash_password(${password})
+                        `;
 
-            if (sessions.length === 0) {
-                return badRequestResponse('Failed to create session');
-            }
+                        if (users.length === 0) {
+                            return err('Invalid username or password');
+                        }
 
-            return sessions[0].token;
+                        const sessions = await sql<{ token: string }[]>`
+                            INSERT INTO sessions (user_id)
+                            VALUES (${users[0].id})
+                            RETURNING token
+                        `;
+
+                        if (sessions.length === 0) {
+                            return err('Failed to create session');
+                        }
+
+                        return ok(sessions[0].token);
+                    }),
+                )
+            ).safeUnwrap();
+
+            useSetCookie('session', token, {
+                httpOnly: true,
+                sameSite: 'strict',
+            });
+
+            return ok({ message: 'logged in' });
         });
-
-        if (isErrorResponse(users)) {
-            return users;
-        }
-
-        const token = users[0];
-
-        if (!token) {
-            return badRequestResponse('Invalid username or password');
-        }
-
-        setCookie('session', token, {
-            httpOnly: true,
-            sameSite: 'strict',
-        });
-
-        return successResponse({ message: 'logged in' });
     },
 );
+
+export const logoutProcedure = procedure('logout', () => {
+    return safeTry(async function* () {
+        const { id } = yield* (await usePrincipalUser()).safeUnwrap();
+
+        console.log('id', id);
+
+        const res = await sql`
+            DELETE FROM sessions
+            WHERE user_id = ${id}
+        `;
+
+        if (res.count === 0) {
+            return err('Failed to log out');
+        }
+
+        useClearCookie('session');
+
+        return ok({ message: 'logged out' });
+    });
+});
+
+export const verifySessionProcedure = procedure('verify', () => {
+    return safeTry(async function* () {
+        yield* (await usePrincipalUser()).safeUnwrap();
+
+        return ok({ message: 'session verified' });
+    });
+});

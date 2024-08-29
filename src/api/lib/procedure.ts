@@ -1,235 +1,135 @@
 import { CookieOptions, Router } from 'express';
-import { db } from '@api/connections/_database';
+import { Result } from '@api/lib/result';
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Procedure types
+import { AsyncLocalStorage } from 'node:async_hooks';
+
+type ProcedureStorage = {
+    setCookie: (name: string, value: string, options: any) => void;
+    getCookie: (name: string) => string | undefined;
+    clearCookie: (name: string) => void;
+};
+
+const asyncLocalStorage = new AsyncLocalStorage<ProcedureStorage>();
 
 export type ProcedureParams = Record<string, string>;
+export type ProcedureResponse = Record<string, string>;
 
-export type UnauthorizedProcedureResponse =
-    | {
-          code: 200;
-          data: Record<string, string>;
-      }
-    | {
-          code: 400;
-          error: string;
-      };
-
-export type AuthorizedProcedureResponse =
-    | UnauthorizedProcedureResponse
-    | {
-          code: 401;
-          error: string;
-      };
-
-export type ProcedureResponse =
-    | UnauthorizedProcedureResponse
-    | AuthorizedProcedureResponse;
-
-export type ErrorResponse = {
-    code: 400 | 401;
-    error: string;
-};
-
-export type UnauthorizedProcedureContext = {
-    getCookie: (name: string) => string | undefined;
-    setCookie: (name: string, value: string, options: CookieOptions) => void;
-    clearCookie: (name: string, options: CookieOptions) => void;
-};
-
-export type AuthorizedProcedureContext = UnauthorizedProcedureContext & {
-    userId: string;
-    sessionId: string;
-};
-
-export type UnauthorizedProcedureCallback<
-    PARAMS extends ProcedureParams,
-    RESPONSE extends UnauthorizedProcedureResponse,
-> = (params: PARAMS, ctx: UnauthorizedProcedureContext) => Promise<RESPONSE>;
-
-export type AuthorizedProcedureCallback<
-    PARAMS extends ProcedureParams,
-    RESPONSE extends AuthorizedProcedureResponse,
-> = (params: PARAMS, ctx: AuthorizedProcedureContext) => Promise<RESPONSE>;
-
-export type UnauthorizedProcedure<
+export type Procedure<
     NAME extends string,
-    PARAMS extends ProcedureParams,
-    RESPONSE extends UnauthorizedProcedureResponse,
+    PARAMS extends ProcedureParams = {},
+    RESPONSE extends ProcedureResponse = {},
+    ERROR extends string = never,
 > = {
-    router: Router;
     name: NAME;
-    params: PARAMS;
-    response: RESPONSE;
-    authorized: false;
+    router: Router;
+    __params: PARAMS;
+    __response: RESPONSE;
+    __error: ERROR;
 };
 
-export type AuthorizedProcedure<
+export function procedure<
     NAME extends string,
-    PARAMS extends ProcedureParams,
-    RESPONSE extends AuthorizedProcedureResponse,
-> = {
-    router: Router;
-    name: NAME;
-    params: PARAMS;
-    response: RESPONSE;
-    authorized: true;
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Procedure definition
-
-export function unauthorizedProcedure<
-    NAME extends string,
-    PARAMS extends ProcedureParams,
-    RESPONSE extends UnauthorizedProcedureResponse,
+    PARAMS extends ProcedureParams = {},
+    RESPONSE extends ProcedureResponse = {},
+    ERROR extends string = never,
 >(
     name: NAME,
-    callback: UnauthorizedProcedureCallback<PARAMS, RESPONSE>,
-): UnauthorizedProcedure<NAME, PARAMS, RESPONSE> {
+    fn: (
+        params: PARAMS,
+    ) => Result<RESPONSE, ERROR> | Promise<Result<RESPONSE, ERROR>>,
+): Procedure<NAME, PARAMS, RESPONSE, ERROR> {
     const router = Router();
 
-    router.post(`/${name}`, (req, res, _next) => {
-        const params = req.body as PARAMS;
-
-        const getCookie = (name: string) => req.cookies?.[name];
-        const setCookie = res.cookie.bind(res);
-        const clearCookie = res.clearCookie.bind(res);
-
-        const ctx: UnauthorizedProcedureContext = {
-            getCookie,
-            setCookie,
-            clearCookie,
-        };
-
-        callback(params, ctx)
-            .then((response) => {
-                res.status(response.code).json(response);
-            })
-            .catch(() => {
-                console.error('Error in procedure', name);
-                res.sendStatus(500);
-            });
-    });
-
-    return { router, name, authorized: false } as any as UnauthorizedProcedure<
-        NAME,
-        PARAMS,
-        RESPONSE
-    >;
-}
-
-export function authorizedProcedure<
-    NAME extends string,
-    PARAMS extends ProcedureParams,
-    RESPONSE extends AuthorizedProcedureResponse,
->(
-    name: NAME,
-    callback: AuthorizedProcedureCallback<PARAMS, RESPONSE>,
-): AuthorizedProcedure<NAME, PARAMS, RESPONSE> {
-    const router = Router();
-
-    router.post(`/${name}`, async (req, res, _next) => {
-        const params = req.body as PARAMS;
-
-        const getCookie = (name: string) => req.cookies?.[name];
-        const setCookie = res.cookie.bind(res);
-        const clearCookie = res.clearCookie.bind(res);
-
-        const token = req.cookies?.session;
-
-        if (!token) {
-            res.status(401).json({ code: 401, error: 'Not logged in' });
-            return;
-        }
-
-        // TODO: Implement session verification without sql function
-        const users = await db.sql<{ user_id?: number }>(
-            // language=SQL
-            'SELECT verify_and_refresh_session($1) AS user_id',
-            [token],
+    router.post(`/${name}`, async (req, res, next) => {
+        const result = await asyncLocalStorage.run(
+            {
+                setCookie: res.cookie.bind(res),
+                getCookie: (name: string) => req.cookies?.[name],
+                clearCookie: res.clearCookie.bind(res),
+            },
+            () => fn(req.body),
         );
 
-        const userId = users[0].user_id;
-
-        if (!userId) {
-            res.clearCookie('session')
-                .status(401)
-                .json({ code: 401, error: 'Not logged in' });
-            return;
+        if (result.isErr()) {
+            return res.status(400).json({ error: result.err() });
         }
 
-        const ctx: AuthorizedProcedureContext = {
-            getCookie,
-            setCookie,
-            clearCookie,
-            userId: '123',
-            sessionId: '456',
-        };
-
-        const response = await callback(params, ctx);
-
-        res.status(response.code).json(response);
+        return res.json(result.ok());
     });
 
-    return { router, name, authorized: true } as any as AuthorizedProcedure<
-        NAME,
-        PARAMS,
-        RESPONSE
-    >;
+    return {
+        name,
+        router,
+    } as Procedure<NAME, PARAMS, RESPONSE, ERROR>;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// core procedure hooks
+
+/**
+ * Set a cookie in the response
+ */
+export function useSetCookie(
+    name: string,
+    value: string,
+    options: CookieOptions,
+) {
+    const storage = asyncLocalStorage.getStore();
+    if (storage) {
+        return storage.setCookie(name, value, options);
+    }
+    throw new Error('Cannot set cookie outside of a procedure');
+}
+
+/**
+ * Get a cookie from the request
+ */
+export function useGetCookie(name: string) {
+    const storage = asyncLocalStorage.getStore();
+    if (storage) {
+        return storage.getCookie(name);
+    }
+    throw new Error('Cannot get cookie outside of a procedure');
+}
+
+/**
+ * Clear a cookie from the response
+ */
+export function useClearCookie(name: string) {
+    const storage = asyncLocalStorage.getStore();
+    if (storage) {
+        return storage.clearCookie(name);
+    }
+    throw new Error('Cannot clear cookie outside of a procedure');
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Router definition
 
-export type RpcRouter<PROCEDURES extends any> = {
-    router: Router;
-    procedures: PROCEDURES;
-};
+export type RpcRouter<PROCEDURES extends Array<Procedure<any, any, any, any>>> =
+    Router & {
+        __procedures: PROCEDURES;
+    };
 
 type ArrayToUnion<T extends any[]> = T[number] extends infer U ? U : never;
 
-export function rpcRouter<PROCEDURES extends any[]>(
+export function createRpcRouter<
+    PROCEDURES extends Array<Procedure<any, any, any, any>>,
+>(
     // the array
     procedures: PROCEDURES,
-): RpcRouter<ArrayToUnion<PROCEDURES>> {
+): RpcRouter<PROCEDURES> {
     const router = Router();
 
     // iterate over the procedures
     for (const procedure of procedures) {
-        if (procedure.authorized) {
-            console.log('✅ Adding authorized procedure', procedure.name);
-        } else {
-            console.log('✅ Adding unauthorized procedure', procedure.name);
-        }
+        console.log('✅ Adding procedure:', procedure.name);
         router.use(procedure.router);
     }
 
-    return { router, procedures } as any as RpcRouter<ArrayToUnion<PROCEDURES>>;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Response helpers
-
-export function successResponse<DATA extends Record<string, string>>(
-    data: DATA,
-): { code: 200; data: DATA } {
-    return { code: 200 as const, data };
-}
-
-export function badRequestResponse<T extends string>(error: T) {
-    return { code: 400 as const, error };
-}
-
-export function unauthorizedResponse<T extends string>(error: T) {
-    return { code: 401 as const, error };
-}
-
-export function isErrorResponse<T>(value: any): value is ErrorResponse {
-    try {
-        return 'error' in value;
-    } catch (_) {
-        return false;
+    if (procedures.length === 0) {
+        console.warn('⚠️ No procedures added to the router');
     }
+
+    return router as any as RpcRouter<PROCEDURES>;
 }

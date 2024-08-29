@@ -1,6 +1,5 @@
 import { inject, Injectable } from '@angular/core';
 import {
-    catchError,
     distinctUntilChanged,
     map,
     merge,
@@ -10,8 +9,8 @@ import {
     shareReplay,
     tap,
 } from 'rxjs';
-import { HttpClient } from '@angular/common/http';
 import { LoggerService } from '@app/core/services/logger.service';
+import { injectRpcClient } from '@app/core/http/rpc-client';
 
 /**
  * Service that handles the authentication of the user.
@@ -20,8 +19,8 @@ import { LoggerService } from '@app/core/services/logger.service';
     providedIn: 'root',
 })
 export class AuthService {
-    #http = inject(HttpClient);
     #logger = inject(LoggerService);
+    #rpcClient = injectRpcClient();
 
     #isAuthenticatedSubject = new ReplaySubject<boolean>(1);
 
@@ -41,16 +40,21 @@ export class AuthService {
      * @returns An observable that emits `true` if the login was successful, `false` otherwise.
      */
     login(username: string, password: string): Observable<boolean> {
-        return this.#http.post('/api/login', { username, password }).pipe(
-            map(() => true),
-            catchError(() => of(false)),
-            tap((isAuthenticated) => {
-                this.#isAuthenticatedSubject.next(isAuthenticated);
-
-                if (isAuthenticated) {
+        return this.#rpcClient.login({ username, password }).pipe(
+            tap((res) => {
+                if (res.ok) {
+                    this.#isAuthenticatedSubject.next(true);
+                } else {
+                    this.#isAuthenticatedSubject.next(false);
+                }
+            }),
+            map((res) => {
+                if (res.ok) {
                     this.#logger.info(`User ${username} logged in.`);
+                    return true;
                 } else {
                     this.#logger.warn(`User ${username} failed to log in.`);
+                    return false;
                 }
             }),
         );
@@ -73,9 +77,16 @@ export class AuthService {
      * @private
      */
     #verify(): Observable<boolean> {
-        return this.#http.get('/api/auth/verify').pipe(
-            map(() => true),
-            catchError(() => of(false)),
+        return this.#rpcClient.verify({}).pipe(
+            map((res) => {
+                if (res.ok) {
+                    this.#logger.info('User is authenticated.');
+                    return true;
+                } else {
+                    this.#logger.warn('User is not authenticated.');
+                    return false;
+                }
+            }),
         );
     }
 }

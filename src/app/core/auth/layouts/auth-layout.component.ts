@@ -87,7 +87,10 @@ import { distinctUntilChanged, filter, map } from 'rxjs';
             </div>
 
             <!-- Main content -->
-            <div class="grid place-content-center" [@routeAnimations]="page()">
+            <div
+                class="flex items-center justify-center"
+                [@routeAnimations]="page()"
+            >
                 <router-outlet />
             </div>
         </div>
@@ -141,6 +144,7 @@ import { distinctUntilChanged, filter, map } from 'rxjs';
                             '0.2s',
                             style({
                                 transform: 'translateX(0) translateY(-50%)',
+                                scale: 0.9,
                             }),
                         ),
                     ]),

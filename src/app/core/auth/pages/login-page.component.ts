@@ -131,7 +131,9 @@ import { FormDisabledDirective } from '@app/shared/directives/form-disabled.dire
             </button>
         </form>
     `,
-    host: { class: 'grid medium:w-80 large:w-96 xlarge:w-[32rem]' },
+    host: {
+        class: 'h-fit grid w-full medium:w-96 large:w-[28rem] xlarge:w-[32rem]',
+    },
 })
 export class LoginPageComponent {
     #fb = inject(NonNullableFormBuilder);

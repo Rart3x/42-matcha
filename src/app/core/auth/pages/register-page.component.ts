@@ -125,7 +125,7 @@ import { MatPasswordToggleButtonComponent } from '@app/shared/components/mat-pas
             </button>
         </form>
     `,
-    host: { class: 'grid medium:min-w-72 large:min-w-80 xlarge:min-w-96' },
+    host: { class: 'grid medium:w-96 large:w-[28rem] xlarge:w-[32rem]' },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterPageComponent {

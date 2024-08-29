@@ -87,7 +87,7 @@ import { distinctUntilChanged, filter, map } from 'rxjs';
             </div>
 
             <!-- Main content -->
-            <div class="grid place-content-center">
+            <div class="grid place-content-center" [@routeAnimations]="page()">
                 <router-outlet />
             </div>
         </div>
@@ -108,6 +108,90 @@ import { distinctUntilChanged, filter, map } from 'rxjs';
                     query('#machine', [
                         style({ transform: 'translateX(-2rem)' }),
                         animate(400),
+                    ]),
+                ]),
+            ]),
+        ]),
+        trigger('routeAnimations', [
+            transition('register => login', [
+                // tab-like forward and back animations slide in and out with opacity change
+                style({
+                    position: 'relative',
+                    display: 'block',
+                    overflow: 'hidden',
+                }),
+                query(':enter, :leave', [
+                    style({
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translateX(-50%) translateY(-50%)',
+                    }),
+                ]),
+                query(':enter', [style({ opacity: 0 })]),
+                query(':leave', [style({ opacity: 1 })]),
+                query(':enter', [
+                    style({ transform: 'translateX(-100%) translateY(-50%)' }),
+                ]),
+                group([
+                    query(':leave', [animate('0.1s', style({ opacity: 0 }))]),
+                    query(':enter', [animate('0.2s', style({ opacity: 1 }))]),
+                    query(':leave', [
+                        animate(
+                            '0.2s',
+                            style({
+                                transform: 'translateX(0) translateY(-50%)',
+                            }),
+                        ),
+                    ]),
+                    query(':enter', [
+                        animate(
+                            '0.2s',
+                            style({
+                                transform: 'translateX(-50%) translateY(-50%)',
+                            }),
+                        ),
+                    ]),
+                ]),
+            ]),
+            transition('login => register', [
+                // tab-like forward and back animations slide in and out with opacity change
+                style({
+                    position: 'relative',
+                    display: 'block',
+                    overflow: 'hidden',
+                }),
+                query(':enter, :leave', [
+                    style({
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translateX(-50%) translateY(-50%)',
+                    }),
+                ]),
+                query(':enter', [style({ opacity: 0 })]),
+                query(':leave', [style({ opacity: 1 })]),
+                query(':enter', [
+                    style({ transform: 'translateX(100%) translateY(-50%)' }),
+                ]),
+                group([
+                    query(':leave', [animate('0.1s', style({ opacity: 0 }))]),
+                    query(':enter', [animate('0.2s', style({ opacity: 1 }))]),
+                    query(':leave', [
+                        animate(
+                            '0.2s',
+                            style({
+                                transform: 'translateX(-100%) translateY(-50%)',
+                            }),
+                        ),
+                    ]),
+                    query(':enter', [
+                        animate(
+                            '0.2s',
+                            style({
+                                transform: 'translateX(-50%) translateY(-50%)',
+                            }),
+                        ),
                     ]),
                 ]),
             ]),

@@ -4,13 +4,13 @@ import {
     map,
     merge,
     Observable,
-    of,
     ReplaySubject,
     shareReplay,
     tap,
 } from 'rxjs';
 import { LoggerService } from '@app/core/services/logger.service';
 import { injectRpcClient } from '@app/core/http/rpc-client';
+import { Router } from '@angular/router';
 
 /**
  * Service that handles the authentication of the user.
@@ -19,6 +19,7 @@ import { injectRpcClient } from '@app/core/http/rpc-client';
     providedIn: 'root',
 })
 export class AuthService {
+    #router = inject(Router);
     #logger = inject(LoggerService);
     #rpcClient = injectRpcClient();
 
@@ -43,20 +44,13 @@ export class AuthService {
         return this.#rpcClient.login({ username, password }).pipe(
             tap((res) => {
                 if (res.ok) {
-                    this.#isAuthenticatedSubject.next(true);
-                } else {
-                    this.#isAuthenticatedSubject.next(false);
-                }
-            }),
-            map((res) => {
-                if (res.ok) {
                     this.#logger.info(`User ${username} logged in.`);
-                    return true;
                 } else {
                     this.#logger.warn(`User ${username} failed to log in.`);
-                    return false;
                 }
             }),
+            tap((res) => this.#isAuthenticatedSubject.next(res.ok)),
+            map((res) => res.ok),
         );
     }
 
@@ -66,9 +60,18 @@ export class AuthService {
      * @returns An observable that emits `true` if the logout was successful, `false` otherwise.
      */
     logout(): Observable<boolean> {
-        this.#logger.info('Logging out...');
-        // TODO: Implement the logout logic
-        return of(true);
+        return this.#rpcClient.logout({}).pipe(
+            tap((res) => {
+                if (res.ok) {
+                    this.#logger.info('User logged out.');
+                } else {
+                    this.#logger.error(`Failed to log out: ${res.error}`);
+                }
+            }),
+            tap(() => this.#isAuthenticatedSubject.next(false)),
+            tap(() => this.#router.navigate(['/login'])),
+            map((res) => res.ok),
+        );
     }
 
     /**

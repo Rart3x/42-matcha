@@ -53,8 +53,6 @@ export const logoutProcedure = procedure('logout', () => {
     return safeTry(async function* () {
         const { id } = yield* (await usePrincipalUser()).safeUnwrap();
 
-        console.log('id', id);
-
         const res = await sql`
             DELETE FROM sessions
             WHERE user_id = ${id}

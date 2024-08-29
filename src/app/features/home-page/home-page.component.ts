@@ -1,9 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButton } from '@angular/material/button';
-import { injectRpcClient } from '@app/core/http/rpc-client';
-import { tap } from 'rxjs';
-import { Router } from '@angular/router';
-import { LoggerService } from '@app/core/services/logger.service';
+import { AuthService } from '@app/core/auth/auth.service';
 
 @Component({
     selector: 'app-home-page',
@@ -16,22 +13,9 @@ import { LoggerService } from '@app/core/services/logger.service';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomePageComponent {
-    #rpcClient = injectRpcClient();
-    #router = inject(Router);
-    #logger = inject(LoggerService);
+    #authService = inject(AuthService);
 
     onClick() {
-        this.#rpcClient
-            .logout({})
-            .pipe(
-                tap((res) => {
-                    if (res.ok) {
-                        void this.#router.navigate(['/login']);
-                    } else {
-                        this.#logger.error(res.error);
-                    }
-                }),
-            )
-            .subscribe();
+        this.#authService.logout().pipe().subscribe();
     }
 }

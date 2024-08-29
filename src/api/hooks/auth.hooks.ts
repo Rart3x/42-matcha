@@ -18,7 +18,7 @@ export function usePrincipalUser() {
 
         const user_id = yield* (
             await sql.begin(async (sql) => {
-                const users = await sql<{ id: string }[]>`
+                const users = await sql<{ user_id: string }[]>`
                     SELECT user_id
                     FROM sessions
                     WHERE token = ${token}
@@ -36,7 +36,7 @@ export function usePrincipalUser() {
                     WHERE token = ${token};
                 `;
 
-                return ok(users[0].id);
+                return ok(users[0].user_id);
             })
         )
             .andThrough(() => {

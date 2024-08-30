@@ -33,6 +33,8 @@ import {
 import { rxEffect } from 'ngxtension/rx-effect';
 import { debounceTime, filter } from 'rxjs';
 import { MatIcon } from '@angular/material/icon';
+import { regexValidator } from '@app/shared/validators/regex.validator';
+import { MatTooltipEllipsisDirective } from '@app/shared/directives/mat-tooltip-ellipsis.directive';
 
 @Component({
     selector: 'app-register-page',
@@ -52,6 +54,7 @@ import { MatIcon } from '@angular/material/icon';
         MatCardSubtitle,
         MatCardHeader,
         MatIcon,
+        MatTooltipEllipsisDirective,
     ],
     providers: [
         {
@@ -71,9 +74,40 @@ import { MatIcon } from '@angular/material/icon';
                     type="text"
                     [formControl]="registerForm.controls.firstName"
                 />
-                @if (!registerForm.controls.username.value) {
-                    <mat-hint>Enter your first name</mat-hint>
-                }
+                <mat-hint>
+                    @if (!registerForm.controls.firstName.value) {
+                        Enter your first name
+                    }
+                </mat-hint>
+                <mat-error class="!line-clamp-1">
+                    <span matTooltipEllipsis>
+                        @if (
+                            registerForm.controls.firstName.hasError('required')
+                        ) {
+                            First name is required
+                        } @else if (
+                            registerForm.controls.firstName.hasError(
+                                'minlength'
+                            )
+                        ) {
+                            First name must be at least 1 character long
+                        } @else if (
+                            registerForm.controls.firstName.hasError(
+                                'maxlength'
+                            )
+                        ) {
+                            Must be at most 30 characters long
+                        } @else if (
+                            registerForm.controls.firstName.hasError('letter')
+                        ) {
+                            Must contain at least one letter
+                        } @else if (
+                            registerForm.controls.firstName.hasError('name')
+                        ) {
+                            Can only contain letters, hyphens, and spaces
+                        }
+                    </span>
+                </mat-error>
             </mat-form-field>
 
             <mat-form-field>
@@ -83,9 +117,32 @@ import { MatIcon } from '@angular/material/icon';
                     type="text"
                     [formControl]="registerForm.controls.lastName"
                 />
-                @if (!registerForm.controls.username.value) {
-                    <mat-hint>Enter your last name</mat-hint>
-                }
+                <mat-hint>
+                    @if (!registerForm.controls.lastName.value) {
+                        Enter your last name
+                    }
+                </mat-hint>
+                <mat-error>
+                    @if (registerForm.controls.lastName.hasError('required')) {
+                        Last name is required
+                    } @else if (
+                        registerForm.controls.lastName.hasError('minlength')
+                    ) {
+                        Must be at least 1 character long
+                    } @else if (
+                        registerForm.controls.lastName.hasError('maxlength')
+                    ) {
+                        Must be at most 30 characters long
+                    } @else if (
+                        registerForm.controls.lastName.hasError('letter')
+                    ) {
+                        Must contain at least one letter
+                    } @else if (
+                        registerForm.controls.lastName.hasError('name')
+                    ) {
+                        Can only contain letters, hyphens, and spaces
+                    }
+                </mat-error>
             </mat-form-field>
 
             <mat-form-field class="col-span-2">
@@ -234,12 +291,49 @@ export class RegisterPageComponent {
     #viewportRuler = inject(ViewportRuler);
 
     registerForm = this.#fb.group({
-        email: [''],
-        username: [''],
-        password: ['', [Validators.required, Validators.minLength(8)]],
-        confirmPassword: [''],
-        firstName: [''],
-        lastName: [''],
+        email: ['', [Validators.required, Validators.email]],
+        username: [
+            '',
+            [
+                Validators.required,
+                Validators.minLength(3),
+                Validators.maxLength(20),
+                Validators.pattern(/^[a-zA-Z0-9_]+$/),
+            ],
+        ],
+        password: [
+            '',
+            [
+                Validators.required,
+                Validators.minLength(8),
+                Validators.maxLength(30),
+                regexValidator(/[a-z]/, 'lowercase'),
+                regexValidator(/[A-Z]/, 'uppercase'),
+                regexValidator(/[0-9]/, 'number'),
+                regexValidator(/[^a-zA-Z0-9]/, 'special'),
+            ],
+        ],
+        confirmPassword: ['', [Validators.required]],
+        firstName: [
+            '',
+            [
+                Validators.required,
+                Validators.minLength(1),
+                Validators.maxLength(30),
+                regexValidator(/[a-zA-Z]/, 'letter'),
+                regexValidator(/^[a-zA-Z]+[a-zA-Z-' ]*$/, 'name'),
+            ],
+        ],
+        lastName: [
+            '',
+            [
+                Validators.required,
+                Validators.minLength(1),
+                Validators.maxLength(30),
+                regexValidator(/[a-zA-Z]/, 'letter'),
+                regexValidator(/^[a-zA-Z]+[a-zA-Z-' ]*$/, 'name'),
+            ],
+        ],
     });
 
     isOpen = signal(false);

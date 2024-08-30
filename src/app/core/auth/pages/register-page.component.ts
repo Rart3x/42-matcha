@@ -1,14 +1,38 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    inject,
+    signal,
+    viewChild,
+} from '@angular/core';
 import { AuthLayoutComponent } from '@app/core/auth/layouts/auth-layout.component';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterModule } from '@angular/router';
-import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import {
+    NonNullableFormBuilder,
+    ReactiveFormsModule,
+    Validators,
+} from '@angular/forms';
 import {
     MAT_FORM_FIELD_DEFAULT_OPTIONS,
     MatFormFieldModule,
 } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatPasswordToggleButtonComponent } from '@app/shared/components/mat-password-toggle-button/mat-password-toggle-button.component';
+import {
+    CdkConnectedOverlay,
+    CdkOverlayOrigin,
+    ViewportRuler,
+} from '@angular/cdk/overlay';
+import {
+    MatCard,
+    MatCardContent,
+    MatCardHeader,
+    MatCardSubtitle,
+} from '@angular/material/card';
+import { rxEffect } from 'ngxtension/rx-effect';
+import { debounceTime, filter } from 'rxjs';
+import { MatIcon } from '@angular/material/icon';
 
 @Component({
     selector: 'app-register-page',
@@ -21,6 +45,13 @@ import { MatPasswordToggleButtonComponent } from '@app/shared/components/mat-pas
         MatInputModule,
         ReactiveFormsModule,
         MatPasswordToggleButtonComponent,
+        CdkConnectedOverlay,
+        CdkOverlayOrigin,
+        MatCard,
+        MatCardContent,
+        MatCardSubtitle,
+        MatCardHeader,
+        MatIcon,
     ],
     providers: [
         {
@@ -81,13 +112,20 @@ import { MatPasswordToggleButtonComponent } from '@app/shared/components/mat-pas
                 }
             </mat-form-field>
 
-            <mat-form-field class="col-span-2">
+            <mat-form-field
+                class="col-span-2"
+                cdkOverlayOrigin
+                #trigger="cdkOverlayOrigin"
+            >
                 <mat-label>Password</mat-label>
                 <input
                     matInput
                     type="password"
                     [formControl]="registerForm.controls.password"
                     #passwordInput
+                    (focus)="openOverlay()"
+                    (input)="openOverlay()"
+                    (blur)="closeOverlay()"
                 />
                 <mat-password-toggle-button
                     matSuffix
@@ -97,6 +135,67 @@ import { MatPasswordToggleButtonComponent } from '@app/shared/components/mat-pas
                     <mat-hint>Choose a strong password</mat-hint>
                 }
             </mat-form-field>
+
+            <ng-template
+                cdkConnectedOverlay
+                [cdkConnectedOverlayWidth]="triggerRect()?.width || 0"
+                [cdkConnectedOverlayOrigin]="trigger"
+                [cdkConnectedOverlayOpen]="isOpen()"
+            >
+                <mat-card class="-mt-4 mb-2 w-full bg-white">
+                    <mat-card-header>
+                        <mat-card-subtitle>
+                            Password must follow these rules
+                        </mat-card-subtitle>
+                    </mat-card-header>
+                    <mat-card-content>
+                        <!-- Password rules -->
+                        <!-- list with ruler matched indicators -->
+                        <ul class="grid gap-1">
+                            <li class="flex items-center">
+                                @if (
+                                    !registerForm.controls.password.value
+                                        .length ||
+                                    registerForm.controls.password.hasError(
+                                        'uppercase'
+                                    )
+                                ) {
+                                    <mat-icon>close</mat-icon>
+                                } @else {
+                                    <mat-icon>done</mat-icon>
+                                }
+                                At least 8 characters
+                            </li>
+                            <li class="flex items-center">
+                                @if (
+                                    !registerForm.controls.password.value
+                                        .length ||
+                                    registerForm.controls.password.hasError(
+                                        'uppercase'
+                                    )
+                                ) {
+                                    <mat-icon>close</mat-icon>
+                                } @else {
+                                    <mat-icon>done</mat-icon>
+                                }
+                                At least 1 uppercase letter
+                            </li>
+                            <li class="flex items-center">
+                                <mat-icon>done</mat-icon>
+                                At least 1 lowercase letter
+                            </li>
+                            <li class="flex items-center">
+                                <mat-icon>done</mat-icon>
+                                At least 1 number
+                            </li>
+                            <li class="flex items-center">
+                                <mat-icon>done</mat-icon>
+                                At least 1 special character
+                            </li>
+                        </ul>
+                    </mat-card-content>
+                </mat-card>
+            </ng-template>
 
             <mat-form-field class="col-span-2">
                 <mat-label>Confirm password</mat-label>
@@ -132,13 +231,41 @@ import { MatPasswordToggleButtonComponent } from '@app/shared/components/mat-pas
 })
 export class RegisterPageComponent {
     #fb = inject(NonNullableFormBuilder);
+    #viewportRuler = inject(ViewportRuler);
 
     registerForm = this.#fb.group({
         email: [''],
         username: [''],
-        password: [''],
+        password: ['', [Validators.required, Validators.minLength(8)]],
         confirmPassword: [''],
         firstName: [''],
         lastName: [''],
     });
+
+    isOpen = signal(false);
+    triggerRect = signal<DOMRect | null>(null);
+    trigger = viewChild.required<CdkOverlayOrigin>('trigger');
+
+    #resizeOverlay() {
+        this.triggerRect.set(
+            this.trigger().elementRef.nativeElement.getBoundingClientRect(),
+        );
+    }
+
+    #resizeOverlayEffect = rxEffect(
+        this.#viewportRuler.change().pipe(
+            debounceTime(200),
+            filter(() => this.isOpen()),
+        ),
+        () => this.#resizeOverlay(),
+    );
+
+    openOverlay() {
+        this.#resizeOverlay();
+        this.isOpen.set(true);
+    }
+
+    closeOverlay() {
+        this.isOpen.set(false);
+    }
 }

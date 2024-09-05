@@ -1,40 +1,26 @@
-import {
-    ChangeDetectionStrategy,
-    Component,
-    inject,
-    signal,
-    viewChild,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
 import { AuthLayoutComponent } from '@app/core/auth/layouts/auth-layout.component';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterModule } from '@angular/router';
 import {
+    AbstractControl,
+    NgForm,
     NonNullableFormBuilder,
     ReactiveFormsModule,
     Validators,
 } from '@angular/forms';
-import {
-    MAT_FORM_FIELD_DEFAULT_OPTIONS,
-    MatFormFieldModule,
-} from '@angular/material/form-field';
+import { MAT_FORM_FIELD_DEFAULT_OPTIONS, MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatPasswordToggleButtonComponent } from '@app/shared/components/mat-password-toggle-button/mat-password-toggle-button.component';
-import {
-    CdkConnectedOverlay,
-    CdkOverlayOrigin,
-    ViewportRuler,
-} from '@angular/cdk/overlay';
-import {
-    MatCard,
-    MatCardContent,
-    MatCardHeader,
-    MatCardSubtitle,
-} from '@angular/material/card';
+import { CdkConnectedOverlay, CdkOverlayOrigin, ViewportRuler } from '@angular/cdk/overlay';
+import { MatCard, MatCardContent, MatCardHeader, MatCardSubtitle } from '@angular/material/card';
 import { rxEffect } from 'ngxtension/rx-effect';
-import { debounceTime, filter } from 'rxjs';
+import { debounceTime, filter, map } from 'rxjs';
 import { MatIcon } from '@angular/material/icon';
 import { regexValidator } from '@app/shared/validators/regex.validator';
 import { MatTooltipEllipsisDirective } from '@app/shared/directives/mat-tooltip-ellipsis.directive';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { RxLet } from '@rx-angular/template/let';
 
 @Component({
     selector: 'app-register-page',
@@ -55,6 +41,7 @@ import { MatTooltipEllipsisDirective } from '@app/shared/directives/mat-tooltip-
         MatCardHeader,
         MatIcon,
         MatTooltipEllipsisDirective,
+        RxLet,
     ],
     providers: [
         {
@@ -66,80 +53,53 @@ import { MatTooltipEllipsisDirective } from '@app/shared/directives/mat-tooltip-
         <h1>Sign up</h1>
         <p>Sign up to start meeting new people</p>
 
-        <form [formGroup]="registerForm" class="grid grid-cols-2 gap-2">
+        <form [formGroup]="form" #formElement="ngForm" class="grid grid-cols-2 gap-3">
             <mat-form-field>
                 <mat-label>First name</mat-label>
                 <input
                     matInput
+                    id="firstName"
                     type="text"
-                    [formControl]="registerForm.controls.firstName"
+                    [formControl]="form.controls.firstName"
                 />
                 <mat-hint>
-                    @if (!registerForm.controls.firstName.value) {
+                    @if (!form.controls.firstName.value) {
                         Enter your first name
                     }
                 </mat-hint>
-                <mat-error class="!line-clamp-1">
-                    <span matTooltipEllipsis>
-                        @if (
-                            registerForm.controls.firstName.hasError('required')
-                        ) {
-                            First name is required
-                        } @else if (
-                            registerForm.controls.firstName.hasError(
-                                'minlength'
-                            )
-                        ) {
-                            First name must be at least 1 character long
-                        } @else if (
-                            registerForm.controls.firstName.hasError(
-                                'maxlength'
-                            )
-                        ) {
-                            Must be at most 30 characters long
-                        } @else if (
-                            registerForm.controls.firstName.hasError('letter')
-                        ) {
-                            Must contain at least one letter
-                        } @else if (
-                            registerForm.controls.firstName.hasError('name')
-                        ) {
-                            Can only contain letters, hyphens, and spaces
-                        }
-                    </span>
+                <mat-error matTooltipEllipsis>
+                    @if (form.controls.firstName.hasError('required')) {
+                        First name is required
+                    } @else if (form.controls.firstName.hasError('minlength')) {
+                        First name must be at least 1 character long
+                    } @else if (form.controls.firstName.hasError('maxlength')) {
+                        Must be at most 30 characters long
+                    } @else if (form.controls.firstName.hasError('letter')) {
+                        Must contain at least one letter
+                    } @else if (form.controls.firstName.hasError('name')) {
+                        Can only contain letters, hyphens, and spaces
+                    }
                 </mat-error>
             </mat-form-field>
 
             <mat-form-field>
                 <mat-label>Last name</mat-label>
-                <input
-                    matInput
-                    type="text"
-                    [formControl]="registerForm.controls.lastName"
-                />
+                <input matInput id="lastName" type="text" [formControl]="form.controls.lastName" />
                 <mat-hint>
-                    @if (!registerForm.controls.lastName.value) {
+                    @if (!form.controls.lastName.value) {
                         Enter your last name
                     }
                 </mat-hint>
-                <mat-error>
-                    @if (registerForm.controls.lastName.hasError('required')) {
+                <mat-error matTooltipEllipsis>
+                    @if (form.controls.lastName.hasError('required')) {
                         Last name is required
-                    } @else if (
-                        registerForm.controls.lastName.hasError('minlength')
-                    ) {
+                    } @else if (form.controls.lastName.hasError('minlength')) {
                         Must be at least 1 character long
-                    } @else if (
-                        registerForm.controls.lastName.hasError('maxlength')
-                    ) {
+                    } @else if (form.controls.lastName.hasError('maxlength')) {
                         Must be at most 30 characters long
-                    } @else if (
-                        registerForm.controls.lastName.hasError('letter')
-                    ) {
+                    } @else if (form.controls.lastName.hasError('letter')) {
                         Must contain at least one letter
-                    } @else if (
-                        registerForm.controls.lastName.hasError('name')
-                    ) {
+                    } @else if (form.controls.lastName.hasError('name')) {
                         Can only contain letters, hyphens, and spaces
                     }
                 </mat-error>
@@ -147,50 +107,75 @@ import { MatTooltipEllipsisDirective } from '@app/shared/directives/mat-tooltip-
 
             <mat-form-field class="col-span-2">
                 <mat-label>Email</mat-label>
-                <input
-                    matInput
-                    type="text"
-                    [formControl]="registerForm.controls.email"
-                />
-                @if (!registerForm.controls.username.value) {
-                    <mat-hint>Enter a valid email address</mat-hint>
-                }
+                <input matInput id="email" type="text" [formControl]="form.controls.email" />
+                <mat-hint>
+                    @if (!form.controls.email.value) {
+                        Enter your email address
+                    }
+                </mat-hint>
+                <mat-error matTooltipEllipsis>
+                    @if (form.controls.email.hasError('required')) {
+                        Email is required
+                    } @else if (form.controls.email.hasError('email')) {
+                        Must be a valid email address
+                    }
+                </mat-error>
             </mat-form-field>
 
             <mat-form-field class="col-span-2">
                 <mat-label>Username</mat-label>
-                <input
-                    matInput
-                    type="text"
-                    [formControl]="registerForm.controls.username"
-                />
-                @if (!registerForm.controls.username.value) {
-                    <mat-hint>Choose a username</mat-hint>
-                }
+                <input matInput id="username" type="text" [formControl]="form.controls.username" />
+                <mat-hint>
+                    @if (!form.controls.username.value) {
+                        Choose a username
+                    }
+                </mat-hint>
+                <mat-error matTooltipEllipsis>
+                    @if (form.controls.username.hasError('required')) {
+                        Username is required
+                    } @else if (form.controls.username.hasError('minlength')) {
+                        Must be at least 3 characters long
+                    } @else if (form.controls.username.hasError('maxlength')) {
+                        Must be at most 20 characters long
+                    } @else if (form.controls.username.hasError('pattern')) {
+                        Can only contain letters, numbers, and underscores
+                    }
+                </mat-error>
             </mat-form-field>
 
-            <mat-form-field
-                class="col-span-2"
-                cdkOverlayOrigin
-                #trigger="cdkOverlayOrigin"
-            >
+            <mat-form-field class="col-span-2" cdkOverlayOrigin #trigger="cdkOverlayOrigin">
                 <mat-label>Password</mat-label>
                 <input
                     matInput
+                    id="password"
                     type="password"
-                    [formControl]="registerForm.controls.password"
+                    [formControl]="form.controls.password"
                     #passwordInput
                     (focus)="openOverlay()"
                     (input)="openOverlay()"
-                    (blur)="closeOverlay()"
+                    (blur)="onBlur($event)"
                 />
-                <mat-password-toggle-button
-                    matSuffix
-                    [inputElement]="passwordInput"
-                />
-                @if (!registerForm.controls.password.value) {
-                    <mat-hint>Choose a strong password</mat-hint>
-                }
+                <mat-password-toggle-button matSuffix [inputElement]="passwordInput" />
+                <mat-hint>
+                    @if (!form.controls.password.value) {
+                        Choose a strong password
+                    }
+                </mat-hint>
+                <mat-error matTooltipEllipsis>
+                    @if (form.controls.password.hasError('required')) {
+                        Password is required
+                    } @else if (form.controls.password.hasError('minlength')) {
+                        Must be at least 8 characters long
+                    } @else if (form.controls.password.hasError('uppercase')) {
+                        Must contain at least 1 uppercase letter
+                    } @else if (form.controls.password.hasError('lowercase')) {
+                        Must contain at least 1 lowercase letter
+                    } @else if (form.controls.password.hasError('number')) {
+                        Must contain at least 1 number
+                    } @else if (form.controls.password.hasError('special')) {
+                        Must contain at least 1 special character
+                    }
+                </mat-error>
             </mat-form-field>
 
             <ng-template
@@ -198,56 +183,79 @@ import { MatTooltipEllipsisDirective } from '@app/shared/directives/mat-tooltip-
                 [cdkConnectedOverlayWidth]="triggerRect()?.width || 0"
                 [cdkConnectedOverlayOrigin]="trigger"
                 [cdkConnectedOverlayOpen]="isOpen()"
+                #overlay="cdkConnectedOverlay"
             >
-                <mat-card class="-mt-4 mb-2 w-full bg-white">
+                <mat-card
+                    [tabIndex]="overlayFocusable() ? 0 : -1"
+                    class="-mt-4 mb-2 w-full bg-white"
+                    (mousedown)="onOverlayMouseDown($event)"
+                    (blur)="onOverlayBlur($event)"
+                >
                     <mat-card-header>
-                        <mat-card-subtitle>
-                            Password must follow these rules
-                        </mat-card-subtitle>
+                        <mat-card-subtitle> Password must follow these rules </mat-card-subtitle>
                     </mat-card-header>
                     <mat-card-content>
-                        <!-- Password rules -->
-                        <!-- list with ruler matched indicators -->
                         <ul class="grid gap-1">
-                            <li class="flex items-center">
-                                @if (
-                                    !registerForm.controls.password.value
-                                        .length ||
-                                    registerForm.controls.password.hasError(
-                                        'uppercase'
-                                    )
-                                ) {
+                            <li
+                                class="flex items-center"
+                                *rxLet="form.controls.password.hasError('minlength'); let error"
+                            >
+                                @if (error) {
                                     <mat-icon>close</mat-icon>
                                 } @else {
                                     <mat-icon>done</mat-icon>
                                 }
-                                At least 8 characters
+                                <span [class.line-through]="!error"> At least 8 characters </span>
                             </li>
-                            <li class="flex items-center">
-                                @if (
-                                    !registerForm.controls.password.value
-                                        .length ||
-                                    registerForm.controls.password.hasError(
-                                        'uppercase'
-                                    )
-                                ) {
+                            <li
+                                class="flex items-center"
+                                *rxLet="form.controls.password.hasError('uppercase'); let error"
+                            >
+                                @if (error) {
                                     <mat-icon>close</mat-icon>
                                 } @else {
                                     <mat-icon>done</mat-icon>
                                 }
-                                At least 1 uppercase letter
+                                <span [class.line-through]="!error">
+                                    At least 1 uppercase letter
+                                </span>
                             </li>
-                            <li class="flex items-center">
-                                <mat-icon>done</mat-icon>
-                                At least 1 lowercase letter
+                            <li
+                                class="flex items-center"
+                                *rxLet="form.controls.password.hasError('lowercase'); let error"
+                            >
+                                @if (error) {
+                                    <mat-icon>close</mat-icon>
+                                } @else {
+                                    <mat-icon>done</mat-icon>
+                                }
+                                <span [class.line-through]="!error">
+                                    At least 1 lowercase letter
+                                </span>
                             </li>
-                            <li class="flex items-center">
-                                <mat-icon>done</mat-icon>
-                                At least 1 number
+                            <li
+                                class="flex items-center"
+                                *rxLet="form.controls.password.hasError('number'); let error"
+                            >
+                                @if (error) {
+                                    <mat-icon>close</mat-icon>
+                                } @else {
+                                    <mat-icon>done</mat-icon>
+                                }
+                                <span [class.line-through]="!error"> At least 1 number </span>
                             </li>
-                            <li class="flex items-center">
-                                <mat-icon>done</mat-icon>
-                                At least 1 special character
+                            <li
+                                class="flex items-center"
+                                *rxLet="form.controls.password.hasError('special'); let error"
+                            >
+                                @if (error) {
+                                    <mat-icon>close</mat-icon>
+                                } @else {
+                                    <mat-icon>done</mat-icon>
+                                }
+                                <span [class.line-through]="!error">
+                                    At least 1 special character
+                                </span>
                             </li>
                         </ul>
                     </mat-card-content>
@@ -258,24 +266,31 @@ import { MatTooltipEllipsisDirective } from '@app/shared/directives/mat-tooltip-
                 <mat-label>Confirm password</mat-label>
                 <input
                     matInput
+                    id="confirmPassword"
                     type="password"
-                    [formControl]="registerForm.controls.confirmPassword"
+                    [formControl]="form.controls.confirmPassword"
                     #confirmInput
                 />
-                <mat-password-toggle-button
-                    matSuffix
-                    [inputElement]="confirmInput"
-                />
-                @if (!registerForm.controls.confirmPassword.value) {
-                    <mat-hint>Confirm your password</mat-hint>
-                }
+                <mat-password-toggle-button matSuffix [inputElement]="confirmInput" />
+                <mat-hint>
+                    @if (!form.controls.confirmPassword.value) {
+                        Confirm your password
+                    }
+                </mat-hint>
+                <mat-error matTooltipEllipsis>
+                    @if (form.controls.confirmPassword.hasError('required')) {
+                        Password confirmation is required
+                    } @else if (form.controls.confirmPassword.hasError('notEqual')) {
+                        Passwords do not match
+                    }
+                </mat-error>
             </mat-form-field>
 
             <button
                 type="submit"
                 class="btn-primary col-span-2 mt-2"
                 mat-flat-button
-                [disabled]="registerForm.invalid"
+                [disabled]="form.invalid"
             >
                 Sign up
             </button>
@@ -287,33 +302,15 @@ import { MatTooltipEllipsisDirective } from '@app/shared/directives/mat-tooltip-
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterPageComponent {
+    isOpen = signal(false);
+    triggerRect = signal<DOMRect | null>(null);
+    trigger = viewChild.required<CdkOverlayOrigin>('trigger');
+    passwordInput = viewChild.required<HTMLElement>('passwordInput');
+    overlay = viewChild.required<CdkConnectedOverlay>('overlay');
+    overlayFocusable = signal(false);
+    formElement = viewChild.required<NgForm>('formElement');
     #fb = inject(NonNullableFormBuilder);
-    #viewportRuler = inject(ViewportRuler);
-
-    registerForm = this.#fb.group({
-        email: ['', [Validators.required, Validators.email]],
-        username: [
-            '',
-            [
-                Validators.required,
-                Validators.minLength(3),
-                Validators.maxLength(20),
-                Validators.pattern(/^[a-zA-Z0-9_]+$/),
-            ],
-        ],
-        password: [
-            '',
-            [
-                Validators.required,
-                Validators.minLength(8),
-                Validators.maxLength(30),
-                regexValidator(/[a-z]/, 'lowercase'),
-                regexValidator(/[A-Z]/, 'uppercase'),
-                regexValidator(/[0-9]/, 'number'),
-                regexValidator(/[^a-zA-Z0-9]/, 'special'),
-            ],
-        ],
-        confirmPassword: ['', [Validators.required]],
+    form = this.#fb.group({
         firstName: [
             '',
             [
@@ -334,18 +331,31 @@ export class RegisterPageComponent {
                 regexValidator(/^[a-zA-Z]+[a-zA-Z-' ]*$/, 'name'),
             ],
         ],
+        email: ['', [Validators.required, Validators.email]],
+        username: [
+            '',
+            [
+                Validators.required,
+                Validators.minLength(3),
+                Validators.maxLength(20),
+                Validators.pattern(/^[a-zA-Z0-9_]+$/),
+            ],
+        ],
+        password: [
+            '',
+            [
+                Validators.required,
+                regexValidator(/.{8,}/, 'minlength'),
+                regexValidator(/.{0,30}/, 'maxlength'),
+                regexValidator(/[a-z]/, 'lowercase'),
+                regexValidator(/[A-Z]/, 'uppercase'),
+                regexValidator(/[0-9]/, 'number'),
+                regexValidator(/[^a-zA-Z0-9]/, 'special'),
+            ],
+        ],
+        confirmPassword: ['', [Validators.required]],
     });
-
-    isOpen = signal(false);
-    triggerRect = signal<DOMRect | null>(null);
-    trigger = viewChild.required<CdkOverlayOrigin>('trigger');
-
-    #resizeOverlay() {
-        this.triggerRect.set(
-            this.trigger().elementRef.nativeElement.getBoundingClientRect(),
-        );
-    }
-
+    #viewportRuler = inject(ViewportRuler);
     #resizeOverlayEffect = rxEffect(
         this.#viewportRuler.change().pipe(
             debounceTime(200),
@@ -359,7 +369,55 @@ export class RegisterPageComponent {
         this.isOpen.set(true);
     }
 
-    closeOverlay() {
-        this.isOpen.set(false);
+    onBlur(ev: FocusEvent) {
+        const overlayElement = this.overlay().overlayRef.overlayElement;
+        const target = ev.relatedTarget;
+
+        if (
+            !(target instanceof HTMLElement) ||
+            (target !== overlayElement && !overlayElement.contains(target))
+        ) {
+            this.isOpen.set(false);
+        }
     }
+
+    #resizeOverlay() {
+        this.triggerRect.set(this.trigger().elementRef.nativeElement.getBoundingClientRect());
+    }
+
+    onOverlayMouseDown(ev: MouseEvent) {
+        if (ev.target instanceof HTMLElement) {
+            this.overlayFocusable.set(true);
+            ev.target.focus();
+        }
+    }
+
+    onOverlayBlur(ev: FocusEvent) {
+        this.overlayFocusable.set(false);
+        if (ev.relatedTarget !== this.passwordInput()) {
+            this.isOpen.set(false);
+        }
+    }
+
+    displayErrorInOverlay(control: AbstractControl, error: string) {
+        console.log(control.errors);
+        return control.hasError(error) && (control.touched || this.formElement().submitted);
+    }
+
+    overlayErrors = toSignal(
+        this.form.valueChanges.pipe(
+            takeUntilDestroyed(),
+            map(() => {
+                return [
+                    {
+                        error:
+                            this.form.controls.password.hasError('minlength') &&
+                            (this.form.controls.password.touched || this.formElement().submitted),
+
+                        message: 'At least 8 characters',
+                    },
+                ];
+            }),
+        ),
+    );
 }

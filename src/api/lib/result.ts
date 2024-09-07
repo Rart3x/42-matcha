@@ -1,54 +1,60 @@
-export interface Result<OK, ERR> {
-    isOk(): this is Ok<OK, ERR>;
+/**
+ * Type helper for representing errors as values.
+ */
+export interface Result<VAL, ERR> {
+    isOk(): this is Ok<VAL, ERR>;
 
-    isErr(): this is Err<OK, ERR>;
+    isErr(): this is Err<VAL, ERR>;
 
-    ok(): OK;
+    value(): VAL;
 
-    err(): ERR;
+    error(): ERR;
 
-    safeUnwrap(): Generator<Err<never, ERR>, OK>;
+    safeUnwrap(): Generator<Err<never, ERR>, VAL>;
 
-    map<NEW_OK>(fn: (value: OK) => NEW_OK): Result<NEW_OK, ERR>;
+    map<NEW_VAL>(fn: (value: VAL) => NEW_VAL): Result<NEW_VAL, ERR>;
 
-    mapErr<NEW_ERR>(fn: (error: ERR) => NEW_ERR): Result<OK, NEW_ERR>;
+    mapErr<NEW_ERR>(fn: (error: ERR) => NEW_ERR): Result<VAL, NEW_ERR>;
 
-    andThrough(fn: (value: ERR) => void): Result<OK, ERR>;
+    andThrough(fn: (value: ERR) => void): Result<VAL, ERR>;
 }
 
-export class Ok<OK, ERR> implements Result<OK, ERR> {
-    constructor(public value: OK) {}
+/**
+ * Represents a successful computation.
+ */
+export class Ok<VAL, ERR> implements Result<VAL, ERR> {
+    constructor(private _value: VAL) {}
 
-    isOk(): this is Ok<OK, ERR> {
+    isOk(): this is Ok<VAL, ERR> {
         return true;
     }
 
-    isErr(): this is Err<OK, ERR> {
+    isErr(): this is Err<VAL, ERR> {
         return false;
     }
 
-    ok(): OK {
-        return this.value;
+    value(): VAL {
+        return this._value;
     }
 
-    err(): ERR {
+    error(): ERR {
         throw new Error('Called `err` on an `Ok` value');
     }
 
-    map<NEW_OK>(fn: (value: OK) => NEW_OK): Result<NEW_OK, ERR> {
-        return new Ok(fn(this.value));
+    map<NEW_VAL>(fn: (value: VAL) => NEW_VAL): Result<NEW_VAL, ERR> {
+        return new Ok(fn(this._value));
     }
 
-    mapErr<NEW_ERR>(fn: (error: ERR) => NEW_ERR): Result<OK, NEW_ERR> {
-        return new Ok(this.value);
+    mapErr<NEW_ERR>(fn: (error: ERR) => NEW_ERR): Result<VAL, NEW_ERR> {
+        return new Ok(this._value);
     }
 
-    andThrough(_: (value: ERR) => void): Result<OK, ERR> {
+    andThrough(_: (value: ERR) => void): Result<VAL, ERR> {
         return this;
     }
 
-    safeUnwrap(): Generator<Err<never, ERR>, OK> {
-        const value = this.value;
+    safeUnwrap(): Generator<Err<never, ERR>, VAL> {
+        const value = this._value;
 
         return (function* () {
             return value;
@@ -56,8 +62,11 @@ export class Ok<OK, ERR> implements Result<OK, ERR> {
     }
 }
 
+/**
+ * Represents a failed computation.
+ */
 export class Err<OK, ERR> implements Result<OK, ERR> {
-    constructor(public error: ERR) {}
+    constructor(public _error: ERR) {}
 
     isOk(): this is Ok<OK, ERR> {
         return false;
@@ -67,29 +76,29 @@ export class Err<OK, ERR> implements Result<OK, ERR> {
         return true;
     }
 
-    ok(): OK {
+    value(): OK {
         throw new Error('Called `ok` on an `Err` value');
     }
 
-    err(): ERR {
-        return this.error;
+    error(): ERR {
+        return this._error;
     }
 
     map<NEW_OK>(fn: (value: OK) => NEW_OK): Result<NEW_OK, ERR> {
-        return new Err(this.error);
+        return new Err(this._error);
     }
 
     mapErr<NEW_ERR>(fn: (error: ERR) => NEW_ERR): Result<OK, NEW_ERR> {
-        return new Err(fn(this.error));
+        return new Err(fn(this._error));
     }
 
     andThrough(fn: (value: ERR) => void): Result<OK, ERR> {
-        fn(this.error);
+        fn(this._error);
         return this;
     }
 
     safeUnwrap(): Generator<Err<never, ERR>, OK> {
-        const error = this.error;
+        const error = this._error;
 
         return (function* () {
             yield new Err(error);
@@ -99,19 +108,25 @@ export class Err<OK, ERR> implements Result<OK, ERR> {
     }
 }
 
-export function ok<OK>(value: OK): Ok<OK, never> {
-    return new Ok(value);
+/**
+ * Helper function for creating an `Ok` value.
+ */
+export function ok<const VAL = void>(value?: VAL): Ok<VAL, never> {
+    return new Ok(value ?? undefined) as Ok<VAL, never>;
 }
 
-type SpecificString<S extends string> = string extends S ? never : S;
-
-export function err<ERR extends string>(
-    error: ERR,
-): Err<never, SpecificString<ERR>>;
-export function err<ERR>(error: ERR): Err<never, ERR> {
-    return new Err(error);
+/**
+ * Helper function for creating an `Err` value.
+ */
+export function err<const ERR = void>(error?: ERR): Err<never, ERR> {
+    return new Err(error ?? undefined) as Err<never, ERR>;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Safely executes a function that may return an error.
+ */
 export function safeTry<OK, ERR>(
     fn: () => Generator<Err<never, ERR>, Result<OK, ERR>>,
 ): Result<OK, ERR>;
@@ -131,54 +146,26 @@ export function safeTry<OK, ERR>(
     return result.value;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// example usage (sync)
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-function getMyValue() {
-    const n = Math.random();
+const voidOK = ok();
 
-    if (n > 0.5) {
-        return ok(n);
-    }
+const numberOK = ok(42);
 
-    return err('error' as const);
-}
+const stringOK = ok('hello');
 
-const test = safeTry(function* () {
-    const val1 = yield* getMyValue()
-        .mapErr((error) => 1 as const)
-        .safeUnwrap();
+const objectOK = ok({
+    hello: 'world',
+});
 
-    const val2 = yield* getMyValue()
-        .mapErr((error) => 2 as const)
-        .safeUnwrap();
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    if (Math.abs(val1 - val2) < 0.1) {
-        return ok('almost same' as const);
-    }
+const voidErr = err();
 
-    return ok('different' as const);
-}).mapErr((error) => (error === 1 ? 'error 1' : 'error 2'));
+const numberErr = err(42);
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// example usage (composition)
+const stringErr = err('hello');
 
-function ModifiedValue() {
-    return safeTry(function* () {
-        const val = yield* getMyValue().safeUnwrap();
-
-        return ok(val + 1);
-    });
-}
-
-const test2 = safeTry(function* () {
-    const val1 = yield* ModifiedValue().safeUnwrap();
-
-    const val2 = yield* ModifiedValue().safeUnwrap();
-
-    if (Math.abs(val1 - val2) < 0.1) {
-        return ok('almost same' as const);
-    }
-
-    return ok('different' as const);
+const objectErr = err({
+    hello: 'world',
 });

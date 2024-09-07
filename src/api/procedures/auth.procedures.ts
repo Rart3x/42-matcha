@@ -5,7 +5,8 @@ import { usePrincipalUser } from '@api/hooks/auth.hooks';
 
 export const loginProcedure = procedure(
     'login',
-    ({ username, password }: { username: string; password: string }) => {
+    {} as { username: string; password: string },
+    ({ username, password }) => {
         return safeTry(async function* () {
             if (!username || !password) {
                 return err('Invalid username or password');

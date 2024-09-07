@@ -27,11 +27,7 @@ if (NODE_ENV === 'production') {
 apiRouter.use(cookieParser()); // parse cookies
 apiRouter.use(json()); // parse json body
 
-export const rpcRouter = createRpcRouter([
-    loginProcedure,
-    logoutProcedure,
-    verifySessionProcedure,
-]);
+export const rpcRouter = createRpcRouter([loginProcedure, logoutProcedure, verifySessionProcedure]);
 
 export type Procedures = (typeof rpcRouter)['__procedures'][number];
 

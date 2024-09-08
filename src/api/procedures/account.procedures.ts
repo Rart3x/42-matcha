@@ -1,8 +1,81 @@
 import { procedure } from '@api/lib/procedure';
 import { err, ok, safeTry } from '@api/lib/result';
 import { sql } from '@api/connections/database';
+import { mailer } from '@api/connections/mailer';
 
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const HOST = process.env['APP_HOST'] || 'localhost';
+const PORT = process.env['APP_PORT'] || '4200';
+
+export const confirmEmailProcedure = procedure(
+    'confirmEmail',
+    {} as {
+        token: string;
+    },
+    (params) => {
+        return safeTry(async function* () {
+            const token = yield* validateToken(params.token)
+                .mapErr(() => 'Invalid registration link')
+                .safeUnwrap();
+
+            yield* (
+                await sql.begin(async (sql) => {
+                    const validToken = await sql`
+                        SELECT id FROM users_registrations WHERE token = ${token}
+                    `;
+
+                    if (validToken.count === 0) {
+                        return err('Invalid registration link');
+                    }
+
+                    const upToDateToken = await sql`
+                        SELECT id FROM users_registrations WHERE token = ${token} AND expires_at > NOW()
+                    `;
+
+                    if (upToDateToken.count === 0) {
+                        return err('Registration link expired');
+                    }
+
+                    const res = await sql`
+                        INSERT INTO users (email, username, password, first_name, last_name)
+                        SELECT email, username, password, first_name, last_name
+                        FROM users_registrations
+                        WHERE token = ${token}
+                        RETURNING id
+                    `;
+
+                    if (!res.count) {
+                        return err('Invalid token');
+                    }
+
+                    await sql`
+                        DELETE FROM users_registrations
+                        WHERE token = ${token}
+                    `;
+
+                    return ok();
+                })
+            ).safeUnwrap();
+
+            return ok({ message: 'Email confirmed' });
+        });
+    },
+);
+
+const UUID_REGEX = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
+
+function validateToken(token?: string) {
+    return safeTry(function* () {
+        if (!token) {
+            return err('Token is required');
+        }
+
+        if (!UUID_REGEX.test(token)) {
+            return err('Invalid token format');
+        }
+
+        return ok(token);
+    });
+}
 
 export const createAccountProcedure = procedure(
     'createAccount',
@@ -78,6 +151,14 @@ export const createAccountProcedure = procedure(
                 })
             ).safeUnwrap();
 
+            yield* (
+                await sendConfirmationEmail(
+                    username,
+                    email,
+                    `http://${HOST}:${PORT}/confirm-email/${token}`,
+                )
+            ).safeUnwrap();
+
             // TODO: send email
             console.log({ token });
 
@@ -85,6 +166,25 @@ export const createAccountProcedure = procedure(
         });
     },
 );
+
+function sendConfirmationEmail(username: string, email: string, confirmationLink: string) {
+    return safeTry(async function* () {
+        try {
+            await mailer.sendMail({
+                from: 'no-reply@matcha.com',
+                to: email,
+                subject: 'Matcha Registration',
+                text: `Hi ${username}, please click the link to confirm your registration: ${confirmationLink}`,
+            });
+
+            return ok();
+        } catch (error) {
+            console.error(`Failed to send confirmation email to ${email}: ${error}`);
+
+            return err('Failed to send confirmation email');
+        }
+    });
+}
 
 const ANGULAR_EMAIL_REGEX =
     /^(?=.{1,254}$)(?=.{1,64}@)[-!#$%&'*+/0-9=?A-Z^_`a-z{|}~]+(\.[-!#$%&'*+/0-9=?A-Z^_`a-z{|}~]+)*@[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$/;

@@ -7,7 +7,7 @@ import {
     logoutProcedure,
     verifySessionProcedure,
 } from '@api/procedures/auth.procedures';
-import { createAccountProcedure } from '@api/procedures/account.procedures';
+import { confirmEmailProcedure, createAccountProcedure } from '@api/procedures/account.procedures';
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Configure root api router with global middlewares                                                                ///
@@ -33,6 +33,7 @@ export const rpcRouter = createRpcRouter([
     logoutProcedure,
     verifySessionProcedure,
     createAccountProcedure,
+    confirmEmailProcedure,
 ]);
 
 export type Procedures = (typeof rpcRouter)['__procedures'][number];

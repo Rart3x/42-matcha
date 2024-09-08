@@ -7,6 +7,7 @@ import {
     logoutProcedure,
     verifySessionProcedure,
 } from '@api/procedures/auth.procedures';
+import { createAccountProcedure } from '@api/procedures/account.procedures';
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Configure root api router with global middlewares                                                                ///
@@ -27,7 +28,12 @@ if (NODE_ENV === 'production') {
 apiRouter.use(cookieParser()); // parse cookies
 apiRouter.use(json()); // parse json body
 
-export const rpcRouter = createRpcRouter([loginProcedure, logoutProcedure, verifySessionProcedure]);
+export const rpcRouter = createRpcRouter([
+    loginProcedure,
+    logoutProcedure,
+    verifySessionProcedure,
+    createAccountProcedure,
+]);
 
 export type Procedures = (typeof rpcRouter)['__procedures'][number];
 

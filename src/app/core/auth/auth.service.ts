@@ -60,7 +60,7 @@ export class AuthService {
      * @returns An observable that emits `true` if the logout was successful, `false` otherwise.
      */
     logout(): Observable<boolean> {
-        return this.#rpcClient.logout({}).pipe(
+        return this.#rpcClient.logout().pipe(
             tap((res) => {
                 if (res.ok) {
                     this.#logger.info('User logged out.');
@@ -80,7 +80,7 @@ export class AuthService {
      * @private
      */
     #verify(): Observable<boolean> {
-        return this.#rpcClient.verify({}).pipe(
+        return this.#rpcClient.verify().pipe(
             map((res) => {
                 if (res.ok) {
                     this.#logger.info('User is authenticated.');

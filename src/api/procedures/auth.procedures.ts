@@ -18,7 +18,7 @@ export const loginProcedure = procedure(
                         const users = await sql<{ id: string }[]>`
                             SELECT id 
                             FROM users 
-                            WHERE username = ${username} AND password = hash_password(${password})
+                            WHERE username = ${username} AND password = crypt(${password}, password)
                         `;
 
                         if (users.length === 0) {

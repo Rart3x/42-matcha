@@ -1,31 +1,18 @@
-import {
-    ChangeDetectionStrategy,
-    Component,
-    DestroyRef,
-    inject,
-    signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
-import {
-    MAT_FORM_FIELD_DEFAULT_OPTIONS,
-    MatFormFieldModule,
-} from '@angular/material/form-field';
+import { MAT_FORM_FIELD_DEFAULT_OPTIONS, MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthLayoutComponent } from '@app/core/auth/layouts/auth-layout.component';
 import { Router, RouterModule } from '@angular/router';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import {
-    NonNullableFormBuilder,
-    ReactiveFormsModule,
-    Validators,
-} from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '@app/core/auth/auth.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { tap } from 'rxjs';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { SnackBarServiceService } from '@app/core/services/snack-bar-service.service';
+import { SnackBarService } from '@app/core/services/snack-bar.service';
 import { MatPasswordToggleButtonComponent } from '@app/shared/components/mat-password-toggle-button/mat-password-toggle-button.component';
 import { deriveLoading } from 'ngxtension/derive-loading';
 import { FormDisabledDirective } from '@app/shared/directives/form-disabled.directive';
@@ -64,9 +51,7 @@ import { FormDisabledDirective } from '@app/shared/directives/form-disabled.dire
             (ngSubmit)="onSubmit()"
         >
             @if (invalidCredentials()) {
-                <div
-                    class="bg-error mb-2 flex items-center gap-2 rounded border p-2"
-                >
+                <div class="bg-error mb-2 flex items-center gap-2 rounded border p-2">
                     <mat-icon>error</mat-icon>
                     Invalid credentials
                 </div>
@@ -140,7 +125,7 @@ export class LoginPageComponent {
     #router = inject(Router);
     #destroyRef = inject(DestroyRef);
     #authService = inject(AuthService);
-    #snackBarService = inject(SnackBarServiceService);
+    #snackBarService = inject(SnackBarService);
 
     loginForm = this.#fb.group({
         username: ['', Validators.required],
@@ -176,8 +161,6 @@ export class LoginPageComponent {
     }
 
     private displayResultSnackbar(result: boolean) {
-        this.#snackBarService.enqueueSnackBar(
-            result ? 'Login successful' : 'Login failed',
-        );
+        this.#snackBarService.enqueueSnackBar(result ? 'Login successful' : 'Login failed');
     }
 }

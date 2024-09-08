@@ -15,12 +15,15 @@ import { MatPasswordToggleButtonComponent } from '@app/shared/components/mat-pas
 import { CdkConnectedOverlay, CdkOverlayOrigin, ViewportRuler } from '@angular/cdk/overlay';
 import { MatCard, MatCardContent, MatCardHeader, MatCardSubtitle } from '@angular/material/card';
 import { rxEffect } from 'ngxtension/rx-effect';
-import { debounceTime, filter, map } from 'rxjs';
+import { debounceTime, filter, map, tap } from 'rxjs';
 import { MatIcon } from '@angular/material/icon';
 import { regexValidator } from '@app/shared/validators/regex.validator';
 import { MatTooltipEllipsisDirective } from '@app/shared/directives/mat-tooltip-ellipsis.directive';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { RxLet } from '@rx-angular/template/let';
+import { AccountService } from '@app/core/services/account.service';
+import { deriveLoading } from 'ngxtension/derive-loading';
+import { FormDisabledDirective } from '@app/shared/directives/form-disabled.directive';
 
 @Component({
     selector: 'app-register-page',
@@ -42,6 +45,7 @@ import { RxLet } from '@rx-angular/template/let';
         MatIcon,
         MatTooltipEllipsisDirective,
         RxLet,
+        FormDisabledDirective,
     ],
     providers: [
         {
@@ -53,7 +57,19 @@ import { RxLet } from '@rx-angular/template/let';
         <h1>Sign up</h1>
         <p>Sign up to start meeting new people</p>
 
-        <form [formGroup]="form" #formElement="ngForm" class="grid grid-cols-2 gap-3">
+        @if (errorMsg()) {
+            <div class="bg-error text-on-error mb-4 rounded-lg p-4">
+                {{ errorMsg() }}
+            </div>
+        }
+
+        <form
+            [appFormDisabled]="loading()"
+            [formGroup]="form"
+            #formElement="ngForm"
+            (ngSubmit)="onSubmit()"
+            class="grid grid-cols-2 gap-3"
+        >
             <mat-form-field>
                 <mat-label>First name</mat-label>
                 <input
@@ -155,7 +171,11 @@ import { RxLet } from '@rx-angular/template/let';
                     (input)="openOverlay()"
                     (blur)="onBlur($event)"
                 />
-                <mat-password-toggle-button matSuffix [inputElement]="passwordInput" />
+                <mat-password-toggle-button
+                    matSuffix
+                    [inputElement]="passwordInput"
+                    [disabled]="loading()"
+                />
                 <mat-hint>
                     @if (!form.controls.password.value) {
                         Choose a strong password
@@ -271,7 +291,11 @@ import { RxLet } from '@rx-angular/template/let';
                     [formControl]="form.controls.confirmPassword"
                     #confirmInput
                 />
-                <mat-password-toggle-button matSuffix [inputElement]="confirmInput" />
+                <mat-password-toggle-button
+                    matSuffix
+                    [inputElement]="confirmInput"
+                    [disabled]="loading()"
+                />
                 <mat-hint>
                     @if (!form.controls.confirmPassword.value) {
                         Confirm your password
@@ -302,14 +326,21 @@ import { RxLet } from '@rx-angular/template/let';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterPageComponent {
+    #fb = inject(NonNullableFormBuilder);
+    #viewportRuler = inject(ViewportRuler);
+    #accountService = inject(AccountService);
+
     isOpen = signal(false);
     triggerRect = signal<DOMRect | null>(null);
+    overlayFocusable = signal(false);
+    errorMsg = signal<string | null>(null);
+    loading = signal(false);
+
     trigger = viewChild.required<CdkOverlayOrigin>('trigger');
     passwordInput = viewChild.required<HTMLElement>('passwordInput');
     overlay = viewChild.required<CdkConnectedOverlay>('overlay');
-    overlayFocusable = signal(false);
     formElement = viewChild.required<NgForm>('formElement');
-    #fb = inject(NonNullableFormBuilder);
+
     form = this.#fb.group({
         firstName: [
             '',
@@ -355,7 +386,7 @@ export class RegisterPageComponent {
         ],
         confirmPassword: ['', [Validators.required]],
     });
-    #viewportRuler = inject(ViewportRuler);
+
     #resizeOverlayEffect = rxEffect(
         this.#viewportRuler.change().pipe(
             debounceTime(200),
@@ -420,4 +451,31 @@ export class RegisterPageComponent {
             }),
         ),
     );
+
+    onSubmit() {
+        if (!this.form.valid) {
+            return;
+        }
+
+        this.#accountService
+            .createAccount(
+                this.form.controls.email.value,
+                this.form.controls.username.value,
+                this.form.controls.password.value,
+                this.form.controls.firstName.value,
+                this.form.controls.lastName.value,
+            )
+            .pipe(
+                tap((res) => {
+                    if (res.ok) {
+                        this.errorMsg.set(null);
+                    } else {
+                        this.errorMsg.set(res.error);
+                    }
+                }),
+                deriveLoading(),
+                tap((loading) => this.loading.set(loading)),
+            )
+            .subscribe();
+    }
 }

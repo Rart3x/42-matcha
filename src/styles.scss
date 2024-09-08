@@ -93,6 +93,13 @@ body {
   }
 }
 
+.text-on-error {
+    color: mat.get-theme-color($light-theme, on-error-container);
+    @media (prefers-color-scheme: dark) {
+        color: mat.get-theme-color($dark-theme, on-error-container);
+    }
+}
+
 .text-outline {
   color: mat.get-theme-color($light-theme, outline);
   @media (prefers-color-scheme: dark) {

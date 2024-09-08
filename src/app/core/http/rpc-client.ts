@@ -1,6 +1,6 @@
 import type { Procedures } from '@api/api';
 import { inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { catchError, map, Observable, of } from 'rxjs';
 
 type RpcClient = {
@@ -28,20 +28,17 @@ export function injectRpcClient(): RpcClient {
                 return (data: any) =>
                     http
                         .post<
-                            Extract<
-                                Procedures,
-                                { name: typeof procedure }
-                            >['__response']
+                            Extract<Procedures, { name: typeof procedure }>['__response']
                         >(`/api/${procedure}`, data)
                         .pipe(
                             map((response) => ({
                                 ok: true,
                                 data: response,
                             })),
-                            catchError((error) =>
+                            catchError((error: HttpErrorResponse) =>
                                 of({
                                     ok: false,
-                                    error,
+                                    error: error.error?.error || 'Unknown error',
                                 }),
                             ),
                         );

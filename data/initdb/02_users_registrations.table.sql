@@ -8,13 +8,13 @@ CREATE TABLE IF NOT EXISTS users_registrations
 
     token      UUID NOT NULL UNIQUE DEFAULT gen_random_uuid(),
 
-    username   TEXT NOT NULL UNIQUE CHECK (3 < length(username) AND length(username) < 20),
-    email      TEXT NOT NULL UNIQUE CHECK (length(email) < 255),
+    username   TEXT NOT NULL UNIQUE CHECK (3 <= length(username) AND length(username) <= 20),
+    email      TEXT NOT NULL UNIQUE CHECK (length(email) <= 255),
 
-    password   TEXT NOT NULL CHECK (length(password) = 64),
+    password   TEXT NOT NULL CHECK (length(password) = 60),
 
-    first_name TEXT NOT NULL CHECK (length(first_name) < 255),
-    last_name  TEXT NOT NULL CHECK (length(last_name) < 255),
+    first_name TEXT NOT NULL CHECK (length(first_name) <= 30),
+    last_name  TEXT NOT NULL CHECK (length(last_name) <= 30),
 
     created_at TIMESTAMP            DEFAULT now(),
     updated_at TIMESTAMP            DEFAULT now(),

@@ -14,7 +14,7 @@ type ToastConfig = {
 @Injectable({
     providedIn: 'root',
 })
-export class SnackBarServiceService {
+export class SnackBarService {
     #matSnackBar = inject(MatSnackBar);
 
     #queue = new Subject<ToastConfig>();
@@ -22,15 +22,11 @@ export class SnackBarServiceService {
     #subscription = this.#queue
         .pipe(
             concatMap((config) => {
-                const snack = this.#matSnackBar.open(
-                    config.message,
-                    config.action?.label,
-                    {
-                        duration: config.duration || 3000,
-                        verticalPosition: 'bottom',
-                        horizontalPosition: 'right',
-                    },
-                );
+                const snack = this.#matSnackBar.open(config.message, config.action?.label, {
+                    duration: config.duration || 3000,
+                    verticalPosition: 'bottom',
+                    horizontalPosition: 'right',
+                });
 
                 if (config.action) {
                     snack
@@ -50,10 +46,7 @@ export class SnackBarServiceService {
      * @param message The message to display.
      * @param config Additional configuration.
      */
-    public enqueueSnackBar(
-        message: string,
-        config?: Omit<ToastConfig, 'message'>,
-    ): void {
+    public enqueueSnackBar(message: string, config?: Omit<ToastConfig, 'message'>): void {
         this.#queue.next({ message, ...config });
     }
 }

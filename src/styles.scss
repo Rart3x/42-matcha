@@ -64,7 +64,6 @@ body {
   font-family: Roboto, 'Helvetica Neue', sans-serif;
 }
 
-
 .btn-primary {
   @include mat.button-color($light-theme, $color-variant: primary);
   @media (prefers-color-scheme: dark) {
@@ -72,58 +71,16 @@ body {
   }
 }
 
-.bg-error {
-  background-color: mat.get-theme-color($light-theme, error-container);
+.btn-secondary {
+  @include mat.button-color($light-theme, $color-variant: secondary);
   @media (prefers-color-scheme: dark) {
-    background-color: mat.get-theme-color($dark-theme, error-container);
+    @include mat.button-color($dark-theme, $color-variant: secondary);
   }
 }
 
-.bg-surface {
-  background-color: mat.get-theme-color($light-theme, surface);
+.btn-tertiary {
+  @include mat.button-color($light-theme, $color-variant: tertiary);
   @media (prefers-color-scheme: dark) {
-    background-color: mat.get-theme-color($dark-theme, surface);
-  }
-}
-
-.bg-surface-container {
-  background-color: mat.get-theme-color($light-theme, surface-container);
-  @media (prefers-color-scheme: dark) {
-    background-color: mat.get-theme-color($dark-theme, surface-container);
-  }
-}
-
-.bg-surface-container-low {
-    background-color: mat.get-theme-color($light-theme, surface-container-low);
-    @media (prefers-color-scheme: dark) {
-        background-color: mat.get-theme-color($dark-theme, surface-container-low);
-    }
-}
-
-.text-on-surface {
-  color: mat.get-theme-color($light-theme, on-surface);
-  @media (prefers-color-scheme: dark) {
-    color: mat.get-theme-color($dark-theme, on-surface);
-  }
-}
-
-.text-on-error {
-    color: mat.get-theme-color($light-theme, on-error-container);
-    @media (prefers-color-scheme: dark) {
-        color: mat.get-theme-color($dark-theme, on-error-container);
-    }
-}
-
-.text-outline {
-  color: mat.get-theme-color($light-theme, outline);
-  @media (prefers-color-scheme: dark) {
-    color: mat.get-theme-color($dark-theme, outline);
-  }
-}
-
-.text-outline-variant {
-  color: mat.get-theme-color($light-theme, outline-variant);
-  @media (prefers-color-scheme: dark) {
-    color: mat.get-theme-color($dark-theme, outline-variant);
+    @include mat.button-color($dark-theme, $color-variant: tertiary);
   }
 }

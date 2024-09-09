@@ -15,13 +15,20 @@ import { NavigationRailLinkComponent } from '@app/shared/components/navigation-r
                     label="Home"
                     [active]="true"
                 ></app-navigation-rail-link>
-                <app-navigation-rail-link icon="search" label="Search"></app-navigation-rail-link>
+                <app-navigation-rail-link
+                    icon="account_circle"
+                    label="Profile"
+                ></app-navigation-rail-link>
+                <app-navigation-rail-link
+                    icon="person_search"
+                    label="Search"
+                ></app-navigation-rail-link>
                 <app-navigation-rail-link icon="chat" label="Chat"></app-navigation-rail-link>
             </nav>
             <!-- navigation rail content -->
         </div>
 
-        <div class="min-h-screen grow overflow-auto">
+        <div class="flex min-h-screen grow flex-col overflow-auto">
             <router-outlet></router-outlet>
         </div>
     `,

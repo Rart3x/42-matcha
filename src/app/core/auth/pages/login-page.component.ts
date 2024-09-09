@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import {
+    AfterViewInit,
+    ChangeDetectionStrategy,
+    Component,
+    DestroyRef,
+    ElementRef,
+    inject,
+    signal,
+    viewChild,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS, MatFormFieldModule } from '@angular/material/form-field';
@@ -120,20 +129,30 @@ import { FormDisabledDirective } from '@app/shared/directives/form-disabled.dire
         class: 'h-fit grid w-full medium:w-96 large:w-[28rem] xlarge:w-[32rem]',
     },
 })
-export class LoginPageComponent {
+export class LoginPageComponent implements AfterViewInit {
     #fb = inject(NonNullableFormBuilder);
     #router = inject(Router);
     #destroyRef = inject(DestroyRef);
     #authService = inject(AuthService);
     #snackBarService = inject(SnackBarService);
 
+    initialUsername = window.history.state?.username ?? '';
+
     loginForm = this.#fb.group({
-        username: ['', Validators.required],
+        username: [this.initialUsername, Validators.required],
         password: [''],
     });
 
     invalidCredentials = signal(false);
     isSubmitting = signal(false);
+
+    passwordInput = viewChild.required<ElementRef<HTMLInputElement>>('passwordInput');
+
+    ngAfterViewInit() {
+        if (this.initialUsername !== '') {
+            this.passwordInput().nativeElement.focus();
+        }
+    }
 
     onSubmit() {
         const { username, password } = this.loginForm.value;

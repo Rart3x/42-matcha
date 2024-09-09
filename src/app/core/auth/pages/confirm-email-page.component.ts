@@ -29,6 +29,7 @@ import { RouterLink } from '@angular/router';
                         <a
                             mat-stroked-button
                             routerLink="/login"
+                            [state]="{ username: username() }"
                             class="bg-primary mt-4 rounded-md px-4 py-2 text-white"
                         >
                             Continue
@@ -53,6 +54,7 @@ export class ConfirmEmailPageComponent implements OnInit {
 
     message = signal('');
     loading = signal(false);
+    username = signal(''); // autofill login form with username after email confirmation
 
     ngOnInit() {
         this.#rpc
@@ -67,6 +69,7 @@ export class ConfirmEmailPageComponent implements OnInit {
                 }),
                 tap((res) => {
                     if (res.ok) {
+                        this.username.set(res.data.username);
                         this.message.set('Your email address has been confirmed.');
                     } else {
                         this.message.set(res.error);

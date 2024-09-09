@@ -17,7 +17,7 @@ export const confirmEmailProcedure = procedure(
                 .mapErr(() => 'Invalid registration link')
                 .safeUnwrap();
 
-            yield* (
+            const { username } = yield* (
                 await sql.begin(async (sql) => {
                     const validToken = await sql`
                         SELECT id FROM users_registrations WHERE token = ${token}
@@ -35,15 +35,15 @@ export const confirmEmailProcedure = procedure(
                         return err('Registration link expired');
                     }
 
-                    const res = await sql`
+                    const [user]: [{ username: string }?] = await sql`
                         INSERT INTO users (email, username, password, first_name, last_name)
                         SELECT email, username, password, first_name, last_name
                         FROM users_registrations
                         WHERE token = ${token}
-                        RETURNING id
+                        RETURNING username
                     `;
 
-                    if (!res.count) {
+                    if (!user) {
                         return err('Invalid token');
                     }
 
@@ -52,11 +52,11 @@ export const confirmEmailProcedure = procedure(
                         WHERE token = ${token}
                     `;
 
-                    return ok();
+                    return ok(user);
                 })
             ).safeUnwrap();
 
-            return ok({ message: 'Email confirmed' });
+            return ok({ message: 'Email confirmed', username });
         });
     },
 );

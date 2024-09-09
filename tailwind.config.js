@@ -5,6 +5,11 @@ module.exports = {
         extend: {
             borderRadius: {
                 xlarge: '1.75rem',
+                '4xl': '2rem',
+            },
+            colors: {
+                'secondary-container': 'var(--sys-secondary-container)',
+                'on-secondary-container': 'var(--sys-on-secondary-container)',
             },
         },
         screens: {

@@ -18,6 +18,10 @@ export const routes: Routes = [
     },
     {
         path: '',
+        loadComponent: () =>
+            import('@app/shared/layouts/navigation-layout.component').then(
+                (m) => m.NavigationLayoutComponent,
+            ),
         children: [
             {
                 path: 'home',

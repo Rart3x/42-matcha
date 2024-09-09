@@ -1,16 +1,21 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, isDevMode } from '@angular/core';
 import { ChildrenOutletContexts, RouterOutlet } from '@angular/router';
 import { animate, group, query, style, transition, trigger } from '@angular/animations';
+import { AngularQueryDevtools } from '@tanstack/angular-query-devtools-experimental';
 
 @Component({
     selector: 'app-root',
     standalone: true,
-    imports: [RouterOutlet],
+    imports: [RouterOutlet, AngularQueryDevtools],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
         <div [@routeAnimations]="getRouteAnimationData()">
             <router-outlet></router-outlet>
         </div>
+
+        @defer (when isDevMode()) {
+            <angular-query-devtools />
+        }
     `,
     animations: [
         trigger('routeAnimations', [
@@ -42,4 +47,6 @@ export class AppComponent {
     getRouteAnimationData() {
         return this.#contexts.getContext('primary')?.route?.snapshot?.data?.['animation'];
     }
+
+    protected readonly isDevMode = isDevMode;
 }

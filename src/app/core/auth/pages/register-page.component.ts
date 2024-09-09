@@ -25,6 +25,9 @@ import { AccountService } from '@app/core/services/account.service';
 import { deriveLoading } from 'ngxtension/derive-loading';
 import { FormDisabledDirective } from '@app/shared/directives/form-disabled.directive';
 import { fromPromise } from 'rxjs/internal/observable/innerFrom';
+import { injectRpcClient } from '@app/core/http/rpc-client';
+import { usernameExistsValidator } from '@app/shared/validators/username-exists.validator';
+import { emailExistsValidator } from '@app/shared/validators/email-exists.validator';
 
 @Component({
     selector: 'app-register-page',
@@ -135,6 +138,8 @@ import { fromPromise } from 'rxjs/internal/observable/innerFrom';
                         Email is required
                     } @else if (form.controls.email.hasError('email')) {
                         Must be a valid email address
+                    } @else if (form.controls.email.hasError('exists')) {
+                        Email is already taken
                     }
                 </mat-error>
             </mat-form-field>
@@ -156,6 +161,8 @@ import { fromPromise } from 'rxjs/internal/observable/innerFrom';
                         Must be at most 20 characters long
                     } @else if (form.controls.username.hasError('pattern')) {
                         Can only contain letters, numbers, and underscores
+                    } @else if (form.controls.username.hasError('exists')) {
+                        Username is already taken
                     }
                 </mat-error>
             </mat-form-field>
@@ -294,7 +301,6 @@ import { fromPromise } from 'rxjs/internal/observable/innerFrom';
                 />
                 <mat-password-toggle-button
                     matSuffix
-                    ariaLabel="toggleConfirmPasswordVisibility"
                     [inputElement]="confirmInput"
                     [disabled]="loading()"
                 />
@@ -329,6 +335,7 @@ import { fromPromise } from 'rxjs/internal/observable/innerFrom';
 })
 export class RegisterPageComponent {
     #fb = inject(NonNullableFormBuilder);
+    #rpc = injectRpcClient();
     #router = inject(Router);
     #viewportRuler = inject(ViewportRuler);
     #accountService = inject(AccountService);
@@ -344,51 +351,72 @@ export class RegisterPageComponent {
     overlay = viewChild.required<CdkConnectedOverlay>('overlay');
     formElement = viewChild.required<NgForm>('formElement');
 
-    form = this.#fb.group({
-        firstName: [
-            '',
-            [
-                Validators.required,
-                Validators.minLength(1),
-                Validators.maxLength(30),
-                regexValidator(/[a-zA-Z]/, 'letter'),
-                regexValidator(/^[a-zA-Z]+[a-zA-Z-' ]*$/, 'name'),
+    form = this.#fb.group(
+        {
+            firstName: [
+                '',
+                [
+                    Validators.required,
+                    Validators.minLength(1),
+                    Validators.maxLength(30),
+                    regexValidator(/[a-zA-Z]/, 'letter'),
+                    regexValidator(/^[a-zA-Z]+[a-zA-Z-' ]*$/, 'name'),
+                ],
             ],
-        ],
-        lastName: [
-            '',
-            [
-                Validators.required,
-                Validators.minLength(1),
-                Validators.maxLength(30),
-                regexValidator(/[a-zA-Z]/, 'letter'),
-                regexValidator(/^[a-zA-Z]+[a-zA-Z-' ]*$/, 'name'),
+            lastName: [
+                '',
+                [
+                    Validators.required,
+                    Validators.minLength(1),
+                    Validators.maxLength(30),
+                    regexValidator(/[a-zA-Z]/, 'letter'),
+                    regexValidator(/^[a-zA-Z]+[a-zA-Z-' ]*$/, 'name'),
+                ],
             ],
-        ],
-        email: ['', [Validators.required, Validators.email]],
-        username: [
-            '',
-            [
-                Validators.required,
-                Validators.minLength(3),
-                Validators.maxLength(20),
-                Validators.pattern(/^[a-zA-Z0-9_]+$/),
+            email: ['', [Validators.required, Validators.email], [emailExistsValidator()]],
+            username: [
+                '',
+                [
+                    Validators.required,
+                    Validators.minLength(3),
+                    Validators.maxLength(20),
+                    Validators.pattern(/^[a-zA-Z0-9_]+$/),
+                ],
+                [usernameExistsValidator()],
             ],
-        ],
-        password: [
-            '',
-            [
-                Validators.required,
-                regexValidator(/.{8,}/, 'minlength'),
-                regexValidator(/.{0,30}/, 'maxlength'),
-                regexValidator(/[a-z]/, 'lowercase'),
-                regexValidator(/[A-Z]/, 'uppercase'),
-                regexValidator(/[0-9]/, 'number'),
-                regexValidator(/[^a-zA-Z0-9]/, 'special'),
+            password: [
+                '',
+                [
+                    Validators.required,
+                    regexValidator(/.{8,}/, 'minlength'),
+                    regexValidator(/^.{0,30}$/, 'maxlength'),
+                    regexValidator(/[a-z]/, 'lowercase'),
+                    regexValidator(/[A-Z]/, 'uppercase'),
+                    regexValidator(/[0-9]/, 'number'),
+                    regexValidator(/[^a-zA-Z0-9]/, 'special'),
+                ],
             ],
-        ],
-        confirmPassword: ['', [Validators.required]],
-    });
+            confirmPassword: ['', [Validators.required]],
+        },
+        {
+            validators: [
+                (control) => {
+                    const passwordControl = control.get('password');
+                    const confirmPasswordControl = control.get('confirmPassword');
+
+                    if (!passwordControl?.value || !confirmPasswordControl?.value) {
+                        return null;
+                    }
+                    if (passwordControl.value !== confirmPasswordControl.value) {
+                        confirmPasswordControl.setErrors({ notEqual: true });
+                        return null;
+                    }
+                    confirmPasswordControl.setErrors(null);
+                    return null;
+                },
+            ],
+        },
+    );
 
     #resizeOverlayEffect = rxEffect(
         this.#viewportRuler.change().pipe(

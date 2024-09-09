@@ -86,7 +86,7 @@ export class AuthService {
                     this.#logger.info('User is authenticated.');
                     return true;
                 } else {
-                    this.#logger.warn('User is not authenticated.');
+                    this.#logger.info('User is not authenticated.');
                     return false;
                 }
             }),

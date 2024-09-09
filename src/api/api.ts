@@ -5,7 +5,12 @@ import {
     logoutProcedure,
     verifySessionProcedure,
 } from '@api/procedures/auth.procedures';
-import { confirmEmailProcedure, createAccountProcedure } from '@api/procedures/account.procedures';
+import {
+    confirmEmailProcedure,
+    createAccountProcedure,
+    emailExistsProcedure,
+    usernameExistsProcedure,
+} from '@api/procedures/account.procedures';
 import cookieParser from 'cookie-parser';
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23,6 +28,8 @@ export const rpcRouter = createRpcRouter([
     verifySessionProcedure,
     createAccountProcedure,
     confirmEmailProcedure,
+    usernameExistsProcedure,
+    emailExistsProcedure,
 ]);
 
 export type Procedures = (typeof rpcRouter)['__procedures'][number];

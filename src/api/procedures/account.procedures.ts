@@ -6,6 +6,70 @@ import { mailer } from '@api/connections/mailer';
 const HOST = process.env['APP_HOST'] || 'localhost';
 const PORT = process.env['APP_PORT'] || '4200';
 
+export const usernameExistsProcedure = procedure(
+    'usernameExists',
+    {} as {
+        username: string;
+    },
+    (params) => {
+        return safeTry(async function* () {
+            const username = yield* validateUsername(params.username)
+                .mapErr(() => 'Invalid username format' as const)
+                .safeUnwrap();
+
+            const exists = await sql.begin(async (sql) => {
+                const [res]: [{ exists: boolean }] = await sql`
+                    SELECT EXISTS(SELECT 1 FROM users WHERE username = ${username}) AS exists
+                `;
+
+                if (res.exists) {
+                    return true;
+                }
+
+                const [res2]: [{ exists: boolean }] = await sql`
+                    SELECT EXISTS(SELECT 1 FROM users_registrations WHERE username = ${username} AND expires_at > NOW()) AS exists
+                `;
+
+                return res2.exists;
+            });
+
+            return ok({ exists: exists ? 'true' : 'false' });
+        });
+    },
+);
+
+export const emailExistsProcedure = procedure(
+    'emailExists',
+    {} as {
+        email: string;
+    },
+    (params) => {
+        return safeTry(async function* () {
+            const email = yield* validateEmail(params.email)
+                .mapErr(() => 'Invalid email format' as const)
+                .safeUnwrap();
+
+            const exists = await sql.begin(async (sql) => {
+                const [res]: [{ exists: boolean }] = await sql`
+                    SELECT EXISTS(SELECT 1 FROM users WHERE email = ${email}) AS exists
+                `;
+
+                if (res.exists) {
+                    return true;
+                }
+
+                const [res2]: [{ exists: boolean }] = await sql`
+                    SELECT EXISTS(SELECT 1 FROM users_registrations WHERE email = ${email} AND expires_at > NOW()) AS exists
+                `;
+
+                return res2.exists;
+            });
+
+            return ok({ exists: exists ? 'true' : 'false' });
+        });
+    },
+);
+
 export const confirmEmailProcedure = procedure(
     'confirmEmail',
     {} as {

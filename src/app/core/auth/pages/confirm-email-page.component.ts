@@ -13,9 +13,7 @@ import { RouterLink } from '@angular/router';
     standalone: true,
     imports: [MatIcon, MatProgressSpinner, RouterLink, MatAnchor],
     template: `
-        <div
-            class="bg-surface-container text-on-surface grid grow place-content-center rounded-t-xlarge p-4"
-        >
+        <div class="bg-surface text-on-surface grid grow place-content-center rounded-t-xlarge p-4">
             <div class="flex flex-col items-center">
                 <mat-icon class="!h-fit !w-fit text-center text-6xl">email</mat-icon>
                 <h3 class="pb-8 text-4xl font-bold">Confirm your email</h3>
@@ -43,7 +41,7 @@ import { RouterLink } from '@angular/router';
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: {
         role: 'main',
-        class: 'min-w-screen relative flex flex-col  min-h-screen gap-6 overflow-auto p-4 pb-0 medium:p-6 medium:pb-0',
+        class: 'min-w-screen relative flex flex-col  min-h-screen gap-6 overflow-auto p-4 pb-0 medium:p-6 medium:pb-0 bg-surface-container',
     },
 })
 export class ConfirmEmailPageComponent implements OnInit {

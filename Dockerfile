@@ -6,18 +6,16 @@ FROM node:22.5.1 AS base
 RUN npm install pm2 -g
 
 RUN mkdir -p /app
+
 WORKDIR /app
 
 ## install dependencies
 
-FROM base AS dependencies
+FROM base AS build
 
 COPY package.json package-lock.json ./
-RUN npm install --production
 
-## build the application
-
-FROM dependencies AS build
+RUN npm install
 
 COPY . .
 
@@ -27,12 +25,10 @@ RUN npm run build
 
 FROM base AS release
 
-COPY --from=dependencies /app/node_modules ./node_modules
-
 COPY --from=build /app/dist ./dist
-
-COPY ecosystem.config.js .
 
 RUN ls -lRa
 
-CMD ["pm2-runtime", "ecosystem.config.js"]
+ENV NODE_ENV=production
+
+CMD ["pm2-runtime", "dist/server.cjs"]

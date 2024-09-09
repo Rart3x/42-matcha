@@ -1,0 +1,11 @@
+node_modules
+.angular
+.idea
+dist
+.nvmrc
+.prettierrc.json
+compose.yaml
+compose.dev.yaml
+proxy.conf.json
+README.md
+data

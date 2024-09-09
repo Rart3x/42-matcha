@@ -111,7 +111,7 @@ const rightToLeftTransition = () => [
             class="hidden w-[500px] overflow-x-hidden web-landscape:grid [&>*]:[grid-area:1/1]"
             aria-hidden="true"
         >
-            <div class="bg-surface-container h-full w-[92%] rounded-xlarge"></div>
+            <div class="bg-surface h-full w-[92%] rounded-xlarge"></div>
             <div class="grid h-full grid-rows-[auto_1fr]">
                 <app-logo />
                 <div class="relative grid place-content-center">
@@ -131,19 +131,17 @@ const rightToLeftTransition = () => [
         </div>
 
         <!-- Right panel (main content) -->
-        <div class="grid flex-grow grid-rows-[auto_1fr]">
+        <div class="text-on-surface grid flex-grow grid-rows-[auto_1fr]">
             <!-- Top bar -->
             <div class="flex items-center">
                 <app-logo class="web-landscape:hidden" />
                 <div class="flex grow items-baseline justify-end gap-1">
                     @if (page() === 'login') {
-                        <span class="text-outline hidden medium:inline">
-                            Don't have an account?
-                        </span>
+                        <span class="hidden medium:inline"> Don't have an account? </span>
                         <a mat-button routerLink="/register">Sign up</a>
                     }
                     @if (page() === 'register') {
-                        <span class="text-outline hidden medium:inline"> Got an account? </span>
+                        <span class="hidden medium:inline"> Got an account? </span>
                         <a mat-button routerLink="/login">Sign in</a>
                     }
                 </div>
@@ -157,7 +155,7 @@ const rightToLeftTransition = () => [
     `,
     host: {
         role: 'main',
-        class: 'min-w-screen relative flex min-h-screen gap-6 overflow-auto p-4 medium:p-6',
+        class: 'min-w-screen relative flex min-h-screen gap-6 overflow-auto p-4 medium:p-6 bg-surface-container-low',
     },
     animations: [
         // slide-in-from-left

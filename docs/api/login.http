@@ -1,4 +1,0 @@
-### POST request to login endpoint
-POST http://localhost:8000/api/auth/login
-
-###

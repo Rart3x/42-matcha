@@ -1,10 +1,4 @@
-import {
-    ChangeDetectionStrategy,
-    Component,
-    effect,
-    input,
-    signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, input, signal } from '@angular/core';
 import { MatIconButton } from '@angular/material/button';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatIcon } from '@angular/material/icon';
@@ -16,13 +10,12 @@ import { MatIcon } from '@angular/material/icon';
     template: `
         <button
             type="button"
+            aria-label="toggle password visibility"
             mat-icon-button
             (click)="togglePasswordVisibility($event)"
             class="mr-1"
             [disabled]="disabled() ?? false"
-            [matTooltip]="
-                isPasswordHidden() ? 'Show password' : 'Hide password'
-            "
+            [matTooltip]="isPasswordHidden() ? 'Show password' : 'Hide password'"
         >
             <mat-icon>
                 @if (isPasswordHidden()) {
@@ -50,9 +43,7 @@ export class MatPasswordToggleButtonComponent {
 
     constructor() {
         effect(() => {
-            this.inputElement().type = this.isPasswordHidden()
-                ? 'password'
-                : 'text';
+            this.inputElement().type = this.isPasswordHidden() ? 'password' : 'text';
         });
     }
 }

@@ -1,88 +1,69 @@
-import { APP_BASE_HREF } from '@angular/common';
-import { CommonEngine } from '@angular/ssr';
 import express from 'express';
-import { fileURLToPath } from 'node:url';
-import { dirname, join, resolve } from 'node:path';
-import bootstrap from './src/main.server';
-import cookieParser from 'cookie-parser';
-import { SESSION_TOKEN } from '@app/core/auth/session.injection-token';
+import { join, resolve } from 'node:path';
 import { apiRouter } from '@api/api';
+import morgan from 'morgan';
+import compression from 'compression';
+import { promisify } from 'node:util';
 import { sql } from '@api/connections/database';
 
+const PORT = Number.parseInt(process.env?.['APP_PORT'] ?? '4000');
+const HOST = process.env?.['APP_HOST'] ?? 'localhost';
+
+const IS_PRODUCTION = process.env?.['NODE_ENV'] === 'production';
+const IS_DEVELOPMENT = !IS_PRODUCTION;
+
 // The Express app is exported so that it can be used by serverless Functions.
-export function app(): express.Express {
-    const server = express();
-    const serverDistFolder = dirname(fileURLToPath(import.meta.url));
-    const browserDistFolder = resolve(serverDistFolder, '../browser');
-    const indexHtml = join(serverDistFolder, 'index.server.html');
+export function start(): void {
+    const app = express();
 
-    const commonEngine = new CommonEngine();
+    if (IS_DEVELOPMENT) {
+        apiRouter.use(morgan('dev')); // colorful logger
+    }
 
-    server.set('view engine', 'html');
-    server.set('views', browserDistFolder);
+    if (IS_PRODUCTION) {
+        apiRouter.use(morgan('combined')); // logger
 
-    // Example Express Rest API endpoints
+        // Compress responses
+        app.use(compression());
+    }
 
-    server.use('/api', apiRouter);
+    // Express Rest API endpoints
+    app.use('/api', apiRouter);
 
-    // Serve static files from /browser
-    server.get(
-        '**',
-        express.static(browserDistFolder, {
-            maxAge: '1y',
-            index: 'index.html',
-        }),
-    );
+    if (IS_PRODUCTION) {
+        const path = resolve(__dirname, 'matcha/browser');
 
-    server.use(cookieParser());
-
-    // All regular routes use the Angular engine
-    server.get('**', (req, res, next) => {
-        const { protocol, originalUrl, baseUrl, headers } = req;
-
-        commonEngine
-            .render({
-                bootstrap,
-                documentFilePath: indexHtml,
-                url: `${protocol}://${headers.host}${originalUrl}`,
-                publicPath: browserDistFolder,
-                providers: [
-                    {
-                        provide: APP_BASE_HREF,
-                        useValue: baseUrl,
-                    },
-                    {
-                        provide: SESSION_TOKEN,
-                        useValue: req.cookies?.['session'],
-                    },
-                ],
-            })
-            .then((html) => res.send(html))
-            .catch((err) => next(err));
-    });
-
-    return server;
-}
-
-async function run(): Promise<void> {
-    const port = process.env['PORT'] || 4000;
-
-    // Start up the Node server
-    const server = app();
-
-    // await db.ready();
-
-    server.listen(port, () => {
-        console.log(
-            `Node Express server listening on http://localhost:${port}`,
+        app.use(
+            express.static(path, {
+                maxAge: '1y',
+            }),
         );
+
+        app.get('**', function (req, res) {
+            // Send the index.html file if the route is not found as the client-side router will handle the rest
+            res.sendFile(join(path, 'index.html'));
+        });
+    }
+
+    const server = app.listen(PORT, () => {
+        console.log(`Server is running on http://${HOST}:${PORT}`);
     });
 
-    process.on('SIGINT', async () => {
+    // Configure graceful shutdown
+    async function shutdown(reason: string) {
+        console.log('Closing postgreSQL connection pool');
         await sql.end();
-        // await db.close();
-        process.exit();
-    });
+
+        console.debug(`Shutting down server: ${reason}`);
+        await promisify(server.close.bind(server))();
+
+        console.debug('Server has been shut down. Exiting process');
+        process.exit(0);
+    }
+
+    // Handle signals for graceful shutdown
+    process.on('SIGTERM', () => shutdown('SIGTERM signal received'));
+    process.on('SIGINT', () => shutdown('SIGINT signal received'));
 }
 
-void run();
+void start();

@@ -294,6 +294,7 @@ import { fromPromise } from 'rxjs/internal/observable/innerFrom';
                 />
                 <mat-password-toggle-button
                     matSuffix
+                    ariaLabel="toggleConfirmPasswordVisibility"
                     [inputElement]="confirmInput"
                     [disabled]="loading()"
                 />

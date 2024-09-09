@@ -93,6 +93,13 @@ body {
   }
 }
 
+.bg-surface-container-low {
+    background-color: mat.get-theme-color($light-theme, surface-container-low);
+    @media (prefers-color-scheme: dark) {
+        background-color: mat.get-theme-color($dark-theme, surface-container-low);
+    }
+}
+
 .text-on-surface {
   color: mat.get-theme-color($light-theme, on-surface);
   @media (prefers-color-scheme: dark) {

@@ -14,6 +14,6 @@ export const appConfig: ApplicationConfig = {
         provideHttpClient(withFetch()),
         provideAnimationsAsync(),
         provideAngularQuery(new QueryClient()),
-        { provide: MAT_ICON_DEFAULT_OPTIONS, useValue: { fontSet: 'material-icons-outlined' } },
+        { provide: MAT_ICON_DEFAULT_OPTIONS, useValue: { fontSet: 'material-symbols-outlined' } },
     ],
 };

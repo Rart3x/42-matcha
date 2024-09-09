@@ -10,7 +10,11 @@ import { NavigationRailLinkComponent } from '@app/shared/components/navigation-r
         <!-- navigation rail -->
         <div class="flex h-screen w-20 flex-col justify-center">
             <nav class="flex flex-col gap-3">
-                <app-navigation-rail-link icon="home" label="Home"></app-navigation-rail-link>
+                <app-navigation-rail-link
+                    icon="home"
+                    label="Home"
+                    [active]="true"
+                ></app-navigation-rail-link>
                 <app-navigation-rail-link icon="search" label="Search"></app-navigation-rail-link>
                 <app-navigation-rail-link icon="chat" label="Chat"></app-navigation-rail-link>
             </nav>

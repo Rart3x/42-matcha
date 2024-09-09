@@ -1,5 +1,5 @@
 import {
-    AfterViewInit,
+    afterNextRender,
     ChangeDetectionStrategy,
     Component,
     DestroyRef,
@@ -19,12 +19,13 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '@app/core/auth/auth.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { tap } from 'rxjs';
+import { iif, of, switchMap, tap } from 'rxjs';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { SnackBarService } from '@app/core/services/snack-bar.service';
 import { MatPasswordToggleButtonComponent } from '@app/shared/components/mat-password-toggle-button/mat-password-toggle-button.component';
 import { deriveLoading } from 'ngxtension/derive-loading';
 import { FormDisabledDirective } from '@app/shared/directives/form-disabled.directive';
+import { fromPromise } from 'rxjs/internal/observable/innerFrom';
 
 @Component({
     selector: 'app-login-page',
@@ -129,18 +130,16 @@ import { FormDisabledDirective } from '@app/shared/directives/form-disabled.dire
         class: 'h-fit grid w-full medium:w-96 large:w-[28rem] xlarge:w-[32rem]',
     },
 })
-export class LoginPageComponent implements AfterViewInit {
+export class LoginPageComponent {
     #fb = inject(NonNullableFormBuilder);
     #router = inject(Router);
     #destroyRef = inject(DestroyRef);
     #authService = inject(AuthService);
     #snackBarService = inject(SnackBarService);
 
-    initialUsername = window.history.state?.username ?? '';
-
     loginForm = this.#fb.group({
-        username: [this.initialUsername, Validators.required],
-        password: [''],
+        username: ['', Validators.required],
+        password: ['', Validators.required],
     });
 
     invalidCredentials = signal(false);
@@ -148,10 +147,15 @@ export class LoginPageComponent implements AfterViewInit {
 
     passwordInput = viewChild.required<ElementRef<HTMLInputElement>>('passwordInput');
 
-    ngAfterViewInit() {
-        if (this.initialUsername !== '') {
-            this.passwordInput().nativeElement.focus();
-        }
+    constructor() {
+        afterNextRender(() => {
+            const initialUsername = window.history.state?.username ?? '';
+
+            if (initialUsername !== '') {
+                this.loginForm.controls.username.setValue(initialUsername);
+                this.passwordInput().nativeElement.focus();
+            }
+        });
     }
 
     onSubmit() {
@@ -167,12 +171,13 @@ export class LoginPageComponent implements AfterViewInit {
                 takeUntilDestroyed(this.#destroyRef),
                 tap((result) => this.displayResultSnackbar(result)),
                 tap((result) => {
-                    if (result) {
-                        void this.#router.navigate(['/']);
-                    } else {
+                    if (!result) {
                         this.invalidCredentials.set(true);
                     }
                 }),
+                switchMap((res) =>
+                    iif(() => res, fromPromise(this.#router.navigate(['/'])), of(null)),
+                ),
                 deriveLoading(),
                 tap((value) => this.isSubmitting.set(value)),
             )

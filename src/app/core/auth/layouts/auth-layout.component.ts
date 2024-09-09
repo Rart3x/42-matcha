@@ -5,22 +5,89 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatIconModule } from '@angular/material/icon';
 import { LogoComponent } from '@app/shared/components/logo/logo.component';
-import {
-    animate,
-    group,
-    query,
-    style,
-    transition,
-    trigger,
-} from '@angular/animations';
-import {
-    NavigationEnd,
-    Router,
-    RouterLink,
-    RouterOutlet,
-} from '@angular/router';
+import { animate, group, query, style, transition, trigger } from '@angular/animations';
+import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { distinctUntilChanged, filter, map } from 'rxjs';
+
+const leftToRightTransition = () => [
+    style({
+        position: 'relative',
+        display: 'block',
+        overflow: 'hidden',
+    }),
+    query(':enter, :leave', [
+        style({
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translateX(-50%) translateY(-50%)',
+        }),
+    ]),
+    query(':enter', [style({ opacity: 0 })]),
+    query(':leave', [style({ opacity: 1 })]),
+    query(':enter', [style({ transform: 'translateX(-100%) translateY(-50%)' })]),
+    group([
+        query(':leave', [animate('0.1s', style({ opacity: 0 }))]),
+        query(':enter', [animate('0.2s', style({ opacity: 1 }))]),
+        query(':leave', [
+            animate(
+                '0.2s',
+                style({
+                    transform: 'translateX(0) translateY(-50%)',
+                    scale: 0.9,
+                }),
+            ),
+        ]),
+        query(':enter', [
+            animate(
+                '0.2s',
+                style({
+                    transform: 'translateX(-50%) translateY(-50%)',
+                }),
+            ),
+        ]),
+    ]),
+];
+const rightToLeftTransition = () => [
+    // tab-like forward and back animations slide in and out with opacity change
+    style({
+        position: 'relative',
+        display: 'block',
+        overflow: 'hidden',
+    }),
+    query(':enter, :leave', [
+        style({
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translateX(-50%) translateY(-50%)',
+        }),
+    ]),
+    query(':enter', [style({ opacity: 0 })]),
+    query(':leave', [style({ opacity: 1 })]),
+    query(':enter', [style({ transform: 'translateX(100%) translateY(-50%)' })]),
+    group([
+        query(':leave', [animate('0.1s', style({ opacity: 0 }))]),
+        query(':enter', [animate('0.2s', style({ opacity: 1 }))]),
+        query(':leave', [
+            animate(
+                '0.2s',
+                style({
+                    transform: 'translateX(-100%) translateY(-50%)',
+                }),
+            ),
+        ]),
+        query(':enter', [
+            animate(
+                '0.2s',
+                style({
+                    transform: 'translateX(-50%) translateY(-50%)',
+                }),
+            ),
+        ]),
+    ]),
+];
 
 @Component({
     selector: 'app-auth-layout',
@@ -44,9 +111,7 @@ import { distinctUntilChanged, filter, map } from 'rxjs';
             class="hidden w-[500px] overflow-x-hidden web-landscape:grid [&>*]:[grid-area:1/1]"
             aria-hidden="true"
         >
-            <div
-                class="bg-surface-container h-full w-[92%] rounded-xlarge"
-            ></div>
+            <div class="bg-surface-container h-full w-[92%] rounded-xlarge"></div>
             <div class="grid h-full grid-rows-[auto_1fr]">
                 <app-logo />
                 <div class="relative grid place-content-center">
@@ -78,19 +143,14 @@ import { distinctUntilChanged, filter, map } from 'rxjs';
                         <a mat-button routerLink="/register">Sign up</a>
                     }
                     @if (page() === 'register') {
-                        <span class="text-outline hidden medium:inline">
-                            Got an account?
-                        </span>
+                        <span class="text-outline hidden medium:inline"> Got an account? </span>
                         <a mat-button routerLink="/login">Sign in</a>
                     }
                 </div>
             </div>
 
             <!-- Main content -->
-            <div
-                class="flex items-center justify-center"
-                [@routeAnimations]="page()"
-            >
+            <div class="flex items-center justify-center" [@routeAnimations]="page()">
                 <router-outlet />
             </div>
         </div>
@@ -104,101 +164,16 @@ import { distinctUntilChanged, filter, map } from 'rxjs';
         trigger('slideIn', [
             transition('void => *', [
                 group([
-                    query(':self', [
-                        style({ transform: 'translateX(-3rem)' }),
-                        animate(400),
-                    ]),
-                    query('#machine', [
-                        style({ transform: 'translateX(-2rem)' }),
-                        animate(400),
-                    ]),
+                    query(':self', [style({ transform: 'translateX(-3rem)' }), animate(400)]),
+                    query('#machine', [style({ transform: 'translateX(-2rem)' }), animate(400)]),
                 ]),
             ]),
         ]),
         trigger('routeAnimations', [
-            transition('register => login', [
-                // tab-like forward and back animations slide in and out with opacity change
-                style({
-                    position: 'relative',
-                    display: 'block',
-                    overflow: 'hidden',
-                }),
-                query(':enter, :leave', [
-                    style({
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translateX(-50%) translateY(-50%)',
-                    }),
-                ]),
-                query(':enter', [style({ opacity: 0 })]),
-                query(':leave', [style({ opacity: 1 })]),
-                query(':enter', [
-                    style({ transform: 'translateX(-100%) translateY(-50%)' }),
-                ]),
-                group([
-                    query(':leave', [animate('0.1s', style({ opacity: 0 }))]),
-                    query(':enter', [animate('0.2s', style({ opacity: 1 }))]),
-                    query(':leave', [
-                        animate(
-                            '0.2s',
-                            style({
-                                transform: 'translateX(0) translateY(-50%)',
-                                scale: 0.9,
-                            }),
-                        ),
-                    ]),
-                    query(':enter', [
-                        animate(
-                            '0.2s',
-                            style({
-                                transform: 'translateX(-50%) translateY(-50%)',
-                            }),
-                        ),
-                    ]),
-                ]),
-            ]),
-            transition('login => register', [
-                // tab-like forward and back animations slide in and out with opacity change
-                style({
-                    position: 'relative',
-                    display: 'block',
-                    overflow: 'hidden',
-                }),
-                query(':enter, :leave', [
-                    style({
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translateX(-50%) translateY(-50%)',
-                    }),
-                ]),
-                query(':enter', [style({ opacity: 0 })]),
-                query(':leave', [style({ opacity: 1 })]),
-                query(':enter', [
-                    style({ transform: 'translateX(100%) translateY(-50%)' }),
-                ]),
-                group([
-                    query(':leave', [animate('0.1s', style({ opacity: 0 }))]),
-                    query(':enter', [animate('0.2s', style({ opacity: 1 }))]),
-                    query(':leave', [
-                        animate(
-                            '0.2s',
-                            style({
-                                transform: 'translateX(-100%) translateY(-50%)',
-                            }),
-                        ),
-                    ]),
-                    query(':enter', [
-                        animate(
-                            '0.2s',
-                            style({
-                                transform: 'translateX(-50%) translateY(-50%)',
-                            }),
-                        ),
-                    ]),
-                ]),
-            ]),
+            transition('login => register', rightToLeftTransition()),
+            transition('register => login', leftToRightTransition()),
+            transition('register => registration-successful', leftToRightTransition()),
+            transition('registration-successful => login', leftToRightTransition()),
         ]),
     ],
 })

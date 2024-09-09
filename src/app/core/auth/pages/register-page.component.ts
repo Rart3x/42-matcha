@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
 import { AuthLayoutComponent } from '@app/core/auth/layouts/auth-layout.component';
 import { MatButtonModule } from '@angular/material/button';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import {
     AbstractControl,
     NgForm,
@@ -15,7 +15,7 @@ import { MatPasswordToggleButtonComponent } from '@app/shared/components/mat-pas
 import { CdkConnectedOverlay, CdkOverlayOrigin, ViewportRuler } from '@angular/cdk/overlay';
 import { MatCard, MatCardContent, MatCardHeader, MatCardSubtitle } from '@angular/material/card';
 import { rxEffect } from 'ngxtension/rx-effect';
-import { debounceTime, filter, map, tap } from 'rxjs';
+import { debounceTime, filter, iif, map, of, switchMap, tap } from 'rxjs';
 import { MatIcon } from '@angular/material/icon';
 import { regexValidator } from '@app/shared/validators/regex.validator';
 import { MatTooltipEllipsisDirective } from '@app/shared/directives/mat-tooltip-ellipsis.directive';
@@ -24,6 +24,7 @@ import { RxLet } from '@rx-angular/template/let';
 import { AccountService } from '@app/core/services/account.service';
 import { deriveLoading } from 'ngxtension/derive-loading';
 import { FormDisabledDirective } from '@app/shared/directives/form-disabled.directive';
+import { fromPromise } from 'rxjs/internal/observable/innerFrom';
 
 @Component({
     selector: 'app-register-page',
@@ -327,6 +328,7 @@ import { FormDisabledDirective } from '@app/shared/directives/form-disabled.dire
 })
 export class RegisterPageComponent {
     #fb = inject(NonNullableFormBuilder);
+    #router = inject(Router);
     #viewportRuler = inject(ViewportRuler);
     #accountService = inject(AccountService);
 
@@ -473,6 +475,13 @@ export class RegisterPageComponent {
                         this.errorMsg.set(res.error);
                     }
                 }),
+                switchMap((res) =>
+                    iif(
+                        () => res.ok,
+                        fromPromise(this.#router.navigate(['/registration-successful'])),
+                        of(null),
+                    ),
+                ),
                 deriveLoading(),
                 tap((loading) => this.loading.set(loading)),
             )

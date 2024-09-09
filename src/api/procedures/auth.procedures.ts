@@ -12,6 +12,13 @@ export const loginProcedure = procedure(
                 return err('Invalid username or password');
             }
 
+            useSetCookie('prout', 'prout', {
+                httpOnly: true,
+                sameSite: 'strict',
+            });
+
+            console.log('prout');
+
             const token = yield* (
                 await sql.begin((sql) =>
                     safeTry(async function* () {
@@ -39,6 +46,9 @@ export const loginProcedure = procedure(
                     }),
                 )
             ).safeUnwrap();
+
+            console.log('yay');
+            // TODO: use a react style hook which provide the cookie setter rather than using it directly
 
             useSetCookie('session', token, {
                 httpOnly: true,

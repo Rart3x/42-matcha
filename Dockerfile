@@ -1,7 +1,7 @@
 
 ## configure the base image
 
-FROM node:22-alpine AS base
+FROM node:22.5.1 AS base
 
 RUN npm install pm2 -g
 

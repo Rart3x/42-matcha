@@ -76,11 +76,17 @@ export function procedure<
     router.post(`/${name}`, async (req, res, next) => {
         const result = await asyncLocalStorage.run(
             {
-                setCookie: res.cookie.bind(res),
+                setCookie: (name: string, value: string, options: CookieOptions) =>
+                    res.cookie(name, value, options),
                 getCookie: (name: string) => req.cookies?.[name],
-                clearCookie: res.clearCookie.bind(res),
+                clearCookie: (name: string) => res.clearCookie(name, { path: '/' }),
             },
-            () => callback(req.body),
+            async () => {
+                console.log('inizio');
+                const res = await callback(req.body);
+                console.log('finito');
+                return res;
+            },
         );
 
         if (result.isErr()) {
@@ -110,10 +116,11 @@ export function procedure<
  */
 export function useSetCookie(name: string, value: string, options: CookieOptions) {
     const storage = asyncLocalStorage.getStore();
-    if (storage) {
-        return storage.setCookie(name, value, options);
+    console.log({ storage });
+    if (!storage) {
+        throw new Error('Cannot set cookie outside of a procedure');
     }
-    throw new Error('Cannot set cookie outside of a procedure');
+    storage.setCookie(name, value, options);
 }
 
 /**
@@ -121,10 +128,10 @@ export function useSetCookie(name: string, value: string, options: CookieOptions
  */
 export function useGetCookie(name: string) {
     const storage = asyncLocalStorage.getStore();
-    if (storage) {
-        return storage.getCookie(name);
+    if (!storage) {
+        throw new Error('Cannot get cookie outside of a procedure');
     }
-    throw new Error('Cannot get cookie outside of a procedure');
+    return storage.getCookie(name);
 }
 
 /**
@@ -132,10 +139,10 @@ export function useGetCookie(name: string) {
  */
 export function useClearCookie(name: string) {
     const storage = asyncLocalStorage.getStore();
-    if (storage) {
-        return storage.clearCookie(name);
+    if (!storage) {
+        throw new Error('Cannot clear cookie outside of a procedure');
     }
-    throw new Error('Cannot clear cookie outside of a procedure');
+    storage.clearCookie(name);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

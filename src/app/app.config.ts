@@ -1,7 +1,5 @@
 import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
-
-import { routes } from './app.routes';
 import {
     provideClientHydration,
     withEventReplay,
@@ -12,6 +10,8 @@ import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { forwardSessionTokenOnSsrInterceptor } from '@app/core/auth/forward-session-token-on-ssr.interceptor';
 import { MAT_ICON_DEFAULT_OPTIONS } from '@angular/material/icon';
+
+import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
     providers: [

@@ -1,13 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ChildrenOutletContexts, RouterOutlet } from '@angular/router';
-import {
-    animate,
-    group,
-    query,
-    style,
-    transition,
-    trigger,
-} from '@angular/animations';
+import { animate, group, query, style, transition, trigger } from '@angular/animations';
 
 @Component({
     selector: 'app-root',
@@ -47,8 +40,6 @@ export class AppComponent {
     #contexts = inject(ChildrenOutletContexts);
 
     getRouteAnimationData() {
-        return this.#contexts.getContext('primary')?.route?.snapshot?.data?.[
-            'animation'
-        ];
+        return this.#contexts.getContext('primary')?.route?.snapshot?.data?.['animation'];
     }
 }

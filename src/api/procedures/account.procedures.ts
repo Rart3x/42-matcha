@@ -159,9 +159,6 @@ export const createAccountProcedure = procedure(
                 )
             ).safeUnwrap();
 
-            // TODO: send email
-            console.log({ token });
-
             return ok({ message: 'Registration successful' });
         });
     },

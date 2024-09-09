@@ -8,16 +8,11 @@ export const loginProcedure = procedure(
     {} as { username: string; password: string },
     ({ username, password }) => {
         return safeTry(async function* () {
+            const setCookie = useSetCookie();
+
             if (!username || !password) {
                 return err('Invalid username or password');
             }
-
-            useSetCookie('prout', 'prout', {
-                httpOnly: true,
-                sameSite: 'strict',
-            });
-
-            console.log('prout');
 
             const token = yield* (
                 await sql.begin((sql) =>
@@ -47,10 +42,7 @@ export const loginProcedure = procedure(
                 )
             ).safeUnwrap();
 
-            console.log('yay');
-            // TODO: use a react style hook which provide the cookie setter rather than using it directly
-
-            useSetCookie('session', token, {
+            setCookie('session', token, {
                 httpOnly: true,
                 sameSite: 'strict',
             });
@@ -62,6 +54,7 @@ export const loginProcedure = procedure(
 
 export const logoutProcedure = procedure('logout', () => {
     return safeTry(async function* () {
+        const clearCookie = useClearCookie();
         const { id } = yield* (await usePrincipalUser()).safeUnwrap();
 
         const res = await sql`
@@ -73,7 +66,7 @@ export const logoutProcedure = procedure('logout', () => {
             return err('Failed to log out');
         }
 
-        useClearCookie('session');
+        clearCookie('session');
 
         return ok({ message: 'logged out' });
     });

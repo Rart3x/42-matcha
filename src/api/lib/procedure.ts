@@ -81,12 +81,7 @@ export function procedure<
                 getCookie: (name: string) => req.cookies?.[name],
                 clearCookie: (name: string) => res.clearCookie(name, { path: '/' }),
             },
-            async () => {
-                console.log('inizio');
-                const res = await callback(req.body);
-                console.log('finito');
-                return res;
-            },
+            async () => callback(req.body),
         );
 
         if (result.isErr()) {
@@ -114,35 +109,34 @@ export function procedure<
 /**
  * Set a cookie in the response
  */
-export function useSetCookie(name: string, value: string, options: CookieOptions) {
+export function useSetCookie() {
     const storage = asyncLocalStorage.getStore();
-    console.log({ storage });
     if (!storage) {
-        throw new Error('Cannot set cookie outside of a procedure');
+        throw new Error('Cannot call useSetCookie outside of a procedure');
     }
-    storage.setCookie(name, value, options);
+    return storage.setCookie;
 }
 
 /**
  * Get a cookie from the request
  */
-export function useGetCookie(name: string) {
+export function useGetCookie() {
     const storage = asyncLocalStorage.getStore();
     if (!storage) {
-        throw new Error('Cannot get cookie outside of a procedure');
+        throw new Error('Cannot call useGetCookie outside of a procedure');
     }
-    return storage.getCookie(name);
+    return storage.getCookie;
 }
 
 /**
  * Clear a cookie from the response
  */
-export function useClearCookie(name: string) {
+export function useClearCookie() {
     const storage = asyncLocalStorage.getStore();
     if (!storage) {
-        throw new Error('Cannot clear cookie outside of a procedure');
+        throw new Error('Cannot call useClearCookie outside of a procedure');
     }
-    storage.clearCookie(name);
+    return storage.clearCookie;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

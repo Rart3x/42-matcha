@@ -4,7 +4,8 @@ import { useClearCookie, useGetCookie } from '@api/lib/procedure';
 
 export function useSessionCookie() {
     return safeTry(function* () {
-        const token = useGetCookie('session');
+        const getCookie = useGetCookie();
+        const token = getCookie('session');
         if (!token) {
             return err('Missing session cookie');
         }
@@ -14,6 +15,7 @@ export function useSessionCookie() {
 
 export function usePrincipalUser() {
     return safeTry(async function* () {
+        const clearCookie = useClearCookie();
         const token = yield* useSessionCookie().safeUnwrap();
 
         const user_id = yield* (
@@ -40,7 +42,7 @@ export function usePrincipalUser() {
             })
         )
             .andThrough(() => {
-                useClearCookie('session');
+                clearCookie('session');
             })
             .safeUnwrap();
 

@@ -32,6 +32,22 @@ export const routes: Routes = [
                 data: { animation: 'home' },
             },
             {
+                path: 'browse',
+                loadComponent: () =>
+                    import('@app/features/browse-page/browse-page.component').then(
+                        (m) => m.BrowsePageComponent,
+                    ),
+                data: { animation: 'browse' },
+            },
+            {
+                path: 'chat',
+                loadComponent: () =>
+                    import('@app/features/chat-page/chat-page.component').then(
+                        (m) => m.ChatPageComponent,
+                    ),
+                data: { animation: 'chat' },
+            },
+            {
                 outlet: 'sidesheet',
                 path: 'views',
                 loadComponent: () =>

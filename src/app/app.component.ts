@@ -3,6 +3,25 @@ import { ChildrenOutletContexts, RouterOutlet } from '@angular/router';
 import { animate, group, query, style, transition, trigger } from '@angular/animations';
 import { AngularQueryDevtools } from '@tanstack/angular-query-devtools-experimental';
 
+const blinkAnimation = () => [
+    style({ position: 'relative' }),
+    query(':enter, :leave', [
+        style({
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+        }),
+    ]),
+    query(':enter', [style({ opacity: 0 })]),
+    query(':leave', [style({ opacity: 1 })]),
+    group([
+        query(':leave', [animate('0.1s', style({ opacity: 0 }))]),
+        query(':enter', [animate('0.1s', style({ opacity: 1 }))]),
+    ]),
+    query(':enter', [style({ backgroundColor: 'red' })]),
+];
+
 @Component({
     selector: 'app-root',
     standalone: true,
@@ -20,24 +39,12 @@ import { AngularQueryDevtools } from '@tanstack/angular-query-devtools-experimen
     animations: [
         trigger('routeAnimations', [
             // fade in and out
-            transition('home <=> auth', [
-                style({ position: 'relative' }),
-                query(':enter, :leave', [
-                    style({
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                    }),
-                ]),
-                query(':enter', [style({ opacity: 0 })]),
-                query(':leave', [style({ opacity: 1 })]),
-                group([
-                    query(':leave', [animate('0.1s', style({ opacity: 0 }))]),
-                    query(':enter', [animate('0.1s', style({ opacity: 1 }))]),
-                ]),
-                query(':enter', [style({ backgroundColor: 'red' })]),
-            ]),
+            transition('home <=> auth', blinkAnimation()),
+            transition('home <=> browse', blinkAnimation()),
+            transition('auth <=> browse', blinkAnimation()),
+            transition('home <=> chat', blinkAnimation()),
+            transition('auth <=> chat', blinkAnimation()),
+            transition('browse <=> chat', blinkAnimation()),
         ]),
     ],
 })
@@ -45,7 +52,14 @@ export class AppComponent {
     #contexts = inject(ChildrenOutletContexts);
 
     getRouteAnimationData() {
-        return this.#contexts.getContext('primary')?.route?.snapshot?.data?.['animation'];
+        const animation =
+            this.#contexts.getContext('primary')?.route?.snapshot?.data?.['animation'];
+        if (animation) {
+            return animation;
+        }
+        return this.#contexts.getContext('primary')?.route?.snapshot?.children?.[0]?.data?.[
+            'animation'
+        ];
     }
 
     protected readonly isDevMode = isDevMode;

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { NavigationRailLinkComponent } from '@app/shared/components/navigation-rail-link/navigation-rail-link.component';
 import { MatSidenavContainer } from '@angular/material/sidenav';
 import { CdkPortalOutlet } from '@angular/cdk/portal';
@@ -14,6 +14,8 @@ import { SidesheetLayoutComponent } from '@app/shared/layouts/sidesheet-layout/s
         MatSidenavContainer,
         CdkPortalOutlet,
         SidesheetLayoutComponent,
+        RouterLink,
+        RouterLinkActive,
     ],
     template: `
         <app-sidesheet-layout>
@@ -24,25 +26,26 @@ import { SidesheetLayoutComponent } from '@app/shared/layouts/sidesheet-layout/s
                         <app-navigation-rail-link
                             icon="home"
                             label="Home"
-                            [active]="true"
-                        ></app-navigation-rail-link>
-                        <app-navigation-rail-link
-                            icon="account_circle"
-                            label="Profile"
-                        ></app-navigation-rail-link>
+                            routerLink="/home"
+                            routerLinkActive="active"
+                        />
                         <app-navigation-rail-link
                             icon="person_search"
-                            label="Search"
-                        ></app-navigation-rail-link>
+                            label="Browse"
+                            routerLink="/browse"
+                            routerLinkActive="active"
+                        />
                         <app-navigation-rail-link
                             icon="chat"
                             label="Chat"
-                        ></app-navigation-rail-link>
+                            routerLink="/chat"
+                            routerLinkActive="active"
+                        />
                     </nav>
                     <!-- navigation rail content -->
                 </div>
 
-                <div class="flex min-h-screen grow flex-col overflow-auto">
+                <div class="relative flex min-h-screen grow flex-col overflow-auto">
                     <router-outlet></router-outlet>
                 </div>
             </div>

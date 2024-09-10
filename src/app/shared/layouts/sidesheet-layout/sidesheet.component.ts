@@ -15,7 +15,7 @@ import { MatTooltip } from '@angular/material/tooltip';
             <!--                <mat-icon>arrow_back</mat-icon>-->
             <!--            </button>-->
             <span class="mat-title-large grow">
-                {{ title() }}
+                {{ heading() }}
             </span>
             <button
                 type="button"
@@ -34,15 +34,17 @@ import { MatTooltip } from '@angular/material/tooltip';
         <div class="grow px-6" #content>
             <ng-content />
         </div>
+        <div class="flex h-[72px] items-center gap-2 border-t p-6 pt-4 empty:hidden">
+            <ng-content select="[bottom-actions]" />
+        </div>
     `,
-    host: { class: 'relative flex flex-col min-h-full w-full max-w-full ' },
-    styles: ``,
+    host: { class: 'relative flex flex-col min-h-screen w-full max-w-full ' },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidesheetComponent {
     #router = inject(Router);
 
-    title = input.required<string>();
+    heading = input.required<string>();
 
     async closeSideSheet() {
         await this.#router.navigate([{ outlets: { sidesheet: null } }]);

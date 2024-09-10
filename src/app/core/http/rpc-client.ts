@@ -3,7 +3,7 @@ import { inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { catchError, map, Observable, of } from 'rxjs';
 
-type RpcClient = {
+export type RpcClient = {
     [procedure in Procedures['name']]: (
         data: Extract<Procedures, { name: procedure }>['__params'],
     ) => Observable<
@@ -17,6 +17,11 @@ type RpcClient = {
           }
     >;
 };
+
+type ProcedureName = Procedures['name'];
+
+export type RpcResponse<T extends ProcedureName> = Extract<Procedures, { name: T }>['__response'];
+export type RpcError<T extends ProcedureName> = Extract<Procedures, { name: T }>['__error'];
 
 export function injectRpcClient(): RpcClient {
     const http = inject(HttpClient);

@@ -12,6 +12,7 @@ import {
     usernameExistsProcedure,
 } from '@api/procedures/account.procedures';
 import cookieParser from 'cookie-parser';
+import { getProfile } from '@api/procedures/profile.procedures';
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Configure root api router with global middlewares                                                                ///
@@ -30,6 +31,7 @@ export const rpcRouter = createRpcRouter([
     confirmEmailProcedure,
     usernameExistsProcedure,
     emailExistsProcedure,
+    getProfile,
 ]);
 
 export type Procedures = (typeof rpcRouter)['__procedures'][number];

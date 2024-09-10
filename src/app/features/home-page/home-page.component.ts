@@ -73,7 +73,13 @@ import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 px-8">
-                    <a mat-flat-button routerLink="/profile" class="btn-secondary">Edit profile</a>
+                    <a
+                        mat-flat-button
+                        routerLink="/profile"
+                        class="btn-secondary"
+                        (click)="openEditProfileSheet()"
+                        >Edit profile</a
+                    >
                     <button mat-flat-button class="btn-secondary" (click)="logout()">Logout</button>
                 </div>
 
@@ -113,6 +119,10 @@ export class HomePageComponent {
 
     async openLikesHistorySheet() {
         await this.#router.navigate([{ outlets: { sidesheet: 'likes' } }]);
+    }
+
+    async openEditProfileSheet() {
+        await this.#router.navigate([{ outlets: { sidesheet: 'edit-profile' } }]);
     }
 
     logout() {

@@ -11,7 +11,7 @@ type ProcedureStorage = {
 const asyncLocalStorage = new AsyncLocalStorage<ProcedureStorage>();
 
 export type ProcedureParams = Record<string, string> | void;
-export type ProcedureResponse = Record<string, string> | never;
+export type ProcedureResponse = Record<string, string | number> | never;
 export type ProcedureError = string | never;
 
 export type Procedure<

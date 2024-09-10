@@ -63,6 +63,14 @@ export const routes: Routes = [
                         (m) => m.LikesHistorySheetComponent,
                     ),
             },
+            {
+                outlet: 'sidesheet',
+                path: 'edit-profile',
+                loadComponent: () =>
+                    import('@app/features/edit-profile-sheet/edit-profile-sheet.component').then(
+                        (m) => m.EditProfileSheetComponent,
+                    ),
+            },
         ],
         canActivate: [isLoggedInGuard],
     },

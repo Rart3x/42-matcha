@@ -14,7 +14,7 @@ import { Router, RouterOutlet } from '@angular/router';
                 position="end"
                 class="!w-[min(25rem,calc(100vw-1rem))]"
             >
-                <div class="min-h-full !w-[min(25rem,calc(100vw-1rem))] overflow-x-hidden">
+                <div class="relative min-h-full !w-[min(25rem,calc(100vw-1rem))] overflow-x-hidden">
                     <router-outlet name="sidesheet" #sidesheetOutlet="outlet" />
                 </div>
             </mat-sidenav>

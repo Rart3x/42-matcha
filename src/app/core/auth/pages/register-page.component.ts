@@ -26,7 +26,7 @@ import { deriveLoading } from 'ngxtension/derive-loading';
 import { FormDisabledDirective } from '@app/shared/directives/form-disabled.directive';
 import { fromPromise } from 'rxjs/internal/observable/innerFrom';
 import { injectRpcClient } from '@app/core/http/rpc-client';
-import { usernameExistsValidator } from '@app/shared/validators/username-exists.validator';
+import { injectUsernameExistsValidator } from '@app/shared/validators/inject-username-exists.validator';
 import { emailExistsValidator } from '@app/shared/validators/email-exists.validator';
 
 @Component({
@@ -62,7 +62,7 @@ import { emailExistsValidator } from '@app/shared/validators/email-exists.valida
         <p>Sign up to start meeting new people</p>
 
         @if (errorMsg()) {
-            <div class="bg-error text-on-error mb-4 rounded-lg p-4">
+            <div class="mb-4 rounded-lg bg-error p-4 text-on-error">
                 {{ errorMsg() }}
             </div>
         }
@@ -382,7 +382,7 @@ export class RegisterPageComponent {
                     Validators.maxLength(20),
                     Validators.pattern(/^[a-zA-Z0-9_]+$/),
                 ],
-                [usernameExistsValidator()],
+                [injectUsernameExistsValidator()],
             ],
             password: [
                 '',

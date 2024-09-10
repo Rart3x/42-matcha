@@ -1,11 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { SidesheetComponent } from '@app/shared/layouts/sidesheet-layout/sidesheet.component';
-import { MatError, MatFormField, MatHint, MatLabel } from '@angular/material/form-field';
-import { MatInput } from '@angular/material/input';
-import { ReactiveFormsModule } from '@angular/forms';
-import { MatOption, MatSelect } from '@angular/material/select';
-import { RxLet } from '@rx-angular/template/let';
-import { MatTooltipEllipsisDirective } from '@app/shared/directives/mat-tooltip-ellipsis.directive';
 import { MatButton } from '@angular/material/button';
 import { injectQuery } from '@tanstack/angular-query-experimental';
 import { injectRpcClient, RpcError, RpcResponse } from '@app/core/http/rpc-client';
@@ -16,36 +10,19 @@ import { EditProfileFormComponent } from '@app/shared/components/edit-profile-fo
 @Component({
     selector: 'app-edit-profile-sheet',
     standalone: true,
-    imports: [
-        SidesheetComponent,
-        MatFormField,
-        MatInput,
-        ReactiveFormsModule,
-        MatSelect,
-        MatOption,
-        MatLabel,
-        MatHint,
-        MatError,
-        RxLet,
-        MatTooltipEllipsisDirective,
-        MatButton,
-        MatProgressSpinner,
-        EditProfileFormComponent,
-    ],
+    imports: [SidesheetComponent, MatButton, MatProgressSpinner, EditProfileFormComponent],
     template: `
         <app-sidesheet heading="Edit Profile">
             <p class="mat-body-large">Update your profile information.</p>
 
-            @switch (profileQuery.status()) {
-                @case ('pending') {
-                    <mat-spinner diameter="30"></mat-spinner>
-                }
-                @case ('error') {
-                    <div class="text-red-500">{{ profileQuery.error() }}</div>
-                }
-                @case ('success') {
-                    <app-edit-profile-form [initialValues]="profileQuery.data()!" />
-                }
+            @if (profileQuery.isPending()) {
+                <mat-spinner diameter="30"></mat-spinner>
+            }
+            @if (profileQuery.isError()) {
+                <div class="text-red-500">{{ profileQuery.error() }}</div>
+            }
+            @if (profileQuery.data(); as form) {
+                <app-edit-profile-form [initialValues]="form" />
             }
 
             <ng-container bottom-actions>

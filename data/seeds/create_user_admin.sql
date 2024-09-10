@@ -3,4 +3,4 @@ FROM users
 WHERE email = 'admin@localhost';
 
 INSERT INTO users (email, password, username, first_name, last_name)
-VALUES ('admin@localhost', hash_password('password'), 'admin', 'Admin', 'User');
+VALUES ('admin@localhost.com', crypt('Password1234@', gen_salt('bf',8)), 'admin', 'Admin', 'User');

@@ -16,9 +16,9 @@ export const getProfile = procedure('getProfile', () => {
                             first_name: string;
                             last_name: string;
                             age: number;
-                            sexual_pref: string;
+                            sexual_pref: 'male' | 'female' | 'any';
                             biography: string;
-                            gender: string;
+                            gender: 'male' | 'female' | 'other';
                         },
                     ] = await sql`
                         SELECT username, first_name, last_name, age, sexual_pref, biography, gender

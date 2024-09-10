@@ -11,6 +11,7 @@ import { injectQuery } from '@tanstack/angular-query-experimental';
 import { injectRpcClient, RpcError, RpcResponse } from '@app/core/http/rpc-client';
 import { lastValueFrom, map } from 'rxjs';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import { EditProfileFormComponent } from '@app/shared/components/edit-profile-form/edit-profile-form.component';
 
 @Component({
     selector: 'app-edit-profile-sheet',
@@ -29,6 +30,7 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
         MatTooltipEllipsisDirective,
         MatButton,
         MatProgressSpinner,
+        EditProfileFormComponent,
     ],
     template: `
         <app-sidesheet heading="Edit Profile">
@@ -39,9 +41,11 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
                     <mat-spinner diameter="30"></mat-spinner>
                 }
                 @case ('error') {
-                    <div class="text-red-500">{{ profileQuery.error }}</div>
+                    <div class="text-red-500">{{ profileQuery.error() }}</div>
                 }
-                @case ('success') {}
+                @case ('success') {
+                    <app-edit-profile-form [initialValues]="profileQuery.data()!" />
+                }
             }
 
             <ng-container bottom-actions>
@@ -60,16 +64,16 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 export class EditProfileSheetComponent {
     #rpc = injectRpcClient();
 
-    profileQuery = injectQuery<Promise<RpcResponse<'getProfile'>>, RpcError<'getProfile'>>(() => ({
+    profileQuery = injectQuery<RpcResponse<'getProfile'>, RpcError<'getProfile'>>(() => ({
         queryKey: ['profile'],
         queryFn: () => {
             return lastValueFrom(
                 this.#rpc.getProfile().pipe(
                     map((res) => {
-                        if (!res.ok) {
-                            throw new Error(res.error);
+                        if (res.ok) {
+                            return res.data;
                         }
-                        return res.data;
+                        throw new Error(res.error);
                     }),
                 ),
             );

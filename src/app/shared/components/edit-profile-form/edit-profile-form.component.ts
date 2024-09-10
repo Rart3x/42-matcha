@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { MatError, MatFormField, MatHint, MatLabel } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -7,6 +7,7 @@ import { RxLet } from '@rx-angular/template/let';
 import { MatTooltipEllipsisDirective } from '@app/shared/directives/mat-tooltip-ellipsis.directive';
 import { regexValidator } from '@app/shared/validators/regex.validator';
 import { usernameExistsValidator } from '@app/shared/validators/username-exists.validator';
+import { RpcResponse } from '@app/core/http/rpc-client';
 
 @Component({
     selector: 'app-edit-profile-form',
@@ -24,8 +25,8 @@ import { usernameExistsValidator } from '@app/shared/validators/username-exists.
         MatTooltipEllipsisDirective,
     ],
     template: `
-        <form [formGroup]="form" id="profile-form" class="grid grid-cols-4 gap-2">
-            <mat-form-field *rxLet="form.controls.firstName as firstName" class="col-span-2">
+        <form [formGroup]="form()" id="profile-form" class="grid grid-cols-4 gap-2">
+            <mat-form-field *rxLet="form().controls.firstName as firstName" class="col-span-2">
                 <mat-label>First Name</mat-label>
                 <input matInput type="text" placeholder="First Name" [formControl]="firstName" />
                 <mat-hint matTooltipEllipsis>
@@ -48,7 +49,7 @@ import { usernameExistsValidator } from '@app/shared/validators/username-exists.
                 </mat-error>
             </mat-form-field>
 
-            <mat-form-field *rxLet="form.controls.lastName as lastName" class="col-span-2">
+            <mat-form-field *rxLet="form().controls.lastName as lastName" class="col-span-2">
                 <mat-label>Last Name</mat-label>
                 <input matInput type="test" placeholder="Last Name" [formControl]="lastName" />
                 <mat-hint matTooltipEllipsis>
@@ -71,7 +72,7 @@ import { usernameExistsValidator } from '@app/shared/validators/username-exists.
                 </mat-error>
             </mat-form-field>
 
-            <mat-form-field *rxLet="form.controls.username as username" class="col-span-3">
+            <mat-form-field *rxLet="form().controls.username as username" class="col-span-3">
                 <mat-label>Username</mat-label>
                 <input matInput type="text" placeholder="Username" [formControl]="username" />
                 <mat-hint matTooltipEllipsis>
@@ -94,7 +95,7 @@ import { usernameExistsValidator } from '@app/shared/validators/username-exists.
                 </mat-error>
             </mat-form-field>
 
-            <mat-form-field *rxLet="form.controls.age as age" class="col-span-1">
+            <mat-form-field *rxLet="form().controls.age as age" class="col-span-1">
                 <mat-label>Age</mat-label>
                 <input matInput type="number" placeholder="Age" [formControl]="age" />
                 <mat-error matTooltipEllipsis>
@@ -110,7 +111,7 @@ import { usernameExistsValidator } from '@app/shared/validators/username-exists.
                 </mat-error>
             </mat-form-field>
 
-            <mat-form-field *rxLet="form.controls.gender as gender" class="col-span-2">
+            <mat-form-field *rxLet="form().controls.gender as gender" class="col-span-2">
                 <mat-label>Gender</mat-label>
                 <mat-select [formControl]="gender">
                     <mat-option value="male">Male</mat-option>
@@ -127,11 +128,11 @@ import { usernameExistsValidator } from '@app/shared/validators/username-exists.
             </mat-form-field>
 
             <mat-form-field
-                *rxLet="form.controls.sexualPreferences as sexualPreferences"
+                *rxLet="form().controls.sexualPreferences as sexualPreferences"
                 class="col-span-2"
             >
                 <mat-label>Sexual preferences</mat-label>
-                <mat-select [formControl]="form.controls.sexualPreferences">
+                <mat-select [formControl]="form().controls.sexualPreferences">
                     <mat-option value="female">Female</mat-option>
                     <mat-option value="male">Male</mat-option>
                     <mat-option value="any">any</mat-option>
@@ -145,13 +146,13 @@ import { usernameExistsValidator } from '@app/shared/validators/username-exists.
                 </mat-error>
             </mat-form-field>
 
-            <mat-form-field *rxLet="form.controls.bio as bio" class="col-span-4">
+            <mat-form-field *rxLet="form().controls.bio as bio" class="col-span-4">
                 <mat-label>Bio</mat-label>
                 <textarea
                     matInput
                     type="text"
                     placeholder="Bio"
-                    [formControl]="form.controls.bio"
+                    [formControl]="form().controls.bio"
                 ></textarea>
                 <mat-hint matTooltipEllipsis>
                     @if (!bio.value) {
@@ -178,64 +179,62 @@ import { usernameExistsValidator } from '@app/shared/validators/username-exists.
 export class EditProfileFormComponent {
     #fb = inject(NonNullableFormBuilder);
 
-    defaultValues = input<{
-        firstName: string;
-        lastName: string;
-        username: string;
-        age: number;
-        bio: string;
-        sexual: string;
-    }>();
+    initialValues = input.required<Partial<RpcResponse<'getProfile'>>>();
 
-    form = this.#fb.group({
-        firstName: [
-            this.defaultValues().firstName || '',
-            Validators.required,
-            Validators.minLength(1),
-            Validators.maxLength(30),
-            regexValidator(/[a-zA-Z]/, 'letter'),
-            regexValidator(/^[a-zA-Z]+[a-zA-Z-' ]*$/, 'name'),
-        ],
-        lastName: [
-            '',
-            Validators.required,
-            Validators.minLength(1),
-            Validators.maxLength(30),
-            regexValidator(/[a-zA-Z]/, 'letter'),
-            regexValidator(/^[a-zA-Z]+[a-zA-Z-' ]*$/, 'name'),
-        ],
-        username: [
-            '',
-            [
-                Validators.required,
-                Validators.minLength(3),
-                Validators.maxLength(20),
-                Validators.pattern(/^[a-zA-Z0-9_]+$/),
-            ],
-            [usernameExistsValidator()],
-        ],
-        age: [
-            0,
-            [
-                Validators.required,
-                Validators.min(18),
-                Validators.max(130),
-                Validators.pattern(/^[0-9]+$/),
-            ],
-        ],
-        bio: [
-            '',
-            [
+    form = computed(() =>
+        this.#fb.group({
+            firstName: [
+                this.initialValues().first_name || '',
                 Validators.required,
                 Validators.minLength(1),
-                Validators.maxLength(500),
-                regexValidator(/^[a-zA-Z0-9]+[a-zA-Z0-9-' ]*$/, 'bio'),
+                Validators.maxLength(30),
+                regexValidator(/[a-zA-Z]/, 'letter'),
+                regexValidator(/^[a-zA-Z]+[a-zA-Z-' ]*$/, 'name'),
             ],
-        ],
-        sexualPreferences: [
-            'any',
-            [Validators.required, Validators.pattern(/^(male|female|any)$/)],
-        ],
-        gender: ['other', [Validators.required, Validators.pattern(/^(male|female|other)$/)]],
-    });
+            lastName: [
+                this.initialValues().last_name || '',
+                Validators.required,
+                Validators.minLength(1),
+                Validators.maxLength(30),
+                regexValidator(/[a-zA-Z]/, 'letter'),
+                regexValidator(/^[a-zA-Z]+[a-zA-Z-' ]*$/, 'name'),
+            ],
+            username: [
+                this.initialValues().username || '',
+                [
+                    Validators.required,
+                    Validators.minLength(3),
+                    Validators.maxLength(20),
+                    Validators.pattern(/^[a-zA-Z0-9_]+$/),
+                ],
+                [usernameExistsValidator()],
+            ],
+            age: [
+                this.initialValues().age || '',
+                [
+                    Validators.required,
+                    Validators.min(18),
+                    Validators.max(130),
+                    Validators.pattern(/^[0-9]+$/),
+                ],
+            ],
+            bio: [
+                this.initialValues().biography || '',
+                [
+                    Validators.required,
+                    Validators.minLength(1),
+                    Validators.maxLength(500),
+                    regexValidator(/^[a-zA-Z0-9]+[a-zA-Z0-9-' ]*$/, 'bio'),
+                ],
+            ],
+            sexualPreferences: [
+                this.initialValues().sexual_pref || 'any',
+                [Validators.required, Validators.pattern(/^(male|female|any)$/)],
+            ],
+            gender: [
+                this.initialValues().gender || 'other',
+                [Validators.required, Validators.pattern(/^(male|female|other)$/)],
+            ],
+        }),
+    );
 }

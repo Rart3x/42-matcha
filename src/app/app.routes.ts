@@ -39,6 +39,14 @@ export const routes: Routes = [
                         (m) => m.ViewsHistorySheetComponent,
                     ),
             },
+            {
+                outlet: 'sidesheet',
+                path: 'likes',
+                loadComponent: () =>
+                    import('@app/features/likes-history-sheet/likes-history-sheet.component').then(
+                        (m) => m.LikesHistorySheetComponent,
+                    ),
+            },
         ],
         canActivate: [isLoggedInGuard],
     },

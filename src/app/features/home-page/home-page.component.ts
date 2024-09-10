@@ -61,6 +61,8 @@ import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-
                         [score]="6"
                         matTooltip="Likes"
                         matTooltipPosition="above"
+                        (click)="openLikesHistorySheet()"
+                        class="cursor-pointer"
                     />
                     <app-score-indicator
                         icon="block"
@@ -107,6 +109,10 @@ export class HomePageComponent {
 
     async openViewsHistorySheet() {
         await this.#router.navigate([{ outlets: { sidesheet: 'views' } }]);
+    }
+
+    async openLikesHistorySheet() {
+        await this.#router.navigate([{ outlets: { sidesheet: 'likes' } }]);
     }
 
     logout() {

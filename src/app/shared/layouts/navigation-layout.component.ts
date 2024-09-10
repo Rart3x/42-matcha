@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NavigationRailLinkComponent } from '@app/shared/components/navigation-rail-link/navigation-rail-link.component';
-import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
-import { CdkPortalOutlet, Portal } from '@angular/cdk/portal';
+import { MatSidenavContainer } from '@angular/material/sidenav';
+import { CdkPortalOutlet } from '@angular/cdk/portal';
+import { SidesheetLayoutComponent } from '@app/shared/layouts/sidesheet-layout/sidesheet-layout.component';
 
 @Component({
     selector: 'app-navigation-layout',
@@ -11,18 +12,12 @@ import { CdkPortalOutlet, Portal } from '@angular/cdk/portal';
         RouterOutlet,
         NavigationRailLinkComponent,
         MatSidenavContainer,
-        MatSidenav,
-        MatSidenavContent,
         CdkPortalOutlet,
+        SidesheetLayoutComponent,
     ],
     template: `
-        <mat-sidenav-container>
-            <mat-sidenav opened position="end">
-                <ng-template [cdkPortalOutlet]="sidesheetPortal" />
-            </mat-sidenav>
-            <mat-sidenav-content
-                class="min-w-screen relative !flex min-h-screen bg-surface-container"
-            >
+        <app-sidesheet-layout>
+            <div class="min-w-screen flex min-h-screen">
                 <!-- navigation rail -->
                 <div class="flex h-screen w-20 flex-col justify-center">
                     <nav class="flex flex-col gap-3">
@@ -50,12 +45,10 @@ import { CdkPortalOutlet, Portal } from '@angular/cdk/portal';
                 <div class="flex min-h-screen grow flex-col overflow-auto">
                     <router-outlet></router-outlet>
                 </div>
-            </mat-sidenav-content>
-        </mat-sidenav-container>
+            </div>
+        </app-sidesheet-layout>
     `,
     host: {},
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class NavigationLayoutComponent {
-    sidesheetPortal?: Portal<any>;
-}
+export class NavigationLayoutComponent {}

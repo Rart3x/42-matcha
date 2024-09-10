@@ -31,6 +31,14 @@ export const routes: Routes = [
                     ),
                 data: { animation: 'home' },
             },
+            {
+                outlet: 'sidesheet',
+                path: 'views',
+                loadComponent: () =>
+                    import('@app/features/views-history-sheet/views-history-sheet.component').then(
+                        (m) => m.ViewsHistorySheetComponent,
+                    ),
+            },
         ],
         canActivate: [isLoggedInGuard],
     },

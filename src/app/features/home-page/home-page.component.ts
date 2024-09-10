@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatAnchor, MatButton } from '@angular/material/button';
 import { AuthService } from '@app/core/auth/auth.service';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatToolbar, MatToolbarRow } from '@angular/material/toolbar';
 import { MatIcon } from '@angular/material/icon';
 import { ScoreIndicatorComponent } from '@app/shared/components/score-indicator/score-indicator.component';
@@ -53,6 +53,8 @@ import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-
                         [score]="13"
                         matTooltip="Views"
                         matTooltipPosition="above"
+                        (click)="openViewsHistorySheet()"
+                        class="cursor-pointer"
                     />
                     <app-score-indicator
                         icon="thumb_up"
@@ -100,7 +102,12 @@ import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomePageComponent {
+    #router = inject(Router);
     #authService = inject(AuthService);
+
+    async openViewsHistorySheet() {
+        await this.#router.navigate([{ outlets: { sidesheet: 'views' } }]);
+    }
 
     logout() {
         this.#authService.logout().pipe().subscribe();

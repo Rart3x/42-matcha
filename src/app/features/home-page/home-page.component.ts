@@ -33,7 +33,7 @@ import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-
             </mat-toolbar-row>
         </mat-toolbar>
 
-        <div class="relative flex grow overflow-auto">
+        <div class="relative flex grow">
             <!-- Left pane -->
             <div class="relative flex min-h-full w-[26rem] flex-col pt-10">
                 <div class="pb-4">
@@ -74,7 +74,7 @@ import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-
                 </div>
 
                 <!-- Content -->
-                <div class="bg-surface m-4 grow rounded-t-2xl"></div>
+                <div class="m-4 grow rounded-t-2xl bg-surface"></div>
             </div>
 
             <!-- Right pane -->

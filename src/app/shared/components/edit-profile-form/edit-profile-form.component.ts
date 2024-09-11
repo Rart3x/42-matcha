@@ -1,13 +1,16 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { MatError, MatFormField, MatHint, MatLabel } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { RxLet } from '@rx-angular/template/let';
 import { MatTooltipEllipsisDirective } from '@app/shared/directives/mat-tooltip-ellipsis.directive';
-import { regexValidator } from '@app/shared/validators/regex.validator';
-import { RpcResponse } from '@app/core/http/rpc-client';
 import { injectUsernameExistsValidator } from '@app/shared/validators/inject-username-exists.validator';
+import { regexValidator } from '@app/shared/validators/regex.validator';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
+import { AsyncPipe } from '@angular/common';
+import { injectRpcQuery } from '@app/core/http/rpc-query';
 
 @Component({
     selector: 'app-edit-profile-form',
@@ -23,11 +26,12 @@ import { injectUsernameExistsValidator } from '@app/shared/validators/inject-use
         MatError,
         RxLet,
         MatTooltipEllipsisDirective,
+        AsyncPipe,
     ],
     template: `
-        @if (form(); as form) {
+        @if (form | async; as form) {
             <form [formGroup]="form" id="profile-form" class="grid grid-cols-4 gap-2">
-                <mat-form-field class="col-span-2">
+                <mat-form-field *rxLet="form.controls.firstName as firstName" class="col-span-2">
                     <mat-label>First Name</mat-label>
                     <input
                         matInput
@@ -180,94 +184,76 @@ import { injectUsernameExistsValidator } from '@app/shared/validators/inject-use
             </form>
         }
     `,
-    styles: ``,
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EditProfileFormComponent {
     #fb = inject(NonNullableFormBuilder);
     #usernameExistsValidator = injectUsernameExistsValidator();
 
-    initialValues = input.required<Partial<RpcResponse<'getProfile'>>>();
+    query = injectRpcQuery('getProfile');
 
-    // form2 = createFormGroup(() => ({
-    //     firstName: createFormField(this.initialValues().first_name || '', {
-    //         validators: [
-    //             V.required,
-    //             V.minLength(1),
-    //             V.maxLength(30),
-    //             regexValidator(/[a-zA-Z]/, 'letter'),
-    //             regexValidator(/^[a-zA-Z]+[a-zA-Z-' ]*$/, 'name'),
-    //         ],
-    //     }),
-    //     lastName: createFormField(this.initialValues().last_name || '', {
-    //         validators: [
-    //             V.required,
-    //             V.minLength(1),
-    //             V.maxLength(30),
-    //             regexValidator(/[a-zA-Z]/, 'letter'),
-    //             regexValidator(/^[a-zA-Z]+[a-zA-Z-' ]*$/, 'name'),
-    //         ],
-    //     }),
-    // }));
+    initialValues = input.required<Partial<ReturnType<(typeof this.query)['data']>>>();
 
-    form = computed(() =>
-        this.#fb.group({
-            firstName: [
-                this.initialValues().first_name || '',
-                [
-                    Validators.required,
-                    Validators.minLength(1),
-                    Validators.maxLength(30),
-                    regexValidator(/[a-zA-Z]/, 'letter'),
-                    regexValidator(/^[a-zA-Z]+[a-zA-Z-' ]*$/, 'name'),
+    form = toObservable(this.query.data).pipe(
+        map((initialValues) =>
+            this.#fb.group({
+                firstName: [
+                    initialValues?.first_name || '',
+                    [
+                        Validators.required,
+                        Validators.minLength(1),
+                        Validators.maxLength(30),
+                        regexValidator(/[a-zA-Z]/, 'letter'),
+                        regexValidator(/^[a-zA-Z]+[a-zA-Z-' ]*$/, 'name'),
+                    ],
                 ],
-            ],
-            lastName: [
-                this.initialValues().last_name || '',
-                [
-                    Validators.required,
-                    Validators.minLength(1),
-                    Validators.maxLength(30),
-                    regexValidator(/[a-zA-Z]/, 'letter'),
-                    regexValidator(/^[a-zA-Z]+[a-zA-Z-' ]*$/, 'name'),
+                lastName: [
+                    initialValues?.last_name || '',
+                    [
+                        Validators.required,
+                        Validators.minLength(1),
+                        Validators.maxLength(30),
+                        regexValidator(/[a-zA-Z]/, 'letter'),
+                        regexValidator(/^[a-zA-Z]+[a-zA-Z-' ]*$/, 'name'),
+                    ],
                 ],
-            ],
-            username: [
-                this.initialValues().username || '',
-                [
-                    Validators.required,
-                    Validators.minLength(3),
-                    Validators.maxLength(20),
-                    Validators.pattern(/^[a-zA-Z0-9_]+$/),
+                username: [
+                    initialValues?.username || '',
+                    [
+                        Validators.required,
+                        Validators.minLength(3),
+                        Validators.maxLength(20),
+                        Validators.pattern(/^[a-zA-Z0-9_]+$/),
+                    ],
+                    [this.#usernameExistsValidator],
                 ],
-                [this.#usernameExistsValidator],
-            ],
-            age: [
-                this.initialValues().age || '',
-                [
-                    Validators.required,
-                    Validators.min(18),
-                    Validators.max(130),
-                    Validators.pattern(/^[0-9]+$/),
+                age: [
+                    initialValues?.age || '',
+                    [
+                        Validators.required,
+                        Validators.min(18),
+                        Validators.max(130),
+                        Validators.pattern(/^[0-9]+$/),
+                    ],
                 ],
-            ],
-            bio: [
-                this.initialValues().biography || '',
-                [
-                    Validators.required,
-                    Validators.minLength(1),
-                    Validators.maxLength(500),
-                    regexValidator(/^[a-zA-Z0-9]+[a-zA-Z0-9-' ]*$/, 'bio'),
+                bio: [
+                    initialValues?.biography || '',
+                    [
+                        Validators.required,
+                        Validators.minLength(1),
+                        Validators.maxLength(500),
+                        regexValidator(/^[a-zA-Z0-9]+[a-zA-Z0-9-' ]*$/, 'bio'),
+                    ],
                 ],
-            ],
-            sexualPreferences: [
-                this.initialValues().sexual_pref || 'any',
-                [Validators.required, Validators.pattern(/^(male|female|any)$/)],
-            ],
-            gender: [
-                this.initialValues().gender || 'other',
-                [Validators.required, Validators.pattern(/^(male|female|other)$/)],
-            ],
-        }),
+                sexualPreferences: [
+                    initialValues?.sexual_pref || 'any',
+                    [Validators.required, Validators.pattern(/^(male|female|any)$/)],
+                ],
+                gender: [
+                    initialValues?.gender || 'other',
+                    [Validators.required, Validators.pattern(/^(male|female|other)$/)],
+                ],
+            }),
+        ),
     );
 }

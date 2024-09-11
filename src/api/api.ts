@@ -34,6 +34,11 @@ export const rpcRouter = createRpcRouter([
     getProfile,
 ]);
 
+// const procedureRouter = createProcedureRouter(getProfileProcedure, getProfileByUsernameProcedure);
+//
+// export type ProcedureContracts = ExtractContract<ExtractProcedures<typeof procedureRouter>>;
+
 export type Procedures = (typeof rpcRouter)['__procedures'][number];
 
 apiRouter.use(rpcRouter);
+// apiRouter.use(procedureRouter);

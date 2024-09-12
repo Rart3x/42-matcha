@@ -5,7 +5,7 @@ import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { RxLet } from '@rx-angular/template/let';
 import { MatTooltipEllipsisDirective } from '@app/shared/directives/mat-tooltip-ellipsis.directive';
-import { injectUsernameExistsValidator } from '@app/shared/validators/inject-username-exists.validator';
+import { injectUsernameAvailableValidator } from '@app/shared/validators/username-available.validator';
 import { AsyncPipe } from '@angular/common';
 import { injectRpcQuery } from '@app/core/http/old/rpc-query';
 
@@ -185,7 +185,7 @@ import { injectRpcQuery } from '@app/core/http/old/rpc-query';
 })
 export class EditProfileFormComponent {
     #fb = inject(NonNullableFormBuilder);
-    #usernameExistsValidator = injectUsernameExistsValidator();
+    #usernameExistsValidator = injectUsernameAvailableValidator();
 
     query = injectRpcQuery('getProfile');
 

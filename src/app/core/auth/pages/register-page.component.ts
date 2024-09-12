@@ -19,6 +19,8 @@ import { injectRpcClient } from '@app/core/http/rpc-client';
 import { injectMutation } from '@tanstack/angular-query-experimental';
 import { AlertComponent } from '@app/shared/components/alert/alert.component';
 import { SnackBarService } from '@app/core/services/snack-bar.service';
+import { injectUsernameAvailableValidator } from '@app/shared/validators/username-available.validator';
+import { injectEmailAvailableValidator } from '@app/shared/validators/email-available.validator';
 
 @Component({
     selector: 'app-register-page',
@@ -130,7 +132,7 @@ import { SnackBarService } from '@app/core/services/snack-bar.service';
                         Email is required
                     } @else if (form.controls.email.hasError('email')) {
                         Must be a valid email address
-                    } @else if (form.controls.email.hasError('exists')) {
+                    } @else if (form.controls.email.hasError('available')) {
                         Email is already taken
                     }
                 </mat-error>
@@ -153,7 +155,7 @@ import { SnackBarService } from '@app/core/services/snack-bar.service';
                         Must be at most 20 characters long
                     } @else if (form.controls.username.hasError('pattern')) {
                         Can only contain letters, numbers, and underscores
-                    } @else if (form.controls.username.hasError('exists')) {
+                    } @else if (form.controls.username.hasError('available')) {
                         Username is already taken
                     }
                 </mat-error>
@@ -314,7 +316,7 @@ import { SnackBarService } from '@app/core/services/snack-bar.service';
                 type="submit"
                 class="btn-primary col-span-2 mt-2"
                 mat-flat-button
-                [disabled]="form.invalid || register.isPending()"
+                [disabled]="register.isPending()"
             >
                 Sign up
             </button>
@@ -379,11 +381,7 @@ export class RegisterPageComponent {
                     regexValidator(/^[a-zA-Z]+[a-zA-Z-' ]*$/, 'name'),
                 ],
             ],
-            email: [
-                '',
-                [Validators.required, Validators.email],
-                // [emailExistsValidator()]
-            ],
+            email: ['', [Validators.required, Validators.email], [injectEmailAvailableValidator()]],
             username: [
                 '',
                 [
@@ -392,7 +390,7 @@ export class RegisterPageComponent {
                     Validators.maxLength(20),
                     Validators.pattern(/^[a-zA-Z0-9_]+$/),
                 ],
-                // [injectUsernameExistsValidator()],
+                [injectUsernameAvailableValidator()],
             ],
             password: [
                 '',

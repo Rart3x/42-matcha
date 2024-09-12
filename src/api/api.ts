@@ -6,7 +6,12 @@ import {
     logoutProcedure,
     verifySessionProcedure,
 } from '@api/procedures/auth.procedure';
-import { confirmEmailProcedure, registerAccountProcedure } from '@api/procedures/account.procedure';
+import {
+    confirmEmailProcedure,
+    emailAvailableProcedure,
+    registerAccountProcedure,
+    usernameAvailableProcedure,
+} from '@api/procedures/account.procedure';
 
 export const apiRouter = Router();
 
@@ -19,6 +24,8 @@ const rpcRouter = createProcedureRouter([
     logoutProcedure,
     registerAccountProcedure,
     confirmEmailProcedure,
+    usernameAvailableProcedure,
+    emailAvailableProcedure,
 ]);
 
 export type RpcRouter = typeof rpcRouter;

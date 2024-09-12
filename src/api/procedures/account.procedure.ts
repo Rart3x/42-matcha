@@ -13,6 +13,12 @@ import { mailer } from '@api/connections/mailer.connection';
 const HOST = process.env['APP_HOST'] || 'localhost';
 const PORT = process.env['APP_PORT'] || '4200';
 
+/**
+ * Register a new account.
+ * @note This procedure does not create a user account, but rather a registration record.
+ * @note The registration record shall be turned into a user account by confirming the email address.
+ * with the `confirmEmail` procedure.
+ */
 export const registerAccountProcedure = procedure(
     'registerAccountProcedure',
     {} as {
@@ -70,6 +76,10 @@ export const registerAccountProcedure = procedure(
     },
 );
 
+/**
+ * Confirm email address.
+ * @note Turns a registration into a user account.
+ */
 export const confirmEmailProcedure = procedure(
     'confirmEmail',
     {} as { token: string },
@@ -81,7 +91,7 @@ export const confirmEmailProcedure = procedure(
             SELECT email, username, password, first_name, last_name
             FROM users_registrations
             WHERE token = ${token}
-            AND expires_at > NOW()
+                AND expires_at > NOW()
             RETURNING username;
         `;
 
@@ -90,5 +100,61 @@ export const confirmEmailProcedure = procedure(
         }
 
         return { username: user.username };
+    },
+);
+
+/**
+ * Check if a username is available (for registration purposes)
+ * @note Provides better UX by checking username availability before submitting the registration form.
+ */
+export const usernameAvailableProcedure = procedure(
+    'usernameAvailable',
+    {} as { username: string },
+    async (params) => {
+        const username = validateUsername(params.username);
+
+        const [user]: [{ username: string }?] = await sql`
+            SELECT EXISTS(
+                SELECT 1
+                FROM users
+                    LEFT JOIN users_registrations as reg
+                        ON reg.username = ${username}
+                        AND reg.expires_at > NOW()
+                WHERE users.username = ${username}
+            )
+        `;
+
+        if (user) {
+            return { available: 'false' as const };
+        }
+        return { available: 'true' as const };
+    },
+);
+
+/**
+ * Check if an email is available (for registration purposes)
+ * @note Provides better UX by checking email availability before submitting the registration form.
+ */
+export const emailAvailableProcedure = procedure(
+    'emailAvailable',
+    {} as { email: string },
+    async (params) => {
+        const email = validateEmail(params.email);
+
+        const [user]: [{ email: string }?] = await sql`
+            SELECT EXISTS(
+                SELECT 1
+                FROM users
+                    LEFT JOIN users_registrations as reg
+                        ON reg.email = ${email}
+                        AND reg.expires_at > NOW()
+                WHERE users.email = ${email}
+            )
+        `;
+
+        if (user) {
+            return { available: 'false' as const };
+        }
+        return { available: 'true' as const };
     },
 );

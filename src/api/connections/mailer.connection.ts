@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 
-export const mailerConnection = nodemailer.createTransport({
+export const mailer = nodemailer.createTransport({
     host: process.env['SMTP_HOST'] || 'localhost',
     port: parseInt(process.env['SMTP_PORT'] || '1025', 10),
 });

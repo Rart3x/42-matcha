@@ -72,3 +72,17 @@ export function validatePassword(password?: string) {
     }
     return password;
 }
+
+const UUID_REGEX = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
+
+export function validateToken(token?: string) {
+    if (!token) {
+        throw badRequest();
+    }
+
+    if (!UUID_REGEX.test(token)) {
+        throw badRequest();
+    }
+
+    return token;
+}

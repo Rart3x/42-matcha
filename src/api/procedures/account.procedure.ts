@@ -3,10 +3,15 @@ import {
     validateEmail,
     validateName,
     validatePassword,
+    validateToken,
     validateUsername,
 } from '@api/validators/account.validators';
 import { sql } from '../../api-old/connections/database';
 import { badRequest } from '@api/errors/bad-request.error';
+import { mailer } from '@api/connections/mailer.connection';
+
+const HOST = process.env['APP_HOST'] || 'localhost';
+const PORT = process.env['APP_PORT'] || '4200';
 
 export const registerAccountProcedure = procedure(
     'registerAccountProcedure',
@@ -48,6 +53,42 @@ export const registerAccountProcedure = procedure(
             throw badRequest();
         }
 
-        return { token: registration.token };
+        const confirmationLink = `http://${HOST}:${PORT}/confirm-email/${registration.token}`;
+
+        await mailer
+            .sendMail({
+                from: 'no-reply@matcha.com',
+                to: email,
+                subject: 'Matcha Registration',
+                text: `Hi ${username}, please click the link to confirm your registration: ${confirmationLink}`,
+            })
+            .catch(() => {
+                throw badRequest();
+            });
+
+        return { message: 'ok' };
+    },
+);
+
+export const confirmEmailProcedure = procedure(
+    'confirmEmail',
+    {} as { token: string },
+    async (params) => {
+        const token = validateToken(params.token);
+
+        const [user]: [{ username: string }?] = await sql`
+            INSERT INTO users (email, username, password, first_name, last_name)
+            SELECT email, username, password, first_name, last_name
+            FROM users_registrations
+            WHERE token = ${token}
+            AND expires_at > NOW()
+            RETURNING username;
+        `;
+
+        if (!user) {
+            throw badRequest();
+        }
+
+        return { username: user.username };
     },
 );

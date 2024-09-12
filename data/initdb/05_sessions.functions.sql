@@ -44,10 +44,6 @@ BEGIN
       AND sessions.expires_at > NOW()
     RETURNING user_id INTO l_user_id;
 
-    IF NOT FOUND THEN
-        RAISE EXCEPTION 'Invalid session';
-    END IF;
-
     RETURN l_user_id;
 END;
 $$ LANGUAGE plpgsql;

@@ -1,4 +1,4 @@
-import { injectRpcClient } from '@app/core/http/rpc-client';
+import { injectRpcClient } from '@app/core/http/old/rpc-client';
 import { AbstractControl, ValidationErrors } from '@angular/forms';
 import { map, Observable, switchMap, timer } from 'rxjs';
 

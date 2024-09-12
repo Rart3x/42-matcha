@@ -1,7 +1,7 @@
-import { procedure } from '@api/lib/procedure';
-import { ok, safeTry } from '@api/lib/result';
-import { usePrincipalUser } from '@api/hooks/auth.hooks';
-import { sql } from '@api/connections/database';
+import { procedure } from '../lib/procedure';
+import { ok, safeTry } from '../lib/result';
+import { usePrincipalUser } from '../hooks/auth.hooks';
+import { sql } from '../connections/database';
 
 export const getProfile = procedure('getProfile', () => {
     return safeTry(async function* () {

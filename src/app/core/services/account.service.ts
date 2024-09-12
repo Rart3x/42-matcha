@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { injectRpcClient } from '@app/core/http/rpc-client';
+import { injectRpcClient } from '@app/core/http/old/rpc-client';
 import { tap } from 'rxjs';
 import { LoggerService } from '@app/core/services/logger.service';
 import { SnackBarService } from '@app/core/services/snack-bar.service';

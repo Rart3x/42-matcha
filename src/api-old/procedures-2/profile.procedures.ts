@@ -4,8 +4,8 @@ import {
     procedure,
     ProcedureError,
     unauthorized,
-} from '@api/lib-2/procedure';
-import { sql } from '@api/connections/database';
+} from '../lib-2/procedure';
+import { sql } from '../connections/database';
 
 /**
  * @throws {Unauthorized}

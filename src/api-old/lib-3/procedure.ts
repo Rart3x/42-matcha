@@ -2,7 +2,7 @@
 // Procedure storage
 
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { err, Result } from '@api/lib-3/result';
+import { err, Result } from '../lib-3/result';
 import { Router } from 'express';
 
 /**

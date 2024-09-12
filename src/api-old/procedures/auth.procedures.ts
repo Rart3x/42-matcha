@@ -1,7 +1,7 @@
-import { procedure, useClearCookie, useSetCookie } from '@api/lib/procedure';
-import { err, ok, safeTry } from '@api/lib/result';
-import { sql } from '@api/connections/database';
-import { usePrincipalUser } from '@api/hooks/auth.hooks';
+import { procedure, useClearCookie, useSetCookie } from '../lib/procedure';
+import { err, ok, safeTry } from '../lib/result';
+import { sql } from '../connections/database';
+import { usePrincipalUser } from '../hooks/auth.hooks';
 
 export const loginProcedure = procedure(
     'login',

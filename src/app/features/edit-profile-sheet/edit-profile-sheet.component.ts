@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { SidesheetComponent } from '@app/shared/layouts/sidesheet-layout/sidesheet.component';
 import { MatButton } from '@angular/material/button';
-import { injectRpcClient } from '@app/core/http/rpc-client';
+import { injectRpcClient } from '@app/core/http/old/rpc-client';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { EditProfileFormComponent } from '@app/shared/components/edit-profile-form/edit-profile-form.component';
 

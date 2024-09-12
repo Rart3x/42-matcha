@@ -1,10 +1,11 @@
 import express from 'express';
 import { join, resolve } from 'node:path';
-import { apiRouter } from '@api/api';
+import { apiRouterOld } from './src/api-old/api';
 import morgan from 'morgan';
 import compression from 'compression';
 import { promisify } from 'node:util';
-import { sql } from '@api/connections/database';
+import { sql } from './src/api-old/connections/database';
+import { apiRouter } from '@api/api';
 
 const PORT = Number.parseInt(process.env?.['APP_PORT'] ?? '4000');
 const HOST = process.env?.['APP_HOST'] ?? 'localhost';
@@ -17,17 +18,18 @@ export function start(): void {
     const app = express();
 
     if (IS_DEVELOPMENT) {
-        apiRouter.use(morgan('dev')); // colorful logger
+        apiRouterOld.use(morgan('dev')); // colorful logger
     }
 
     if (IS_PRODUCTION) {
-        apiRouter.use(morgan('combined')); // logger
+        apiRouterOld.use(morgan('combined')); // logger
 
         // Compress responses
         app.use(compression());
     }
 
     // Express Rest API endpoints
+    // app.use('/api', apiRouterOld);
     app.use('/api', apiRouter);
 
     if (IS_PRODUCTION) {

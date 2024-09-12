@@ -1,7 +1,7 @@
-import { procedure } from '@api/lib/procedure';
-import { err, ok, safeTry } from '@api/lib/result';
-import { sql } from '@api/connections/database';
-import { mailer } from '@api/connections/mailer';
+import { procedure } from '../lib/procedure';
+import { err, ok, safeTry } from '../lib/result';
+import { sql } from '../connections/database';
+import { mailer } from '../connections/mailer';
 
 const HOST = process.env['APP_HOST'] || 'localhost';
 const PORT = process.env['APP_PORT'] || '4200';

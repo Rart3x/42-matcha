@@ -25,7 +25,7 @@ import { AccountService } from '@app/core/services/account.service';
 import { deriveLoading } from 'ngxtension/derive-loading';
 import { FormDisabledDirective } from '@app/shared/directives/form-disabled.directive';
 import { fromPromise } from 'rxjs/internal/observable/innerFrom';
-import { injectRpcClient } from '@app/core/http/rpc-client';
+import { injectRpcClient } from '@app/core/http/old/rpc-client';
 import { injectUsernameExistsValidator } from '@app/shared/validators/inject-username-exists.validator';
 import { emailExistsValidator } from '@app/shared/validators/email-exists.validator';
 

@@ -1,4 +1,4 @@
-import type { Procedures } from '@api/api';
+import type { Procedures } from '../../../../api-old/api';
 import { HttpClient } from '@angular/common/http';
 import { inject, isSignal, Signal } from '@angular/core';
 import { injectQuery } from '@tanstack/angular-query-experimental';

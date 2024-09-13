@@ -1,6 +1,6 @@
 import { useClearCookie, useGetCookie, useSetCookie } from '@api/hooks/cookie.hooks';
 import { unauthorized } from '@api/errors/unauthorized.error';
-import { sql } from '../../api-old/connections/database';
+import { sql } from '@api/connections/database.connection';
 
 const SESSION_COOKIE_NAME = 'session';
 

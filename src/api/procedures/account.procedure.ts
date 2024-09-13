@@ -6,9 +6,10 @@ import {
     validateToken,
     validateUsername,
 } from '@api/validators/account.validators';
-import { sql } from '../../api-old/connections/database';
 import { badRequest } from '@api/errors/bad-request.error';
 import { mailer } from '@api/connections/mailer.connection';
+import { sql } from '@api/connections/database.connection';
+import { usePrincipalUser } from '@api/hooks/auth.hooks';
 
 const HOST = process.env['APP_HOST'] || 'localhost';
 const PORT = process.env['APP_PORT'] || '4200';
@@ -113,7 +114,9 @@ export const usernameAvailableProcedure = procedure(
     async (params) => {
         const username = validateUsername(params.username);
 
-        const [user]: [{ username: string }?] = await sql`
+        const user_id = await usePrincipalUser().catch(() => null);
+
+        const [user]: [{ exists: boolean }] = await sql`
             SELECT EXISTS(
                 SELECT 1
                 FROM users
@@ -121,10 +124,11 @@ export const usernameAvailableProcedure = procedure(
                         ON reg.username = ${username}
                         AND reg.expires_at > NOW()
                 WHERE users.username = ${username}
-            )
+                    AND users.id != ${user_id}
+            ) as exists
         `;
 
-        if (user) {
+        if (user.exists) {
             return { available: 'false' as const };
         }
         return { available: 'true' as const };
@@ -141,7 +145,9 @@ export const emailAvailableProcedure = procedure(
     async (params) => {
         const email = validateEmail(params.email);
 
-        const [user]: [{ email: string }?] = await sql`
+        const user_id = await usePrincipalUser().catch(() => null);
+
+        const [user]: [{ exists: boolean }] = await sql`
             SELECT EXISTS(
                 SELECT 1
                 FROM users
@@ -149,10 +155,11 @@ export const emailAvailableProcedure = procedure(
                         ON reg.email = ${email}
                         AND reg.expires_at > NOW()
                 WHERE users.email = ${email}
-            )
+                    AND users.id != ${user_id}
+            ) as exists
         `;
 
-        if (user) {
+        if (user.exists) {
             return { available: 'false' as const };
         }
         return { available: 'true' as const };

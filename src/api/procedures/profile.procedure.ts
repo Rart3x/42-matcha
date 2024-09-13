@@ -9,7 +9,7 @@ import {
     validateGender,
     validateSexualPref,
 } from '@api/validators/profile.validators';
-import { validateTags } from '@api/validators/tag.validators';
+import { validateTag, validateTags } from '@api/validators/tag.validators';
 
 export type Profile = {
     username: string;
@@ -41,6 +41,27 @@ export const getPrincipalProfileProcedure = procedure('getPrincipalProfile', asy
 
     return profile;
 });
+
+export const getExistingTagsProcedure = procedure(
+    'getExistingTags',
+    {} as { tag: string },
+    async (params) => {
+        const tag = validateTag(params.tag);
+
+        const [existingTags] = await sql`
+            SELECT name, COUNT(*) as nbr
+            FROM tags
+            WHERE name LIKE ${tag}
+            GROUP BY name
+        `;
+
+        if (!existingTags || existingTags.length === 0) {
+            throw badRequest();
+        }
+
+        return existingTags;
+    },
+);
 
 export const patchPrincipalProfileProcedure = procedure(
     'patchPrincipalProfile',

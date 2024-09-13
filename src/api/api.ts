@@ -7,6 +7,7 @@ import {
     verifySessionProcedure,
 } from '@api/procedures/auth.procedure';
 import {
+    confirmEmailModificationProcedure,
     confirmEmailProcedure,
     emailAvailableProcedure,
     registerAccountProcedure,
@@ -38,6 +39,7 @@ const rpcRouter = createProcedureRouter([
     updateEmailProcedure,
     updatePasswordProcedure,
     getExistingTagsProcedure,
+    confirmEmailModificationProcedure,
 ]);
 
 export type RpcRouter = typeof rpcRouter;

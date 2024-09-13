@@ -248,3 +248,40 @@ export const updatePasswordProcedure = procedure(
         return { message: 'ok' };
     },
 );
+
+export const confirmEmailModificationProcedure = procedure(
+    'confirmEmailModification',
+    {} as { token: string },
+    async (params) => {
+        const token = validateToken(params.token);
+
+        const user_id = await usePrincipalUser();
+
+        const user = await sql.begin(async (sql) => {
+            const [user]: [{ username: string }?] = await sql`
+                UPDATE users
+                SET email = 'lol'
+                FROM users
+                         JOIN pending_email_modification
+                              ON users.id = pending_email_modification.user_id
+                WHERE token = ${token}
+                  AND user_id = ${user_id}
+                returning username
+            `;
+
+            if (!user) {
+                throw badRequest();
+            }
+
+            await sql`
+                DELETE
+                FROM pending_email_modification
+                WHERE token = ${token}
+                  AND user_id = ${user_id}
+            `;
+            return user;
+        });
+
+        return { username: user.username };
+    },
+);

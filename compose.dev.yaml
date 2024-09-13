@@ -13,6 +13,7 @@ services:
             - ./data/initdb:/docker-entrypoint-initdb.d
         ports:
             - '5432:5432'
+        command: [ "postgres", "-c", "log_statement=all", "-c", "log_destination=stderr" ]
 
     dev-mailhog:
         image: mailhog/mailhog

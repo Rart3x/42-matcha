@@ -40,11 +40,13 @@ import { MatProgressBar } from '@angular/material/progress-bar';
                 <ng-content />
             </div>
         </div>
-        <div class="flex h-[72px] items-center gap-2 border-t p-6 pt-4 empty:hidden">
+        <div
+            class="flex h-[72px] items-center gap-2 border-t border-t-outline-variant p-6 empty:hidden"
+        >
             <ng-content select="[bottom-actions]" />
         </div>
     `,
-    host: { class: 'relative flex flex-col min-h-screen w-full max-w-full ' },
+    host: { class: 'absolute inset-0 flex flex-col  max-w-full ' },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidesheetComponent {

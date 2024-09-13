@@ -35,9 +35,9 @@ import { SnackBarService } from '@app/core/services/snack-bar.service';
             </mat-toolbar-row>
         </mat-toolbar>
 
-        <div class="relative flex grow">
+        <div class="max-medium:flex-col relative flex grow">
             <!-- Left pane -->
-            <div class="relative flex min-h-full w-[26rem] flex-col pt-10">
+            <div class="relative flex flex-col pt-10 medium:w-[26rem]">
                 <div class="pb-4">
                     <div class="mx-auto size-40 rounded-full bg-slate-400"></div>
                 </div>
@@ -92,22 +92,7 @@ import { SnackBarService } from '@app/core/services/snack-bar.service';
             </div>
 
             <!-- Right pane -->
-            <div class="flex min-h-full grow flex-col gap-2 p-4 pt-20">
-                <div class="flex items-center justify-end gap-2">
-                    <span>sort by:</span>
-                    <mat-button-toggle-group name="fontStyle" aria-label="Font Style">
-                        <mat-button-toggle value="bold" checked> Age</mat-button-toggle>
-                        <mat-button-toggle value="italic"> Location</mat-button-toggle>
-                        <mat-button-toggle value="underline"> Fame rating</mat-button-toggle>
-                        <mat-button-toggle value="color"> Common tags </mat-button-toggle>
-                    </mat-button-toggle-group>
-                </div>
-                <div class="flex min-h-full grow flex-col gap-4">
-                    <mat-card class="h-40" />
-                    <mat-card class="h-40" />
-                    <mat-card class="h-40" />
-                </div>
-            </div>
+            <div class="flex grow flex-col gap-2 p-4 pt-20"></div>
         </div>
     `,
     host: { class: 'flex min-h-full relative flex-col gap-1' },

@@ -35,6 +35,10 @@ module.exports = {
             'web-landscape': {
                 raw: '(orientation: landscape) and (min-width: 600px)',
             },
+            'max-medium': { max: '599px' },
+            'max-expanded': { max: '839px' },
+            'max-large': { max: '1199px' },
+            'max-xlarge': { max: '1599px' },
         },
     },
     plugins: [],

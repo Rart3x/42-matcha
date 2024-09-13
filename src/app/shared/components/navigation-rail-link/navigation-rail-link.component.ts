@@ -13,6 +13,7 @@ import { NgClass } from '@angular/common';
                 'group-hover:bg-secondary-container group-hover:px-4 group-hover:text-on-secondary-container group-hover:transition-[padding]',
                 'filled easing-linear m-0 box-content inline-flex !size-fit items-center justify-center rounded-4xl px-1 text-3xl leading-8 duration-1000',
             ]"
+            class="min-w-"
         >
             {{ icon() }}
         </mat-icon>
@@ -20,7 +21,7 @@ import { NgClass } from '@angular/common';
     `,
     host: {
         role: 'link',
-        class: 'group flex flex-col -gap-1 cursor-pointer justify-center items-center',
+        class: 'group flex flex-col -gap-1 cursor-pointer justify-center items-center min-w-16',
         '[class.active]': 'active()',
     },
     styles: `

@@ -19,10 +19,14 @@ import { SidesheetLayoutComponent } from '@app/shared/layouts/sidesheet-layout/s
     ],
     template: `
         <app-sidesheet-layout>
-            <div class="min-w-screen flex min-h-screen">
+            <div
+                class="min-w-screen max-medium:flex-col-reverse max-medium:h-screen flex min-h-screen"
+            >
                 <!-- navigation rail -->
-                <div class="flex h-screen w-20 flex-col justify-center">
-                    <nav class="flex flex-col gap-3">
+                <div
+                    class="max-medium:min-h-20 flex justify-center medium:h-screen medium:w-20 medium:flex-col"
+                >
+                    <nav class="flex gap-3 medium:flex-col">
                         <app-navigation-rail-link
                             icon="home"
                             label="Home"
@@ -45,7 +49,9 @@ import { SidesheetLayoutComponent } from '@app/shared/layouts/sidesheet-layout/s
                     <!-- navigation rail content -->
                 </div>
 
-                <div class="relative flex min-h-screen grow flex-col overflow-auto">
+                <div
+                    class="max-medium:min-w-screen relative grow overflow-auto medium:min-h-screen"
+                >
                     <router-outlet></router-outlet>
                 </div>
             </div>

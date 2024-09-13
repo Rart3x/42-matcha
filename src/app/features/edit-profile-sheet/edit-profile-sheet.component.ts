@@ -144,7 +144,15 @@ import { RestrictedInputDirective } from '@app/shared/directives/restricted-inpu
 
                 <mat-form-field *rxLet="form.controls.age as age" class="col-span-1">
                     <mat-label>Age</mat-label>
-                    <input matInput type="number" placeholder="Age" [formControl]="age" />
+                    <input
+                        matInput
+                        type="text"
+                        placeholder="Age"
+                        [formControl]="age"
+                        appRestrictedInput
+                        pattern="^[0-9]*$"
+                        [maxLength]="3"
+                    />
                     <mat-error matTooltipEllipsis>
                         @if (age.hasError('required')) {
                             Age is required
@@ -352,12 +360,7 @@ export class EditProfileSheetComponent {
         ],
         tags: [
             [] as string[],
-            [
-                Validators.required,
-                Validators.minLength(3),
-                Validators.maxLength(10),
-                // regexValidator(/^[a-zA-Z0-9]+[a-zA-Z0-9-' ]*$/, 'tag'),
-            ],
+            [Validators.required, Validators.minLength(3), Validators.maxLength(10)],
         ],
     });
 

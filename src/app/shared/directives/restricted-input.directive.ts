@@ -25,7 +25,7 @@ export class RestrictedInputDirective {
 
         const newLength = oldValue.length + 1;
         const maxLength = this.maxLength();
-        if (maxLength && newLength > maxLength) {
+        if (maxLength && maxLength < newLength) {
             event.preventDefault();
         }
     }

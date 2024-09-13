@@ -67,9 +67,9 @@ import { Profile } from '@api/procedures/profile.procedure';
                 [formGroup]="form"
                 (ngSubmit)="onSubmit()"
                 id="profile-form"
-                class="grid grid-cols-4 gap-2"
+                class="grid grid-cols-8 gap-2"
             >
-                <mat-form-field *rxLet="form.controls.first_name as firstName" class="col-span-2">
+                <mat-form-field *rxLet="form.controls.first_name as firstName" class="col-span-4">
                     <mat-label>First Name</mat-label>
                     <input
                         matInput
@@ -97,7 +97,7 @@ import { Profile } from '@api/procedures/profile.procedure';
                     </mat-error>
                 </mat-form-field>
 
-                <mat-form-field *rxLet="form.controls.last_name as lastName" class="col-span-2">
+                <mat-form-field *rxLet="form.controls.last_name as lastName" class="col-span-4">
                     <mat-label>Last Name</mat-label>
                     <input matInput type="test" placeholder="Last Name" [formControl]="lastName" />
                     <mat-hint matTooltipEllipsis>
@@ -120,7 +120,7 @@ import { Profile } from '@api/procedures/profile.procedure';
                     </mat-error>
                 </mat-form-field>
 
-                <mat-form-field *rxLet="form.controls.username as username" class="col-span-3">
+                <mat-form-field *rxLet="form.controls.username as username" class="col-span-5">
                     <mat-label>Username</mat-label>
                     <input matInput type="text" placeholder="Username" [formControl]="username" />
                     <mat-hint matTooltipEllipsis>
@@ -143,7 +143,7 @@ import { Profile } from '@api/procedures/profile.procedure';
                     </mat-error>
                 </mat-form-field>
 
-                <mat-form-field *rxLet="form.controls.age as age" class="col-span-1">
+                <mat-form-field *rxLet="form.controls.age as age" class="col-span-3">
                     <mat-label>Age</mat-label>
                     <input
                         matInput
@@ -167,7 +167,7 @@ import { Profile } from '@api/procedures/profile.procedure';
                     </mat-error>
                 </mat-form-field>
 
-                <mat-form-field *rxLet="form.controls.gender as gender" class="col-span-2">
+                <mat-form-field *rxLet="form.controls.gender as gender" class="col-span-4">
                     <mat-label>Gender</mat-label>
                     <mat-select [formControl]="gender">
                         <mat-option value="male">Male</mat-option>
@@ -185,7 +185,7 @@ import { Profile } from '@api/procedures/profile.procedure';
 
                 <mat-form-field
                     *rxLet="form.controls.sexual_pref as sexualPreferences"
-                    class="col-span-2"
+                    class="col-span-4"
                 >
                     <mat-label>Sexual preferences</mat-label>
                     <mat-select [formControl]="form.controls.sexual_pref">
@@ -202,7 +202,7 @@ import { Profile } from '@api/procedures/profile.procedure';
                     </mat-error>
                 </mat-form-field>
 
-                <mat-form-field *rxLet="form.controls.biography as bio" class="col-span-4">
+                <mat-form-field *rxLet="form.controls.biography as bio" class="col-span-8">
                     <mat-label>Bio</mat-label>
                     <textarea
                         matInput
@@ -228,7 +228,7 @@ import { Profile } from '@api/procedures/profile.procedure';
                     </mat-error>
                 </mat-form-field>
 
-                <mat-form-field *rxLet="form.controls.tags as tags" class="col-span-4">
+                <mat-form-field *rxLet="form.controls.tags as tags" class="col-span-8">
                     <mat-label>Likes</mat-label>
                     <mat-chip-grid #chipGrid aria-label="Tag selection" [formControl]="tags">
                         @for (tag of reactiveTags(); track tag) {

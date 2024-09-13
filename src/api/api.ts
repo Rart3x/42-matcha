@@ -21,6 +21,11 @@ import {
     getProfileByUsernameProcedure,
     patchPrincipalProfileProcedure,
 } from '@api/procedures/profile.procedure';
+import {
+    getPrincipalUserLikesProcedure,
+    getPrincipalUserStatsProcedure,
+    getPrincipalUserVisitsProcedure,
+} from '@api/procedures/relation.procedure';
 
 export const apiRouter = Router();
 
@@ -42,6 +47,9 @@ const rpcRouter = createProcedureRouter([
     getExistingTagsProcedure,
     confirmEmailModificationProcedure,
     getProfileByUsernameProcedure,
+    getPrincipalUserStatsProcedure,
+    getPrincipalUserLikesProcedure,
+    getPrincipalUserVisitsProcedure,
 ]);
 
 export type RpcRouter = typeof rpcRouter;

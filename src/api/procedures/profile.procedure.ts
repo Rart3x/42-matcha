@@ -23,6 +23,30 @@ export type Profile = {
     tags: string[];
 };
 
+export const getProfileByUsernameProcedure = procedure(
+    'getProfileByUsername',
+    {} as { username: string },
+    async (params) => {
+        const username = validateUsername(params.username);
+
+        const [profile]: [Profile?] = await sql`
+            SELECT username, first_name, last_name, age, sexual_pref, biography, gender,
+                   array_remove(ARRAY_AGG(tags.name), NULL) as tags
+            FROM users
+                LEFT JOIN users_tags ON users_tags.user_id = users.id
+                LEFT JOIN tags ON tags.id = users_tags.tag_id
+            WHERE username = ${username}
+            GROUP BY username, first_name, last_name, age, sexual_pref, biography, gender
+        `;
+
+        if (!profile) {
+            throw badRequest();
+        }
+
+        return profile;
+    },
+);
+
 export const getPrincipalProfileProcedure = procedure('getPrincipalProfile', async () => {
     const user_id = await usePrincipalUser();
 

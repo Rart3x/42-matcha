@@ -18,6 +18,7 @@ import {
 import {
     getExistingTagsProcedure,
     getPrincipalProfileProcedure,
+    getProfileByUsernameProcedure,
     patchPrincipalProfileProcedure,
 } from '@api/procedures/profile.procedure';
 
@@ -40,6 +41,7 @@ const rpcRouter = createProcedureRouter([
     updatePasswordProcedure,
     getExistingTagsProcedure,
     confirmEmailModificationProcedure,
+    getProfileByUsernameProcedure,
 ]);
 
 export type RpcRouter = typeof rpcRouter;

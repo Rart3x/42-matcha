@@ -1,22 +1,20 @@
 import { badRequest } from '@api/errors/bad-request.error';
 
-export function validateAge(age?: string): number {
+export function validateAge(age?: number): number {
     if (!age) {
         throw badRequest();
     }
-    if (!/^\d+$/.test(age)) {
-        throw badRequest();
-    }
-
-    const parsed = parseInt(age, 10);
-
-    if (isNaN(parsed)) {
+    if (isNaN(age)) {
         return 0;
     }
-    if (parsed < 18 || 120 < parsed) {
+    // test if integer
+    if (age % 1 !== 0) {
         throw badRequest();
     }
-    return parsed;
+    if (age < 18 || 120 < age) {
+        throw badRequest();
+    }
+    return age;
 }
 
 export function validateSexualPref(sexual_pref?: string) {

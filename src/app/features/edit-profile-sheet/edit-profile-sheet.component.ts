@@ -5,7 +5,7 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { injectRpcClient } from '@app/core/http/rpc-client';
 import { injectMutation, injectQuery } from '@tanstack/angular-query-experimental';
 import { regexValidator } from '@app/shared/validators/regex.validator';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { injectUsernameAvailableValidator } from '@app/shared/validators/username-available.validator';
 import { MatError, MatFormField, MatHint, MatLabel } from '@angular/material/form-field';
 import { MatTooltipEllipsisDirective } from '@app/shared/directives/mat-tooltip-ellipsis.directive';
@@ -31,6 +31,7 @@ import {
 } from '@angular/material/autocomplete';
 import { MatIcon } from '@angular/material/icon';
 import { RestrictedInputDirective } from '@app/shared/directives/restricted-input.directive';
+import { Profile } from '@api/procedures/profile.procedure';
 
 @Component({
     selector: 'app-edit-profile-sheet',
@@ -259,7 +260,7 @@ import { RestrictedInputDirective } from '@app/shared/directives/restricted-inpu
                         }
                     </mat-autocomplete>
                     <mat-hint>
-                        @if (!form.controls.tags.value.length) {
+                        @if (!form.controls.tags.value?.length) {
                             Add tags to describe your interests.
                         }
                     </mat-hint>
@@ -296,7 +297,7 @@ import { RestrictedInputDirective } from '@app/shared/directives/restricted-inpu
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EditProfileSheetComponent {
-    #fb = inject(NonNullableFormBuilder);
+    #fb = inject(FormBuilder);
     #rpcClient = injectRpcClient();
     #snackbar = inject(SnackBarService);
     #usernameAvailableValidator = injectUsernameAvailableValidator();
@@ -333,7 +334,7 @@ export class EditProfileSheetComponent {
             [this.#usernameAvailableValidator],
         ],
         age: [
-            '',
+            null as number | null,
             [
                 Validators.required,
                 Validators.min(18),
@@ -389,7 +390,7 @@ export class EditProfileSheetComponent {
 
     onSubmit() {
         if (this.form.valid) {
-            this.update.mutate(this.form.getRawValue());
+            this.update.mutate(this.form.getRawValue() as Required<Profile>);
         }
     }
 
@@ -411,32 +412,30 @@ export class EditProfileSheetComponent {
     readonly tagSeparatorKeysCodes: number[] = [ENTER, COMMA];
 
     tagAdded(event: MatChipInputEvent): void {
+        const tags = this.form.controls.tags.value ?? ([] as string[]);
         const value = (event.value || '').trim();
 
-        if (value && !this.form.controls.tags.value.includes(value)) {
-            this.form.controls.tags.setValue([...this.form.controls.tags.value, value]);
+        if (value && !tags.includes(value)) {
+            this.form.controls.tags.setValue([...tags, value]);
         }
         event.chipInput?.clear();
     }
 
     tagRemoved(tag: string): void {
-        const index = this.form.controls.tags.value.indexOf(tag);
+        const tags = this.form.controls.tags.value ?? ([] as string[]);
+
+        const index = tags.indexOf(tag);
 
         if (0 <= index) {
-            this.form.controls.tags.setValue(
-                this.form.controls.tags.value
-                    .slice(0, index)
-                    .concat(this.form.controls.tags.value.slice(index + 1)),
-            );
+            this.form.controls.tags.setValue(tags.slice(0, index).concat(tags.slice(index + 1)));
         }
     }
 
     tagSelected(event: MatAutocompleteSelectedEvent): void {
-        if (!this.form.controls.tags.value.includes(event.option.viewValue)) {
-            this.form.controls.tags.setValue([
-                ...this.form.controls.tags.value,
-                event.option.viewValue,
-            ]);
+        const tags = this.form.controls.tags.value ?? ([] as string[]);
+
+        if (!tags.includes(event.option.viewValue)) {
+            this.form.controls.tags.setValue([...tags, event.option.viewValue]);
         }
         event.option.deselect();
     }

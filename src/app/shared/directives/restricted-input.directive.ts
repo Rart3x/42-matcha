@@ -10,7 +10,7 @@ export class RestrictedInputDirective {
     pattern = input<string>();
     maxLength = input<number>();
 
-    @HostListener('document:keypress', ['$event'])
+    @HostListener('keypress', ['$event'])
     onKeyPress(event: KeyboardEvent) {
         const oldValue = this.#el.nativeElement.value;
         const newKey = event.key;

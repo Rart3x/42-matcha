@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS users
     first_name  TEXT    NOT NULL CHECK (length(first_name) <= 30),
     last_name   TEXT    NOT NULL CHECK (length(last_name) <= 30),
 
-    age         INTEGER NULL CHECK (18 < age),
+    age         INTEGER NULL CHECK (18 <= age),
     biography   TEXT    NULL CHECK (length(biography) < 255),
     gender      TEXT    NULL CHECK (length(gender) < 255),
     sexual_pref TEXT    NULL CHECK (length(sexual_pref) < 255),

@@ -2,8 +2,8 @@ import { Request, Response, Router } from 'express';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { BaseApiError } from './base-api-error';
 
-export type ProcedureParams = Record<string, string> | void;
-export type ProcedureResult = Record<string, string> | void;
+export type ProcedureParams = Record<string, any> | void;
+export type ProcedureResult = Record<string, any>;
 
 export type AsyncRouterContext = {
     request: Request;

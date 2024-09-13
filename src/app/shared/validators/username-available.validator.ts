@@ -25,7 +25,6 @@ export function injectUsernameAvailableValidator(injector?: Injector) {
                     }),
                 ),
                 map((res) => {
-                    console.log(res);
                     if (res.available === 'true') {
                         return null;
                     }

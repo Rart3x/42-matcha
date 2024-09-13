@@ -10,6 +10,7 @@ import {
     validateSexualPref,
 } from '@api/validators/profile.validators';
 import { validateTag, validateTags } from '@api/validators/tag.validators';
+import { limitValidator, offsetValidator } from '@api/validators/page.validators';
 
 export type Profile = {
     username: string;
@@ -44,22 +45,28 @@ export const getPrincipalProfileProcedure = procedure('getPrincipalProfile', asy
 
 export const getExistingTagsProcedure = procedure(
     'getExistingTags',
-    {} as { tag: string },
+    {} as {
+        tag: string;
+        offset: number;
+        limit: number;
+    },
     async (params) => {
         const tag = validateTag(params.tag);
+        const offset = offsetValidator(params.offset);
+        const limit = limitValidator(params.limit);
 
-        const [existingTags] = await sql`
+        const existingTags = await sql<{ name: string; nbr: number }[]>`
             SELECT name, COUNT(*) as nbr
             FROM tags
-            WHERE name LIKE ${tag}
+            WHERE name LIKE ${tag + '%'}
             GROUP BY name
+            OFFSET ${offset}
+            LIMIT ${limit}
         `;
 
-        if (!existingTags || existingTags.length === 0) {
-            throw badRequest();
-        }
+        const count = existingTags?.[0]?.nbr ?? 0;
 
-        return existingTags;
+        return { count, page: offset / limit + 1, tags: existingTags.map((tag) => tag.name) };
     },
 );
 

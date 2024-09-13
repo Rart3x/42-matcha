@@ -3,9 +3,13 @@ import { SidesheetComponent } from '@app/shared/layouts/sidesheet-layout/sideshe
 import { MatButton } from '@angular/material/button';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { injectRpcClient } from '@app/core/http/rpc-client';
-import { injectMutation, injectQuery } from '@tanstack/angular-query-experimental';
+import {
+    injectInfiniteQuery,
+    injectMutation,
+    injectQuery,
+} from '@tanstack/angular-query-experimental';
 import { regexValidator } from '@app/shared/validators/regex.validator';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { injectUsernameAvailableValidator } from '@app/shared/validators/username-available.validator';
 import { MatError, MatFormField, MatHint, MatLabel } from '@angular/material/form-field';
 import { MatTooltipEllipsisDirective } from '@app/shared/directives/mat-tooltip-ellipsis.directive';
@@ -58,6 +62,7 @@ import { Profile } from '@api/procedures/profile.procedure';
         MatAutocomplete,
         MatChipRemove,
         RestrictedInputDirective,
+        FormsModule,
     ],
     template: `
         <app-sidesheet heading="Edit Profile" [loading]="profile.isPending()">
@@ -241,6 +246,8 @@ import { Profile } from '@api/procedures/profile.procedure';
                         }
                     </mat-chip-grid>
                     <input
+                        [(ngModel)]="currentSearch"
+                        [ngModelOptions]="{ standalone: true }"
                         appRestrictedInput
                         pattern="^[a-zA-Z0-9]-*$"
                         [maxLength]="20"
@@ -255,9 +262,13 @@ import { Profile } from '@api/procedures/profile.procedure';
                         #auto="matAutocomplete"
                         (optionSelected)="tagSelected($event)"
                     >
-                        @for (tag of filteredTags(); track tag) {
-                            <mat-option [value]="tag">{{ tag }}</mat-option>
+                        @for (pages of existingTags.data()?.pages; track $index) {
+                            @for (tag of pages.tags; track tag) {
+                                <mat-option [value]="tag">{{ tag }}</mat-option>
+                            }
                         }
+                        <!--                        @for (tag of tags.data(); track tag) {-->
+                        <!--                        }-->
                     </mat-autocomplete>
                     <mat-hint>
                         @if (!form.controls.tags.value?.length) {
@@ -403,11 +414,46 @@ export class EditProfileSheetComponent {
 
     // tags
 
+    currentSearch = signal('');
+
+    existingTags = injectInfiniteQuery(() => ({
+        queryKey: ['tags', this.currentSearch()],
+        queryFn: ({ pageParam }) =>
+            this.#rpcClient.getExistingTags({
+                tag: this.currentSearch(),
+                offset: pageParam * 10,
+                limit: 10,
+            }),
+        initialPageParam: 0,
+        getPreviousPageParam: (firstPage, allPages, firstPageParam) => {
+            if (firstPageParam === 0) {
+                return undefined;
+            }
+            return firstPageParam - 1;
+        },
+        getNextPageParam: (lastPage, allPages, lastPageParam) => {
+            if (lastPage.tags.length === 0) {
+                return undefined;
+            }
+            return lastPageParam + 1;
+        },
+        enabled: this.currentSearch().length >= 3,
+    }));
+
+    async fetchNextPage() {
+        // Do nothing if already fetching
+        if (this.existingTags.isFetching()) return;
+        await this.existingTags.fetchNextPage();
+    }
+    async fetchPreviousPage() {
+        // Do nothing if already fetching
+        if (this.existingTags.isFetching()) return;
+        await this.existingTags.fetchPreviousPage();
+    }
+
     reactiveTags = toSignal(this.form.controls.tags.valueChanges, {
         initialValue: this.form.controls.tags.value,
     });
-
-    filteredTags = signal<string[]>([]);
 
     readonly tagSeparatorKeysCodes: number[] = [ENTER, COMMA];
 

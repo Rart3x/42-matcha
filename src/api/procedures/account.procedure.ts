@@ -165,3 +165,86 @@ export const emailAvailableProcedure = procedure(
         return { available: 'true' as const };
     },
 );
+
+export const updateEmailProcedure = procedure(
+    'updateEmail',
+    {} as { email: string },
+    async (params) => {
+        const email = validateEmail(params.email);
+
+        const user_id = await usePrincipalUser();
+
+        const { token, username } = await sql.begin(async (sql) => {
+            const [existing]: [{ exists: boolean }] = await sql`
+                SELECT EXISTS(
+                    SELECT 1
+                    FROM users, users_registrations
+                    WHERE
+                    (
+                        users_registrations.email = ${email}
+                        AND expires_at > NOW()
+                    )
+                    OR users.email = ${email}
+                ) as exists
+            `;
+
+            if (existing.exists) {
+                throw badRequest();
+            }
+
+            const [result]: [{ token: string }?] = await sql`
+                INSERT INTO pending_email_modification(new_email, user_id)
+                VALUES (${email}, ${user_id})
+                RETURNING token
+            `;
+
+            if (!result) {
+                throw badRequest();
+            }
+
+            const [user]: [{ username: string }?] = await sql`
+                SELECT username
+                FROM users
+                WHERE id = ${user_id}
+            `;
+
+            if (!user) {
+                throw badRequest();
+            }
+
+            return { token: result.token, username: user.username };
+        });
+
+        const confirmationLink = `http://${HOST}:${PORT}/confirm-email-modification/${token}`;
+
+        await mailer
+            .sendMail({
+                from: 'no-reply@matcha.com',
+                to: email,
+                subject: 'Email Modification',
+                text: `Hi ${username}, please click the link to confirm your new email: ${confirmationLink}`,
+            })
+            .catch(() => {
+                throw badRequest();
+            });
+
+        return { message: 'ok' };
+    },
+);
+
+export const updatePasswordProcedure = procedure(
+    'updatePassword',
+    {} as { password: string },
+    async (params) => {
+        const password = validatePassword(params.password);
+
+        const user_id = await usePrincipalUser().catch(() => null);
+
+        await sql`
+            SET password = crypt(${password}, gen_salt('bf', 8))
+            WHERE id = ${user_id}
+        `;
+
+        return { message: 'ok' };
+    },
+);

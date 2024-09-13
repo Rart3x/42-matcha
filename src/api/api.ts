@@ -10,6 +10,8 @@ import {
     confirmEmailProcedure,
     emailAvailableProcedure,
     registerAccountProcedure,
+    updateEmailProcedure,
+    updatePasswordProcedure,
     usernameAvailableProcedure,
 } from '@api/procedures/account.procedure';
 import {
@@ -32,6 +34,8 @@ const rpcRouter = createProcedureRouter([
     emailAvailableProcedure,
     getPrincipalProfileProcedure,
     patchPrincipalProfileProcedure,
+    updateEmailProcedure,
+    updatePasswordProcedure,
 ]);
 
 export type RpcRouter = typeof rpcRouter;

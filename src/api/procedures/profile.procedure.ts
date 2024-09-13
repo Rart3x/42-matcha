@@ -84,6 +84,7 @@ export const getExistingTagsProcedure = procedure(
             FROM tags
             WHERE name LIKE ${tag + '%'}
             GROUP BY name
+            ORDER BY name
             OFFSET ${offset}
             LIMIT ${limit}
         `;

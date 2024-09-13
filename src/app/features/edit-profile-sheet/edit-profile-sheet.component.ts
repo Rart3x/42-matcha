@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    computed,
+    effect,
+    inject,
+    signal,
+    viewChild,
+} from '@angular/core';
 import { SidesheetComponent } from '@app/shared/layouts/sidesheet-layout/sidesheet.component';
 import { MatButton } from '@angular/material/button';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
@@ -36,6 +44,8 @@ import {
 import { MatIcon } from '@angular/material/icon';
 import { RestrictedInputDirective } from '@app/shared/directives/restricted-input.directive';
 import { Profile } from '@api/procedures/profile.procedure';
+import { ScrollingModule } from '@angular/cdk/scrolling';
+import { AfterViewInitDirective } from '@app/shared/directives/after-view-init.directive';
 
 @Component({
     selector: 'app-edit-profile-sheet',
@@ -63,6 +73,8 @@ import { Profile } from '@api/procedures/profile.procedure';
         MatChipRemove,
         RestrictedInputDirective,
         FormsModule,
+        ScrollingModule,
+        AfterViewInitDirective,
     ],
     template: `
         <app-sidesheet heading="Edit Profile" [loading]="profile.isPending()">
@@ -262,13 +274,20 @@ import { Profile } from '@api/procedures/profile.procedure';
                         #auto="matAutocomplete"
                         (optionSelected)="tagSelected($event)"
                     >
-                        @for (pages of existingTags.data()?.pages; track $index) {
-                            @for (tag of pages.tags; track tag) {
-                                <mat-option [value]="tag">{{ tag }}</mat-option>
-                            }
-                        }
-                        <!--                        @for (tag of tags.data(); track tag) {-->
-                        <!--                        }-->
+                        <cdk-virtual-scroll-viewport
+                            itemSize="25"
+                            class="h-[200px]"
+                            (scrolledIndexChange)="scrollIndex.set($event)"
+                            #viewport
+                        >
+                            <mat-option
+                                *cdkVirtualFor="let tag of autocompletedTags(); let last = last"
+                                [value]="tag"
+                                (focus)="viewport.scrollToIndex(scrollIndex())"
+                            >
+                                {{ tag }}
+                            </mat-option>
+                        </cdk-virtual-scroll-viewport>
                     </mat-autocomplete>
                     <mat-hint>
                         @if (!form.controls.tags.value?.length) {
@@ -425,12 +444,6 @@ export class EditProfileSheetComponent {
                 limit: 10,
             }),
         initialPageParam: 0,
-        getPreviousPageParam: (firstPage, allPages, firstPageParam) => {
-            if (firstPageParam === 0) {
-                return undefined;
-            }
-            return firstPageParam - 1;
-        },
         getNextPageParam: (lastPage, allPages, lastPageParam) => {
             if (lastPage.tags.length === 0) {
                 return undefined;
@@ -440,15 +453,44 @@ export class EditProfileSheetComponent {
         enabled: this.currentSearch().length >= 3,
     }));
 
+    autocomplete = viewChild(MatAutocomplete);
+
+    scrollIndex = signal(0);
+
+    autocompletedTags = computed(() => {
+        const pages = this.existingTags.data()?.pages ?? [];
+
+        if (this.currentSearch().length < 3) {
+            return [];
+        }
+
+        return pages.flatMap((page) => page.tags);
+    });
+
+    autocompletedTagsCount = computed(() => this.autocompletedTags().length);
+
+    #scrollEffect = effect(async () => {
+        if (this.scrollIndex() > this.autocompletedTagsCount() - 5 && this.autocomplete()?.isOpen) {
+            await this.fetchNextPage();
+        }
+    });
+
+    #fetchedEffect = effect(async () => {
+        if (
+            this.existingTags.isFetched() &&
+            this.scrollIndex() > this.autocompletedTagsCount() - 5 &&
+            this.autocomplete()?.isOpen
+        ) {
+            await this.fetchNextPage();
+        }
+    });
+
     async fetchNextPage() {
+        console.log('fetching next page');
         // Do nothing if already fetching
+        // TODO:add more exclusion logic
         if (this.existingTags.isFetching()) return;
         await this.existingTags.fetchNextPage();
-    }
-    async fetchPreviousPage() {
-        // Do nothing if already fetching
-        if (this.existingTags.isFetching()) return;
-        await this.existingTags.fetchPreviousPage();
     }
 
     reactiveTags = toSignal(this.form.controls.tags.valueChanges, {
@@ -483,6 +525,7 @@ export class EditProfileSheetComponent {
         if (!tags.includes(event.option.viewValue)) {
             this.form.controls.tags.setValue([...tags, event.option.viewValue]);
         }
+        this.currentSearch.set('');
         event.option.deselect();
     }
 }

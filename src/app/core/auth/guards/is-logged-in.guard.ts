@@ -1,19 +1,17 @@
 import { CanActivateChildFn, RedirectCommand, Router } from '@angular/router';
 import { inject } from '@angular/core';
-import { AuthService } from '@app/core/auth/auth.service';
 import { map } from 'rxjs';
+import { AuthService } from '@app/core/auth/auth.service';
 
 export const isLoggedInGuard: CanActivateChildFn = (
     _route,
     _state,
-    authService = inject(AuthService),
+    auth = inject(AuthService),
     router = inject(Router),
 ) => {
-    return authService.isAuthenticated$.pipe(
+    return auth.isLoggedIn$.pipe(
         map((isAuthenticated) =>
-            isAuthenticated
-                ? true
-                : new RedirectCommand(router.parseUrl('/login')),
+            isAuthenticated ? true : new RedirectCommand(router.parseUrl('/login')),
         ),
     );
 };

@@ -1,53 +1,32 @@
-import type { Procedures } from '@api/api';
-import { inject } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { catchError, map, Observable, of } from 'rxjs';
+import { inject, Injector } from '@angular/core';
+import { assertInjector } from 'ngxtension/assert-injector';
+import { HttpClient } from '@angular/common/http';
+import { RpcRouter } from '@api/api';
+import { firstValueFrom } from 'rxjs';
+
+type Contracts = RpcRouter['__contracts'];
 
 export type RpcClient = {
-    [procedure in Procedures['name']]: (
-        data: Extract<Procedures, { name: procedure }>['__params'],
-    ) => Observable<
-        | {
-              ok: true;
-              data: Extract<Procedures, { name: procedure }>['__response'];
-          }
-        | {
-              ok: false;
-              error: Extract<Procedures, { name: procedure }>['__error'];
-          }
-    >;
+    [procedure in Contracts['__name']]: (
+        data: Extract<Contracts, { __name: procedure }>['__params'],
+    ) => Promise<Extract<Contracts, { __name: procedure }>['__result']>;
 };
 
-type ProcedureName = Procedures['name'];
+export function injectRpcClient(injector?: Injector) {
+    return assertInjector(injectRpcClient, injector, () => {
+        const http = inject(HttpClient);
 
-export type RpcResponse<T extends ProcedureName> = Extract<Procedures, { name: T }>['__response'];
-export type RpcError<T extends ProcedureName> = Extract<Procedures, { name: T }>['__error'];
-
-export function injectRpcClient(): RpcClient {
-    const http = inject(HttpClient);
-
-    return new Proxy(
-        {},
-        {
-            get: (_, procedure: Procedures['name']) => {
-                return (data: any) =>
-                    http
-                        .post<
-                            Extract<Procedures, { name: typeof procedure }>['__response']
-                        >(`/api/${procedure}`, data)
-                        .pipe(
-                            map((response) => ({
-                                ok: true,
-                                data: response,
-                            })),
-                            catchError((error: HttpErrorResponse) =>
-                                of({
-                                    ok: false,
-                                    error: error.error?.error || 'Unknown error',
-                                }),
-                            ),
-                        );
+        return new Proxy(
+            {},
+            {
+                get: (_, procedure: Contracts['__name']) => (data: any) =>
+                    firstValueFrom(
+                        http.post<Extract<Contracts, { __name: typeof procedure }>['__result']>(
+                            `/api/${procedure}`,
+                            data,
+                        ),
+                    ),
             },
-        },
-    ) as RpcClient;
+        ) as RpcClient;
+    });
 }

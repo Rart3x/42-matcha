@@ -2,32 +2,25 @@ import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@
 import { AuthLayoutComponent } from '@app/core/auth/layouts/auth-layout.component';
 import { MatButtonModule } from '@angular/material/button';
 import { Router, RouterModule } from '@angular/router';
-import {
-    AbstractControl,
-    NgForm,
-    NonNullableFormBuilder,
-    ReactiveFormsModule,
-    Validators,
-} from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS, MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatPasswordToggleButtonComponent } from '@app/shared/components/mat-password-toggle-button/mat-password-toggle-button.component';
 import { CdkConnectedOverlay, CdkOverlayOrigin, ViewportRuler } from '@angular/cdk/overlay';
 import { MatCard, MatCardContent, MatCardHeader, MatCardSubtitle } from '@angular/material/card';
 import { rxEffect } from 'ngxtension/rx-effect';
-import { debounceTime, filter, iif, map, of, switchMap, tap } from 'rxjs';
+import { debounceTime, filter } from 'rxjs';
 import { MatIcon } from '@angular/material/icon';
 import { regexValidator } from '@app/shared/validators/regex.validator';
 import { MatTooltipEllipsisDirective } from '@app/shared/directives/mat-tooltip-ellipsis.directive';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { RxLet } from '@rx-angular/template/let';
-import { AccountService } from '@app/core/services/account.service';
-import { deriveLoading } from 'ngxtension/derive-loading';
 import { FormDisabledDirective } from '@app/shared/directives/form-disabled.directive';
-import { fromPromise } from 'rxjs/internal/observable/innerFrom';
 import { injectRpcClient } from '@app/core/http/rpc-client';
-import { injectUsernameExistsValidator } from '@app/shared/validators/inject-username-exists.validator';
-import { emailExistsValidator } from '@app/shared/validators/email-exists.validator';
+import { injectMutation } from '@tanstack/angular-query-experimental';
+import { AlertComponent } from '@app/shared/components/alert/alert.component';
+import { SnackBarService } from '@app/core/services/snack-bar.service';
+import { injectUsernameAvailableValidator } from '@app/shared/validators/username-available.validator';
+import { injectEmailAvailableValidator } from '@app/shared/validators/email-available.validator';
 
 @Component({
     selector: 'app-register-page',
@@ -50,6 +43,7 @@ import { emailExistsValidator } from '@app/shared/validators/email-exists.valida
         MatTooltipEllipsisDirective,
         RxLet,
         FormDisabledDirective,
+        AlertComponent,
     ],
     providers: [
         {
@@ -61,19 +55,19 @@ import { emailExistsValidator } from '@app/shared/validators/email-exists.valida
         <h1>Sign up</h1>
         <p>Sign up to start meeting new people</p>
 
-        @if (errorMsg()) {
-            <div class="mb-4 rounded-lg bg-error p-4 text-on-error">
-                {{ errorMsg() }}
-            </div>
-        }
-
         <form
-            [appFormDisabled]="loading()"
+            [appFormDisabled]="register.isPending()"
             [formGroup]="form"
-            #formElement="ngForm"
             (ngSubmit)="onSubmit()"
             class="grid grid-cols-2 gap-3"
         >
+            @if (register.isError()) {
+                <app-alert class="col-span-2">
+                    <ng-container heading> Registration failed. </ng-container>
+                    Please try again
+                </app-alert>
+            }
+
             <mat-form-field>
                 <mat-label>First name</mat-label>
                 <input
@@ -138,7 +132,7 @@ import { emailExistsValidator } from '@app/shared/validators/email-exists.valida
                         Email is required
                     } @else if (form.controls.email.hasError('email')) {
                         Must be a valid email address
-                    } @else if (form.controls.email.hasError('exists')) {
+                    } @else if (form.controls.email.hasError('available')) {
                         Email is already taken
                     }
                 </mat-error>
@@ -161,7 +155,7 @@ import { emailExistsValidator } from '@app/shared/validators/email-exists.valida
                         Must be at most 20 characters long
                     } @else if (form.controls.username.hasError('pattern')) {
                         Can only contain letters, numbers, and underscores
-                    } @else if (form.controls.username.hasError('exists')) {
+                    } @else if (form.controls.username.hasError('available')) {
                         Username is already taken
                     }
                 </mat-error>
@@ -182,7 +176,7 @@ import { emailExistsValidator } from '@app/shared/validators/email-exists.valida
                 <mat-password-toggle-button
                     matSuffix
                     [inputElement]="passwordInput"
-                    [disabled]="loading()"
+                    [disabled]="register.isPending()"
                 />
                 <mat-hint>
                     @if (!form.controls.password.value) {
@@ -302,7 +296,7 @@ import { emailExistsValidator } from '@app/shared/validators/email-exists.valida
                 <mat-password-toggle-button
                     matSuffix
                     [inputElement]="confirmInput"
-                    [disabled]="loading()"
+                    [disabled]="register.isPending()"
                 />
                 <mat-hint>
                     @if (!form.controls.confirmPassword.value) {
@@ -322,7 +316,7 @@ import { emailExistsValidator } from '@app/shared/validators/email-exists.valida
                 type="submit"
                 class="btn-primary col-span-2 mt-2"
                 mat-flat-button
-                [disabled]="form.invalid"
+                [disabled]="register.isPending()"
             >
                 Sign up
             </button>
@@ -335,21 +329,35 @@ import { emailExistsValidator } from '@app/shared/validators/email-exists.valida
 })
 export class RegisterPageComponent {
     #fb = inject(NonNullableFormBuilder);
-    #rpc = injectRpcClient();
     #router = inject(Router);
     #viewportRuler = inject(ViewportRuler);
-    #accountService = inject(AccountService);
+    #rpcClient = injectRpcClient();
+    #snackBar = inject(SnackBarService);
 
-    isOpen = signal(false);
-    triggerRect = signal<DOMRect | null>(null);
-    overlayFocusable = signal(false);
-    errorMsg = signal<string | null>(null);
-    loading = signal(false);
+    // Form submission
 
-    trigger = viewChild.required<CdkOverlayOrigin>('trigger');
-    passwordInput = viewChild.required<HTMLElement>('passwordInput');
-    overlay = viewChild.required<CdkConnectedOverlay>('overlay');
-    formElement = viewChild.required<NgForm>('formElement');
+    register = injectMutation(() => ({
+        mutationKey: ['register'],
+        mutationFn: this.#rpcClient.registerAccountProcedure,
+        onSuccess: async () => {
+            this.#snackBar.enqueueSnackBar('Registration successful');
+            await this.#router.navigate(['/registration-successful']);
+        },
+        onError: () => {
+            this.form.markAllAsTouched();
+            this.#snackBar.enqueueSnackBar('Registration failed');
+        },
+    }));
+
+    onSubmit() {
+        if (this.form.valid) {
+            const { confirmPassword, ...values } = this.form.getRawValue();
+
+            this.register.mutate(values);
+        }
+    }
+
+    // Form validation
 
     form = this.#fb.group(
         {
@@ -373,7 +381,7 @@ export class RegisterPageComponent {
                     regexValidator(/^[a-zA-Z]+[a-zA-Z-' ]*$/, 'name'),
                 ],
             ],
-            email: ['', [Validators.required, Validators.email], [emailExistsValidator()]],
+            email: ['', [Validators.required, Validators.email], [injectEmailAvailableValidator()]],
             username: [
                 '',
                 [
@@ -382,7 +390,7 @@ export class RegisterPageComponent {
                     Validators.maxLength(20),
                     Validators.pattern(/^[a-zA-Z0-9_]+$/),
                 ],
-                [injectUsernameExistsValidator()],
+                [injectUsernameAvailableValidator()],
             ],
             password: [
                 '',
@@ -417,6 +425,16 @@ export class RegisterPageComponent {
             ],
         },
     );
+
+    // Password overlay
+
+    isOpen = signal(false);
+    triggerRect = signal<DOMRect | null>(null);
+    overlayFocusable = signal(false);
+
+    trigger = viewChild.required<CdkOverlayOrigin>('trigger');
+    passwordInput = viewChild.required<HTMLElement>('passwordInput');
+    overlay = viewChild.required<CdkConnectedOverlay>('overlay');
 
     #resizeOverlayEffect = rxEffect(
         this.#viewportRuler.change().pipe(
@@ -459,61 +477,5 @@ export class RegisterPageComponent {
         if (ev.relatedTarget !== this.passwordInput()) {
             this.isOpen.set(false);
         }
-    }
-
-    displayErrorInOverlay(control: AbstractControl, error: string) {
-        console.log(control.errors);
-        return control.hasError(error) && (control.touched || this.formElement().submitted);
-    }
-
-    overlayErrors = toSignal(
-        this.form.valueChanges.pipe(
-            takeUntilDestroyed(),
-            map(() => {
-                return [
-                    {
-                        error:
-                            this.form.controls.password.hasError('minlength') &&
-                            (this.form.controls.password.touched || this.formElement().submitted),
-
-                        message: 'At least 8 characters',
-                    },
-                ];
-            }),
-        ),
-    );
-
-    onSubmit() {
-        if (!this.form.valid) {
-            return;
-        }
-
-        this.#accountService
-            .createAccount(
-                this.form.controls.email.value,
-                this.form.controls.username.value,
-                this.form.controls.password.value,
-                this.form.controls.firstName.value,
-                this.form.controls.lastName.value,
-            )
-            .pipe(
-                tap((res) => {
-                    if (res.ok) {
-                        this.errorMsg.set(null);
-                    } else {
-                        this.errorMsg.set(res.error);
-                    }
-                }),
-                switchMap((res) =>
-                    iif(
-                        () => res.ok,
-                        fromPromise(this.#router.navigate(['/registration-successful'])),
-                        of(null),
-                    ),
-                ),
-                deriveLoading(),
-                tap((loading) => this.loading.set(loading)),
-            )
-            .subscribe();
     }
 }

@@ -11,6 +11,8 @@ module.exports = {
                 surface: 'var(--sys-surface)',
                 error: 'var(--sys-error)',
                 outline: 'var(--sys-outline)',
+                'error-container': 'var(--sys-error-container)',
+                'on-error-container': 'var(--sys-on-error-container)',
                 'outline-variant': 'var(--sys-outline-variant)',
                 'surface-container': 'var(--sys-surface-container)',
                 'surface-container-low': 'var(--sys-surface-container-low)',

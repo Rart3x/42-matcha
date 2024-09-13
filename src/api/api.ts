@@ -1,39 +1,39 @@
 import { json, Router } from 'express';
-import { createRpcRouter } from '@api/lib/procedure';
+import cookieParser from 'cookie-parser';
+import { createProcedureRouter } from './lib/procedure-router';
 import {
     loginProcedure,
     logoutProcedure,
     verifySessionProcedure,
-} from '@api/procedures/auth.procedures';
+} from '@api/procedures/auth.procedure';
 import {
     confirmEmailProcedure,
-    createAccountProcedure,
-    emailExistsProcedure,
-    usernameExistsProcedure,
-} from '@api/procedures/account.procedures';
-import cookieParser from 'cookie-parser';
-import { getProfile } from '@api/procedures/profile.procedures';
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Configure root api router with global middlewares                                                                ///
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    emailAvailableProcedure,
+    registerAccountProcedure,
+    usernameAvailableProcedure,
+} from '@api/procedures/account.procedure';
+import {
+    getPrincipalProfileProcedure,
+    patchPrincipalProfileProcedure,
+} from '@api/procedures/profile.procedure';
 
 export const apiRouter = Router();
 
 apiRouter.use(cookieParser()); // parse cookies
 apiRouter.use(json()); // parse json body
 
-export const rpcRouter = createRpcRouter([
+const rpcRouter = createProcedureRouter([
+    verifySessionProcedure,
     loginProcedure,
     logoutProcedure,
-    verifySessionProcedure,
-    createAccountProcedure,
+    registerAccountProcedure,
     confirmEmailProcedure,
-    usernameExistsProcedure,
-    emailExistsProcedure,
-    getProfile,
+    usernameAvailableProcedure,
+    emailAvailableProcedure,
+    getPrincipalProfileProcedure,
+    patchPrincipalProfileProcedure,
 ]);
 
-export type Procedures = (typeof rpcRouter)['__procedures'][number];
+export type RpcRouter = typeof rpcRouter;
 
 apiRouter.use(rpcRouter);

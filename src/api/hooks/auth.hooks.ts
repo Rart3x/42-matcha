@@ -1,51 +1,61 @@
-import { err, ok, safeTry } from '@api/lib/result';
-import { sql } from '@api/connections/database';
-import { useClearCookie, useGetCookie } from '@api/lib/procedure';
+import { useClearCookie, useGetCookie, useSetCookie } from '@api/hooks/cookie.hooks';
+import { unauthorized } from '@api/errors/unauthorized.error';
+import { sql } from '@api/connections/database.connection';
 
-export function useSessionCookie() {
-    return safeTry(function* () {
-        const getCookie = useGetCookie();
-        const token = getCookie('session');
-        if (!token) {
-            return err('Missing session cookie');
-        }
-        return ok(token);
-    });
+const SESSION_COOKIE_NAME = 'session';
+
+export function useGetSessionCookie() {
+    const getCookie = useGetCookie();
+
+    return getCookie(SESSION_COOKIE_NAME);
 }
 
-export function usePrincipalUser() {
-    return safeTry(async function* () {
-        const clearCookie = useClearCookie();
-        const token = yield* useSessionCookie().safeUnwrap();
+export function useSetSessionCookie() {
+    const setCookie = useSetCookie();
 
-        const user_id = yield* (
-            await sql.begin(async (sql) => {
-                const users = await sql<{ user_id: string }[]>`
-                    SELECT user_id
-                    FROM sessions
-                    WHERE token = ${token}
-                        AND NOW() < expires_at
-                `;
+    return (token: string) =>
+        setCookie(SESSION_COOKIE_NAME, token, {
+            httpOnly: true,
+            sameSite: 'strict',
+        });
+}
 
-                if (users.length === 0) {
-                    return err('Invalid session');
-                }
+export function useClearSessionCookie() {
+    const clearCookie = useClearCookie();
 
-                // refresh the session
-                await sql<{ user_id: string }[]>`
-                    UPDATE sessions 
-                    SET updated_at = NOW()
-                    WHERE token = ${token};
-                `;
+    return () => clearCookie(SESSION_COOKIE_NAME);
+}
 
-                return ok(users[0].user_id);
-            })
-        )
-            .andThrough(() => {
-                clearCookie('session');
-            })
-            .safeUnwrap();
+/**
+ * @throws UnauthorizedError
+ */
+export async function usePrincipalUser() {
+    const clearCookie = useClearCookie();
+    const token = useGetSessionCookie();
 
-        return ok({ id: user_id });
-    });
+    if (!token) {
+        throw unauthorized();
+    }
+
+    return sql
+        .begin(async (sql) => {
+            // refresh the session
+            const [users]: [{ user_id: string }?] = await sql`
+                UPDATE sessions 
+                SET updated_at = NOW()
+                WHERE token = ${token}
+                    AND NOW() < expires_at
+                RETURNING user_id;
+            `;
+
+            if (!users) {
+                throw unauthorized();
+            }
+
+            return users.user_id;
+        })
+        .catch((err) => {
+            clearCookie(SESSION_COOKIE_NAME);
+            throw err;
+        });
 }

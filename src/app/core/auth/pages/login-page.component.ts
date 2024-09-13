@@ -1,11 +1,9 @@
 import {
-    afterNextRender,
+    AfterViewInit,
     ChangeDetectionStrategy,
     Component,
-    DestroyRef,
     ElementRef,
     inject,
-    signal,
     viewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -17,15 +15,14 @@ import { AuthLayoutComponent } from '@app/core/auth/layouts/auth-layout.componen
 import { Router, RouterModule } from '@angular/router';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { AuthService } from '@app/core/auth/auth.service';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { iif, of, switchMap, tap } from 'rxjs';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { SnackBarService } from '@app/core/services/snack-bar.service';
 import { MatPasswordToggleButtonComponent } from '@app/shared/components/mat-password-toggle-button/mat-password-toggle-button.component';
-import { deriveLoading } from 'ngxtension/derive-loading';
 import { FormDisabledDirective } from '@app/shared/directives/form-disabled.directive';
-import { fromPromise } from 'rxjs/internal/observable/innerFrom';
+import { injectMutation, injectQueryClient } from '@tanstack/angular-query-experimental';
+import { injectRpcClient } from '@app/core/http/rpc-client';
+import { RxLet } from '@rx-angular/template/let';
+import { AlertComponent } from '@app/shared/components/alert/alert.component';
 
 @Component({
     selector: 'app-login-page',
@@ -43,6 +40,8 @@ import { fromPromise } from 'rxjs/internal/observable/innerFrom';
         MatProgressSpinnerModule,
         MatPasswordToggleButtonComponent,
         FormDisabledDirective,
+        RxLet,
+        AlertComponent,
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [
@@ -54,71 +53,62 @@ import { fromPromise } from 'rxjs/internal/observable/innerFrom';
     template: `
         <h1>Sign in</h1>
         <p>Sign in with username</p>
+
         <form
             class="grid gap-3"
-            [formGroup]="loginForm"
-            [appFormDisabled]="isSubmitting()"
+            [formGroup]="form"
+            [appFormDisabled]="login.isPending()"
             (ngSubmit)="onSubmit()"
         >
-            @if (invalidCredentials()) {
-                <div class="bg-error mb-2 flex items-center gap-2 rounded border p-2">
-                    <mat-icon>error</mat-icon>
+            @if (login.isError()) {
+                <app-alert>
+                    <ng-container heading>Login failed.</ng-container>
                     Invalid credentials
-                </div>
+                </app-alert>
             }
 
-            <mat-form-field>
+            <mat-form-field *rxLet="form.controls.username as username">
                 <mat-label>Username</mat-label>
                 <mat-icon matPrefix>person</mat-icon>
-                <input
-                    id="username"
-                    matInput
-                    [formControl]="loginForm.controls.username"
-                    placeholder="Username"
-                />
-                @if (!loginForm.controls.username.value) {
-                    <mat-hint>Enter your username</mat-hint>
-                }
+                <input id="username" matInput [formControl]="username" placeholder="Username" />
+                <mat-hint>
+                    @if (!username.value) {
+                        Enter your username
+                    }
+                </mat-hint>
                 <mat-error>Username is required</mat-error>
             </mat-form-field>
 
-            <mat-form-field>
+            <mat-form-field *rxLet="form.controls.password as password">
                 <mat-label>Password</mat-label>
                 <mat-icon matPrefix>password</mat-icon>
                 <input
-                    id="password"
+                    [formControl]="password"
                     matInput
-                    [formControl]="loginForm.controls.password"
-                    placeholder="Password"
                     #passwordInput
+                    id="password"
+                    placeholder="Password"
                 />
                 <mat-password-toggle-button
                     matSuffix
                     [inputElement]="passwordInput"
-                    [disabled]="isSubmitting()"
+                    [disabled]="login.isPending()"
                 />
-                @if (!loginForm.controls.password.value) {
-                    <mat-hint>Enter your password</mat-hint>
-                }
+                <mat-hint>
+                    @if (password.value) {
+                        Enter your password
+                    }
+                </mat-hint>
                 <mat-error>Password is required</mat-error>
             </mat-form-field>
-
-            <div class="hidden">
-                <!-- Fix for weird bug with outline appearance on entry -->
-                <mat-form-field appearance="outline">
-                    <mat-icon matPrefix>password</mat-icon>
-                    <mat-label>Password</mat-label>
-                    <input matInput class="hidden" disabled />
-                </mat-form-field>
-            </div>
 
             <button
                 mat-flat-button
                 class="btn-primary mt-2"
                 matTooltip="Sign in"
-                [disabled]="isSubmitting()"
+                [disabled]="login.isPending()"
             >
-                @if (isSubmitting()) {
+                @if (login.isPending()) {
                     <mat-spinner diameter="20"></mat-spinner>
                 } @else {
                     Meet new people
@@ -130,61 +120,46 @@ import { fromPromise } from 'rxjs/internal/observable/innerFrom';
         class: 'h-fit grid w-full medium:w-96 large:w-[28rem] xlarge:w-[32rem]',
     },
 })
-export class LoginPageComponent {
+export class LoginPageComponent implements AfterViewInit {
     #fb = inject(NonNullableFormBuilder);
     #router = inject(Router);
-    #destroyRef = inject(DestroyRef);
-    #authService = inject(AuthService);
-    #snackBarService = inject(SnackBarService);
+    #snackBar = inject(SnackBarService);
+    #rpcClient = injectRpcClient();
+    #queryClient = injectQueryClient();
 
-    loginForm = this.#fb.group({
+    form = this.#fb.group({
         username: ['', Validators.required],
         password: ['', Validators.required],
     });
 
-    invalidCredentials = signal(false);
-    isSubmitting = signal(false);
+    login = injectMutation(() => ({
+        mutationFn: this.#rpcClient.login,
+        onSuccess: async () => {
+            this.#snackBar.enqueueSnackBar('Login successful');
+            await this.#queryClient.invalidateQueries({ queryKey: ['verifySession'] });
+            await this.#router.navigate(['/home']);
+        },
+        onError: () => {
+            this.#snackBar.enqueueSnackBar('Login failed');
+        },
+    }));
 
     passwordInput = viewChild.required<ElementRef<HTMLInputElement>>('passwordInput');
 
-    constructor() {
-        afterNextRender(() => {
-            const initialUsername = window.history.state?.username ?? '';
+    ngAfterViewInit() {
+        const initialUsername = window.history.state?.username ?? '';
 
-            if (initialUsername !== '') {
-                this.loginForm.controls.username.setValue(initialUsername);
-                this.passwordInput().nativeElement.focus();
-            }
-        });
+        if (initialUsername !== '') {
+            this.form.controls.username.setValue(initialUsername);
+            this.passwordInput().nativeElement.focus();
+        }
     }
 
     onSubmit() {
-        const { username, password } = this.loginForm.value;
+        const { username, password } = this.form.value;
 
-        if (!this.loginForm.valid || !username || !password) {
-            return;
+        if (this.form.valid && !!username && !!password) {
+            this.login.mutate({ username, password });
         }
-
-        this.#authService
-            .login(username, password)
-            .pipe(
-                takeUntilDestroyed(this.#destroyRef),
-                tap((result) => this.displayResultSnackbar(result)),
-                tap((result) => {
-                    if (!result) {
-                        this.invalidCredentials.set(true);
-                    }
-                }),
-                switchMap((res) =>
-                    iif(() => res, fromPromise(this.#router.navigate(['/'])), of(null)),
-                ),
-                deriveLoading(),
-                tap((value) => this.isSubmitting.set(value)),
-            )
-            .subscribe();
-    }
-
-    private displayResultSnackbar(result: boolean) {
-        this.#snackBarService.enqueueSnackBar(result ? 'Login successful' : 'Login failed');
     }
 }

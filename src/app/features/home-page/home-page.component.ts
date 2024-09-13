@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatAnchor, MatButton } from '@angular/material/button';
-import { AuthService } from '@app/core/auth/auth.service';
 import { Router, RouterLink } from '@angular/router';
 import { MatToolbar, MatToolbarRow } from '@angular/material/toolbar';
 import { MatIcon } from '@angular/material/icon';
@@ -8,6 +7,9 @@ import { ScoreIndicatorComponent } from '@app/shared/components/score-indicator/
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatCard } from '@angular/material/card';
 import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
+import { injectMutation, injectQueryClient } from '@tanstack/angular-query-experimental';
+import { injectRpcClient } from '@app/core/http/rpc-client';
+import { SnackBarService } from '@app/core/services/snack-bar.service';
 
 @Component({
     selector: 'app-home-page',
@@ -80,7 +82,9 @@ import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-
                         (click)="openEditProfileSheet()"
                         >Edit profile</a
                     >
-                    <button mat-flat-button class="btn-secondary" (click)="logout()">Logout</button>
+                    <button mat-flat-button class="btn-secondary" (click)="logout.mutate()">
+                        Logout
+                    </button>
                 </div>
 
                 <!-- Content -->
@@ -111,7 +115,21 @@ import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-
 })
 export class HomePageComponent {
     #router = inject(Router);
-    #authService = inject(AuthService);
+    #rpcClient = injectRpcClient();
+    #queryClient = injectQueryClient();
+    #snackBar = inject(SnackBarService);
+
+    logout = injectMutation(() => ({
+        mutationFn: this.#rpcClient.logout,
+        onSuccess: async () => {
+            this.#snackBar.enqueueSnackBar('You have been logged out');
+            await this.#queryClient.invalidateQueries({ queryKey: ['verifySession'] });
+            await this.#router.navigate(['/login']);
+        },
+        onError: () => {
+            this.#snackBar.enqueueSnackBar('Failed to logout');
+        },
+    }));
 
     async openViewsHistorySheet() {
         await this.#router.navigate([{ outlets: { sidesheet: 'views' } }]);
@@ -123,9 +141,5 @@ export class HomePageComponent {
 
     async openEditProfileSheet() {
         await this.#router.navigate([{ outlets: { sidesheet: 'edit-profile' } }]);
-    }
-
-    logout() {
-        this.#authService.logout().pipe().subscribe();
     }
 }

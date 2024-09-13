@@ -1,16 +1,8 @@
-import { inject, Injectable } from '@angular/core';
-import {
-    distinctUntilChanged,
-    map,
-    merge,
-    Observable,
-    ReplaySubject,
-    shareReplay,
-    tap,
-} from 'rxjs';
-import { LoggerService } from '@app/core/services/logger.service';
+import { Injectable } from '@angular/core';
+import { injectQuery } from '@tanstack/angular-query-experimental';
 import { injectRpcClient } from '@app/core/http/rpc-client';
-import { Router } from '@angular/router';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { filter, map } from 'rxjs';
 
 /**
  * Service that handles the authentication of the user.
@@ -19,77 +11,18 @@ import { Router } from '@angular/router';
     providedIn: 'root',
 })
 export class AuthService {
-    #router = inject(Router);
-    #logger = inject(LoggerService);
-    #rpcClient = injectRpcClient();
+    #rpc = injectRpcClient();
 
-    #isAuthenticatedSubject = new ReplaySubject<boolean>(1);
+    #verifySessionQuery = injectQuery(() => ({
+        queryKey: ['verifySession'],
+        refetchOnWindowFocus: 'always',
+        retry: false,
+        staleTime: /* 10 minutes */ 1000 * 60 * 10,
+        queryFn: () => this.#rpc.verifySession(),
+    }));
 
-    /**
-     * Observable that emits the authentication status.
-     */
-    isAuthenticated$: Observable<boolean> = merge(
-        this.#verify(),
-        this.#isAuthenticatedSubject,
-    ).pipe(distinctUntilChanged(), shareReplay(1));
-
-    /**
-     * Logs in the user.
-     *
-     * @param username
-     * @param password
-     * @returns An observable that emits `true` if the login was successful, `false` otherwise.
-     */
-    login(username: string, password: string): Observable<boolean> {
-        return this.#rpcClient.login({ username, password }).pipe(
-            tap((res) => {
-                if (res.ok) {
-                    this.#logger.info(`User ${username} logged in.`);
-                } else {
-                    this.#logger.warn(`User ${username} failed to log in.`);
-                }
-            }),
-            tap((res) => this.#isAuthenticatedSubject.next(res.ok)),
-            map((res) => res.ok),
-        );
-    }
-
-    /**
-     * Logs out the user.
-     *
-     * @returns An observable that emits `true` if the logout was successful, `false` otherwise.
-     */
-    logout(): Observable<boolean> {
-        return this.#rpcClient.logout().pipe(
-            tap((res) => {
-                if (res.ok) {
-                    this.#logger.info('User logged out.');
-                } else {
-                    this.#logger.error(`Failed to log out: ${res.error}`);
-                }
-            }),
-            tap(() => this.#isAuthenticatedSubject.next(false)),
-            tap(() => this.#router.navigate(['/login'])),
-            map((res) => res.ok),
-        );
-    }
-
-    /**
-     * Pings the server to check if the user is authenticated.
-     *
-     * @private
-     */
-    #verify(): Observable<boolean> {
-        return this.#rpcClient.verify().pipe(
-            map((res) => {
-                if (res.ok) {
-                    this.#logger.info('User is authenticated.');
-                    return true;
-                } else {
-                    this.#logger.info('User is not authenticated.');
-                    return false;
-                }
-            }),
-        );
-    }
+    isLoggedIn$ = toObservable(this.#verifySessionQuery.isFetching).pipe(
+        filter((isFetching) => !isFetching),
+        map(() => this.#verifySessionQuery.isSuccess()),
+    );
 }

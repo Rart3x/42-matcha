@@ -1,10 +1,10 @@
 import express from 'express';
 import { join, resolve } from 'node:path';
-import { apiRouter } from '@api/api';
 import morgan from 'morgan';
 import compression from 'compression';
 import { promisify } from 'node:util';
-import { sql } from '@api/connections/database';
+import { apiRouter } from '@api/api';
+import { sql } from '@api/connections/database.connection';
 
 const PORT = Number.parseInt(process.env?.['APP_PORT'] ?? '4000');
 const HOST = process.env?.['APP_HOST'] ?? 'localhost';
@@ -28,6 +28,7 @@ export function start(): void {
     }
 
     // Express Rest API endpoints
+    // app.use('/api', apiRouterOld);
     app.use('/api', apiRouter);
 
     if (IS_PRODUCTION) {

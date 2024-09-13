@@ -6,14 +6,12 @@ import { map } from 'rxjs';
 export const isLoggedOutGuard: CanActivateChildFn = (
     _route,
     _state,
-    authService = inject(AuthService),
+    auth = inject(AuthService),
     router = inject(Router),
 ) => {
-    return authService.isAuthenticated$.pipe(
+    return auth.isLoggedIn$.pipe(
         map((isAuthenticated) =>
-            isAuthenticated
-                ? new RedirectCommand(router.parseUrl('/home'))
-                : true,
+            isAuthenticated ? new RedirectCommand(router.parseUrl('/home')) : true,
         ),
     );
 };

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { SidesheetComponent } from '@app/shared/layouts/sidesheet-layout/sidesheet.component';
 import { MatButton } from '@angular/material/button';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
@@ -16,6 +16,21 @@ import { MatInput } from '@angular/material/input';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { filter, first, tap } from 'rxjs';
 import { SnackBarService } from '@app/core/services/snack-bar.service';
+import { COMMA, ENTER } from '@angular/cdk/keycodes';
+import {
+    MatChipGrid,
+    MatChipInput,
+    MatChipInputEvent,
+    MatChipRemove,
+    MatChipRow,
+} from '@angular/material/chips';
+import {
+    MatAutocomplete,
+    MatAutocompleteSelectedEvent,
+    MatAutocompleteTrigger,
+} from '@angular/material/autocomplete';
+import { MatIcon } from '@angular/material/icon';
+import { RestrictedInputDirective } from '@app/shared/directives/restricted-input.directive';
 
 @Component({
     selector: 'app-edit-profile-sheet',
@@ -34,6 +49,14 @@ import { SnackBarService } from '@app/core/services/snack-bar.service';
         MatOption,
         MatSelect,
         MatInput,
+        MatChipGrid,
+        MatChipRow,
+        MatIcon,
+        MatChipInput,
+        MatAutocompleteTrigger,
+        MatAutocomplete,
+        MatChipRemove,
+        RestrictedInputDirective,
     ],
     template: `
         <app-sidesheet heading="Edit Profile" [loading]="profile.isPending()">
@@ -195,6 +218,54 @@ import { SnackBarService } from '@app/core/services/snack-bar.service';
                         }
                     </mat-error>
                 </mat-form-field>
+
+                <mat-form-field *rxLet="form.controls.tags as tags" class="col-span-4">
+                    <mat-label>Likes</mat-label>
+                    <mat-chip-grid #chipGrid aria-label="Tag selection" [formControl]="tags">
+                        @for (tag of reactiveTags(); track tag) {
+                            <mat-chip-row (removed)="tagRemoved(tag)">
+                                {{ tag }}
+                                <button matChipRemove [attr.aria-label]="'Remove ' + tag + ' tag'">
+                                    <mat-icon>cancel</mat-icon>
+                                </button>
+                            </mat-chip-row>
+                        }
+                    </mat-chip-grid>
+                    <input
+                        appRestrictedInput
+                        pattern="^[a-zA-Z0-9]-*$"
+                        [maxLength]="20"
+                        name="currentTag"
+                        placeholder="I like ..."
+                        [matChipInputFor]="chipGrid"
+                        [matAutocomplete]="auto"
+                        [matChipInputSeparatorKeyCodes]="tagSeparatorKeysCodes"
+                        (matChipInputTokenEnd)="tagAdded($event)"
+                    />
+                    <mat-autocomplete
+                        #auto="matAutocomplete"
+                        (optionSelected)="tagSelected($event)"
+                    >
+                        @for (tag of filteredTags(); track tag) {
+                            <mat-option [value]="tag">{{ tag }}</mat-option>
+                        }
+                    </mat-autocomplete>
+                    <mat-hint>
+                        @if (!form.controls.tags.value.length) {
+                            Add tags to describe your interests.
+                        }
+                    </mat-hint>
+                    <mat-error>
+                        @if (
+                            form.controls.tags.hasError('required') ||
+                            form.controls.tags.hasError('minlength')
+                        ) {
+                            Must have at least 3 tags
+                        } @else if (form.controls.tags.hasError('maxlength')) {
+                            Must have at most 10 tags
+                        }
+                    </mat-error>
+                </mat-form-field>
             </form>
 
             <ng-container bottom-actions>
@@ -279,6 +350,15 @@ export class EditProfileSheetComponent {
             'other' as 'male' | 'female' | 'other',
             [Validators.required, Validators.pattern(/^(male|female|other)$/)],
         ],
+        tags: [
+            [] as string[],
+            [
+                Validators.required,
+                Validators.minLength(3),
+                Validators.maxLength(10),
+                // regexValidator(/^[a-zA-Z0-9]+[a-zA-Z0-9-' ]*$/, 'tag'),
+            ],
+        ],
     });
 
     profile = injectQuery(() => ({
@@ -315,5 +395,46 @@ export class EditProfileSheetComponent {
         if (data) {
             this.form.patchValue(data);
         }
+    }
+
+    // tags
+
+    reactiveTags = toSignal(this.form.controls.tags.valueChanges, {
+        initialValue: this.form.controls.tags.value,
+    });
+
+    filteredTags = signal<string[]>([]);
+
+    readonly tagSeparatorKeysCodes: number[] = [ENTER, COMMA];
+
+    tagAdded(event: MatChipInputEvent): void {
+        const value = (event.value || '').trim();
+
+        if (value && !this.form.controls.tags.value.includes(value)) {
+            this.form.controls.tags.setValue([...this.form.controls.tags.value, value]);
+        }
+        event.chipInput?.clear();
+    }
+
+    tagRemoved(tag: string): void {
+        const index = this.form.controls.tags.value.indexOf(tag);
+
+        if (0 <= index) {
+            this.form.controls.tags.setValue(
+                this.form.controls.tags.value
+                    .slice(0, index)
+                    .concat(this.form.controls.tags.value.slice(index + 1)),
+            );
+        }
+    }
+
+    tagSelected(event: MatAutocompleteSelectedEvent): void {
+        if (!this.form.controls.tags.value.includes(event.option.viewValue)) {
+            this.form.controls.tags.setValue([
+                ...this.form.controls.tags.value,
+                event.option.viewValue,
+            ]);
+        }
+        event.option.deselect();
     }
 }

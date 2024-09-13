@@ -71,6 +71,14 @@ export const routes: Routes = [
                         (m) => m.EditProfileSheetComponent,
                     ),
             },
+            {
+                outlet: 'sidesheet',
+                path: 'edit-pictures',
+                loadComponent: () =>
+                    import('@app/features/edit-pictures-sheet/edit-pictures-sheet.component').then(
+                        (m) => m.EditPicturesSheetComponent,
+                    ),
+            },
         ],
         canActivate: [isLoggedInGuard],
     },

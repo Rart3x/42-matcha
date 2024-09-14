@@ -26,6 +26,7 @@ import {
     getPrincipalUserStatsProcedure,
     getPrincipalUserVisitsProcedure,
 } from '@api/procedures/relation.procedure';
+import { browseUsersProcedure } from '@api/procedures/browse.procedure';
 
 export const apiRouter = Router();
 
@@ -33,23 +34,24 @@ apiRouter.use(cookieParser()); // parse cookies
 apiRouter.use(json()); // parse json body
 
 const rpcRouter = createProcedureRouter([
-    verifySessionProcedure,
-    loginProcedure,
-    logoutProcedure,
-    registerAccountProcedure,
+    browseUsersProcedure,
     confirmEmailProcedure,
-    usernameAvailableProcedure,
-    emailAvailableProcedure,
-    getPrincipalProfileProcedure,
-    patchPrincipalProfileProcedure,
-    updateEmailProcedure,
-    updatePasswordProcedure,
-    getExistingTagsProcedure,
     confirmEmailModificationProcedure,
+    emailAvailableProcedure,
+    getExistingTagsProcedure,
+    getPrincipalProfileProcedure,
+    getPrincipalUserLikesProcedure,
     getProfileByUsernameProcedure,
     getPrincipalUserStatsProcedure,
-    getPrincipalUserLikesProcedure,
     getPrincipalUserVisitsProcedure,
+    loginProcedure,
+    logoutProcedure,
+    patchPrincipalProfileProcedure,
+    registerAccountProcedure,
+    usernameAvailableProcedure,
+    updateEmailProcedure,
+    updatePasswordProcedure,
+    verifySessionProcedure,
 ]);
 
 export type RpcRouter = typeof rpcRouter;

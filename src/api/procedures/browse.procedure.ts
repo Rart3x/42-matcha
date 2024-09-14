@@ -1,7 +1,6 @@
 import { procedure } from '@api/lib/procedure';
 import { sql } from '@api/connections/database.connection';
 import { usePrincipalUser } from '@api/hooks/auth.hooks';
-import { limitValidator, offsetValidator } from '@api/validators/page.validators';
 import { badRequest } from '@api/errors/bad-request.error';
 import { validateAge } from '@api/validators/profile.validators';
 
@@ -23,18 +22,19 @@ export const browseUsersProcedure = procedure(
 
         const age = validateAge(params.age);
         const orderBy = params.orderBy;
-        const location = params.location;
+        // const location = params.location;
         const rating = params.rating;
         const tags = params.tags;
 
         const { users: users } = await sql.begin(async (sql) => {
-            // -- Fetch Principal User --  //
             const user = sql`
                 SELECT *
-                FROM tags, users, users_tags
-                WHERE users.id = users_tags.user_id
-                AND tags.id = users_tags.tag_id
-                AND users.id = ${user_id}
+                FROM tags t, 
+                     users u, 
+                     users_tags ut
+                WHERE u.id = ut.user_id
+                AND t.id = ut.tag_id
+                AND u.id = ${user_id}
             `;
 
             if (!user) {
@@ -54,15 +54,30 @@ export const browseUsersProcedure = procedure(
                     fame_rating: number;
                 }[]
             >`
-                SELECT users.id, users.username, users.first_name, users.last_name, users.age, users.fame_rating
-                FROM users
-                WHERE ${age ? sql`AND users.age BETWEEN ${age - 5} AND ${age + 5}` : sql``}
-                ${rating ? sql`AND users.fame_rating >= ${rating}` : sql``}
-                ${tags ? sql`AND tags.name IN (${tags})` : sql``}
-                ORDER BY ${orderBy} DESC
-                LIMIT 10
+                SELECT
+                    u.id,
+                    u.username,
+                    u.first_name,
+                    u.last_name,
+                    u.age,
+                    u.fame_rating,
+                    COUNT(DISTINCT t.id) AS common_tags_count
+                FROM
+                    users u
+                        LEFT JOIN
+                    users_tags ut ON u.id = ut.user_id
+                        LEFT JOIN
+                    tags t ON ut.tag_id = t.id
+                WHERE
+                    ${age ? `u.age BETWEEN ${age - 5} AND ${age + 5}` : ''}
+                    ${rating ? `u.fame_rating >= ${rating}` : ''}
+                    ${tags ? `t.name IN (${tags.map((t) => `$${t}`).join(',')})` : ''}
+                GROUP BY
+                    u.id, u.username, u.first_name, u.last_name, u.age, u.fame_rating
+                ORDER BY
+                    ${orderBy}
+                LIMIT 10;
             `;
-
             return { users };
         });
         return users;

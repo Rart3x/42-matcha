@@ -3,6 +3,8 @@ import { sql } from '@api/connections/database.connection';
 import { usePrincipalUser } from '@api/hooks/auth.hooks';
 import { badRequest } from '@api/errors/bad-request.error';
 import { validateAge } from '@api/validators/profile.validators';
+import { validateTags } from '@api/validators/tag.validators';
+import { validateRating, validateOrderBy } from '@api/validators/browse.validator';
 
 export const browseUsersProcedure = procedure(
     'browseUsers',
@@ -16,15 +18,11 @@ export const browseUsersProcedure = procedure(
     async (params) => {
         const user_id = await usePrincipalUser();
 
-        if (!params.orderBy || !['age', 'location', 'rating', 'tag'].includes(params.orderBy)) {
-            throw badRequest();
-        }
-
         const age = validateAge(params.age);
-        const orderBy = params.orderBy;
+        const orderBy = validateOrderBy(params.orderBy);
         // const location = params.location;
-        const rating = params.rating;
-        const tags = params.tags;
+        const rating = validateRating(params.rating);
+        const tags = validateTags(params.tags);
 
         const { users: users } = await sql.begin(async (sql) => {
             const user = sql`

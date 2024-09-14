@@ -73,7 +73,7 @@ export const browseUsersProcedure = procedure(
                 GROUP BY
                     u.id, u.username, u.first_name, u.last_name, u.age, u.fame_rating
                 ORDER BY
-                    ${orderBy}
+                    ${orderBy ? `u.${orderBy}` : 'u.fame_rating'} DESC
                 LIMIT 10;
             `;
             return { users };

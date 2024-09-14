@@ -1,21 +1,9 @@
-import {
-    ChangeDetectionStrategy,
-    Component,
-    computed,
-    effect,
-    inject,
-    signal,
-    viewChild,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { SidesheetComponent } from '@app/shared/layouts/sidesheet-layout/sidesheet.component';
 import { MatButton } from '@angular/material/button';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { injectRpcClient } from '@app/core/http/rpc-client';
-import {
-    injectInfiniteQuery,
-    injectMutation,
-    injectQuery,
-} from '@tanstack/angular-query-experimental';
+import { injectMutation, injectQuery } from '@tanstack/angular-query-experimental';
 import { regexValidator } from '@app/shared/validators/regex.validator';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { injectUsernameAvailableValidator } from '@app/shared/validators/username-available.validator';
@@ -28,24 +16,14 @@ import { MatInput } from '@angular/material/input';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { filter, first, tap } from 'rxjs';
 import { SnackBarService } from '@app/core/services/snack-bar.service';
-import { COMMA, ENTER } from '@angular/cdk/keycodes';
-import {
-    MatChipGrid,
-    MatChipInput,
-    MatChipInputEvent,
-    MatChipRemove,
-    MatChipRow,
-} from '@angular/material/chips';
-import {
-    MatAutocomplete,
-    MatAutocompleteSelectedEvent,
-    MatAutocompleteTrigger,
-} from '@angular/material/autocomplete';
+import { MatChipGrid, MatChipInput, MatChipRemove, MatChipRow } from '@angular/material/chips';
+import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { MatIcon } from '@angular/material/icon';
 import { RestrictedInputDirective } from '@app/shared/directives/restricted-input.directive';
 import { Profile } from '@api/procedures/profile.procedure';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { AfterViewInitDirective } from '@app/shared/directives/after-view-init.directive';
+import { TagsInputComponent } from '@app/shared/components/tags-input/tags-input.component';
 
 @Component({
     selector: 'app-edit-profile-sheet',
@@ -75,6 +53,7 @@ import { AfterViewInitDirective } from '@app/shared/directives/after-view-init.d
         FormsModule,
         ScrollingModule,
         AfterViewInitDirective,
+        TagsInputComponent,
     ],
     template: `
         <app-sidesheet heading="Edit Profile" [loading]="profile.isPending()">
@@ -245,66 +224,7 @@ import { AfterViewInitDirective } from '@app/shared/directives/after-view-init.d
                     </mat-error>
                 </mat-form-field>
 
-                <mat-form-field *rxLet="form.controls.tags as tags" class="col-span-8">
-                    <mat-label>Likes</mat-label>
-                    <mat-chip-grid #chipGrid aria-label="Tag selection" [formControl]="tags">
-                        @for (tag of reactiveTags(); track tag) {
-                            <mat-chip-row (removed)="tagRemoved(tag)">
-                                {{ tag }}
-                                <button matChipRemove [attr.aria-label]="'Remove ' + tag + ' tag'">
-                                    <mat-icon>cancel</mat-icon>
-                                </button>
-                            </mat-chip-row>
-                        }
-                    </mat-chip-grid>
-                    <input
-                        [(ngModel)]="currentSearch"
-                        [ngModelOptions]="{ standalone: true }"
-                        appRestrictedInput
-                        pattern="^[a-zA-Z0-9]-*$"
-                        [maxLength]="20"
-                        name="currentTag"
-                        placeholder="I like ..."
-                        [matChipInputFor]="chipGrid"
-                        [matAutocomplete]="auto"
-                        [matChipInputSeparatorKeyCodes]="tagSeparatorKeysCodes"
-                        (matChipInputTokenEnd)="tagAdded($event)"
-                    />
-                    <mat-autocomplete
-                        #auto="matAutocomplete"
-                        (optionSelected)="tagSelected($event)"
-                    >
-                        <cdk-virtual-scroll-viewport
-                            itemSize="25"
-                            class="h-[200px]"
-                            (scrolledIndexChange)="scrollIndex.set($event)"
-                            #viewport
-                        >
-                            <mat-option
-                                *cdkVirtualFor="let tag of autocompletedTags(); let last = last"
-                                [value]="tag"
-                                (focus)="viewport.scrollToIndex(scrollIndex())"
-                            >
-                                {{ tag }}
-                            </mat-option>
-                        </cdk-virtual-scroll-viewport>
-                    </mat-autocomplete>
-                    <mat-hint>
-                        @if (!form.controls.tags.value?.length) {
-                            Add tags to describe your interests.
-                        }
-                    </mat-hint>
-                    <mat-error>
-                        @if (
-                            form.controls.tags.hasError('required') ||
-                            form.controls.tags.hasError('minlength')
-                        ) {
-                            Must have at least 3 tags
-                        } @else if (form.controls.tags.hasError('maxlength')) {
-                            Must have at most 10 tags
-                        }
-                    </mat-error>
-                </mat-form-field>
+                <app-tags-input [formControl]="form.controls.tags" class="col-span-8" />
             </form>
 
             <ng-container bottom-actions>
@@ -429,103 +349,5 @@ export class EditProfileSheetComponent {
         if (data) {
             this.form.patchValue(data);
         }
-    }
-
-    // tags
-
-    currentSearch = signal('');
-
-    existingTags = injectInfiniteQuery(() => ({
-        queryKey: ['tags', this.currentSearch()],
-        queryFn: ({ pageParam }) =>
-            this.#rpcClient.getExistingTags({
-                tag: this.currentSearch(),
-                offset: pageParam * 10,
-                limit: 10,
-            }),
-        initialPageParam: 0,
-        getNextPageParam: (lastPage, allPages, lastPageParam) => {
-            if (lastPage.tags.length === 0) {
-                return undefined;
-            }
-            return lastPageParam + 1;
-        },
-        enabled: this.currentSearch().length >= 3,
-    }));
-
-    autocomplete = viewChild(MatAutocomplete);
-
-    scrollIndex = signal(0);
-
-    autocompletedTags = computed(() => {
-        const pages = this.existingTags.data()?.pages ?? [];
-
-        if (this.currentSearch().length < 3) {
-            return [];
-        }
-
-        return pages.flatMap((page) => page.tags);
-    });
-
-    autocompletedTagsCount = computed(() => this.autocompletedTags().length);
-
-    #scrollEffect = effect(async () => {
-        if (this.scrollIndex() > this.autocompletedTagsCount() - 5 && this.autocomplete()?.isOpen) {
-            await this.fetchNextPage();
-        }
-    });
-
-    #fetchedEffect = effect(async () => {
-        if (
-            this.existingTags.isFetched() &&
-            this.scrollIndex() > this.autocompletedTagsCount() - 5 &&
-            this.autocomplete()?.isOpen
-        ) {
-            await this.fetchNextPage();
-        }
-    });
-
-    async fetchNextPage() {
-        console.log('fetching next page');
-        // Do nothing if already fetching
-        // TODO:add more exclusion logic
-        if (this.existingTags.isFetching()) return;
-        await this.existingTags.fetchNextPage();
-    }
-
-    reactiveTags = toSignal(this.form.controls.tags.valueChanges, {
-        initialValue: this.form.controls.tags.value,
-    });
-
-    readonly tagSeparatorKeysCodes: number[] = [ENTER, COMMA];
-
-    tagAdded(event: MatChipInputEvent): void {
-        const tags = this.form.controls.tags.value ?? ([] as string[]);
-        const value = (event.value || '').trim();
-
-        if (value && !tags.includes(value)) {
-            this.form.controls.tags.setValue([...tags, value]);
-        }
-        event.chipInput?.clear();
-    }
-
-    tagRemoved(tag: string): void {
-        const tags = this.form.controls.tags.value ?? ([] as string[]);
-
-        const index = tags.indexOf(tag);
-
-        if (0 <= index) {
-            this.form.controls.tags.setValue(tags.slice(0, index).concat(tags.slice(index + 1)));
-        }
-    }
-
-    tagSelected(event: MatAutocompleteSelectedEvent): void {
-        const tags = this.form.controls.tags.value ?? ([] as string[]);
-
-        if (!tags.includes(event.option.viewValue)) {
-            this.form.controls.tags.setValue([...tags, event.option.viewValue]);
-        }
-        this.currentSearch.set('');
-        event.option.deselect();
     }
 }

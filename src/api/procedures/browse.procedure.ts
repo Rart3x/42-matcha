@@ -18,13 +18,15 @@ export const browseUsersProcedure = procedure(
     async (params) => {
         const user_id = await usePrincipalUser();
 
-        const age = await validateAge(params.age);
+        const age = await validateAge(params.age).catch(() => null);
         const orderBy = await validateOrderBy(params.orderBy);
         // const location = params.location;
-        const minimum_rating = await validateRating(params.minimum_rating);
-        const minimum_common_tags = await validateMinimumCommonTags(params.minimum_common_tags);
+        const minimum_rating = await validateRating(params.minimum_rating).catch(() => null);
+        const minimum_common_tags = await validateMinimumCommonTags(
+            params.minimum_common_tags,
+        ).catch(() => null);
 
-        return sql<
+        const users = await sql<
             {
                 id: number;
                 username: string;
@@ -52,8 +54,8 @@ export const browseUsersProcedure = procedure(
                     JOIN users_tags ut2
                         ON ut1.tag_id = ut2.tag_id
                     WHERE
-                        ut2.user_id = principal_user.id -- replace this with the actual principal user ID
-                        AND ut1.user_id != principal_user.id -- exclude the principal user themselves
+                        ut2.user_id = ${user_id} -- replace this with the actual principal user ID
+                        AND ut1.user_id != ${user_id} -- exclude the principal user themselves
                     GROUP BY
                         ut1.user_id
                 ),
@@ -62,6 +64,7 @@ export const browseUsersProcedure = procedure(
                     COALESCE(${age}, principal_user.age) as age,
                     COALESCE(${minimum_rating}, principal_user.fame_rating - 2) as minimum_rating,
                     COALESCE(${minimum_common_tags}, 3) AS minimum_common_tags
+                    FROM principal_user
                 )
                 SELECT
                     users.id,
@@ -70,7 +73,7 @@ export const browseUsersProcedure = procedure(
                     users.last_name,
                     users.fame_rating,
                     COUNT(common_tags.count) as common_tags
-                FROM users
+                FROM filters, users 
                 LEFT JOIN common_tags
                     ON users.id = common_tags.other_user_id
                 WHERE
@@ -81,5 +84,7 @@ export const browseUsersProcedure = procedure(
                 ORDER BY ${sql(orderBy)} DESC
                 LIMIT 10;
         `;
+
+        return { users };
     },
 );

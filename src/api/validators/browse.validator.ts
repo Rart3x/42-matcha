@@ -1,7 +1,7 @@
 import { badRequest } from '@api/errors/bad-request.error';
 
 export async function validateRating(rating?: number) {
-    if (rating == null || rating < 0 || rating > 5) {
+    if (rating == null) {
         throw badRequest();
     }
     return rating;

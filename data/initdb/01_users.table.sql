@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS users
 
     fame_rating INTEGER   DEFAULT 0,
 
+    profile_complete BOOLEAN DEFAULT FALSE,
+
     created_at  TIMESTAMP DEFAULT now(),
     updated_at  TIMESTAMP DEFAULT now()
 );
@@ -28,3 +30,23 @@ CREATE OR REPLACE TRIGGER update_timestamp
     ON users
     FOR EACH ROW
 EXECUTE FUNCTION update_timestamp();
+
+CREATE OR REPLACE FUNCTION update_fame_rating_on_reported()
+    RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE users
+    SET fame_rating = fame_rating - 1
+    WHERE id = NEW.reported_user_id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION update_fame_rating_on_unreported()
+    RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE users
+    SET fame_rating = fame_rating + 1
+    WHERE id = OLD.reported_user_id;
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;

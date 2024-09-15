@@ -49,6 +49,10 @@ import {
     deleteVisitProcedure,
     getVisitsProcedure,
 } from '@api/procedures/visit.procedure';
+import {
+    createFakeUserReportProcedure,
+    deleteFakeUserReportProcedure,
+} from '@api/procedures/fake_user_report.procedure';
 
 export const apiRouter = Router();
 
@@ -60,9 +64,11 @@ const rpcRouter = createProcedureRouter([
     confirmEmailProcedure,
     confirmEmailModificationProcedure,
     createBlockProcedure,
+    createFakeUserReportProcedure,
     createLikeProcedure,
     createVisitProcedure,
     deleteBlockProcedure,
+    deleteFakeUserReportProcedure,
     deleteLikeProcedure,
     deleteVisitProcedure,
     emailAvailableProcedure,

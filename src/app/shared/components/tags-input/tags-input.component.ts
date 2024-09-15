@@ -1,6 +1,7 @@
 import {
     ChangeDetectionStrategy,
     Component,
+    ElementRef,
     input,
     Signal,
     signal,
@@ -81,6 +82,7 @@ import { AfterViewInitDirective } from '@app/shared/directives/after-view-init.d
 
             <!-- Input -->
             <input
+                #input
                 [(ngModel)]="currentSearch"
                 [ngModelOptions]="{ standalone: true }"
                 appRestrictedInput
@@ -137,6 +139,8 @@ export class TagsInputComponent {
     currentSearch = signal('');
     activatedOption = signal<MatOption | null>(null);
 
+    input = viewChild<ElementRef<HTMLInputElement>>('input');
+
     autoCompletedTags = injectQuery(() => ({
         queryKey: ['tags', this.currentSearch()],
         queryFn: ({ queryKey: [_, currentSearch] }) =>
@@ -174,6 +178,8 @@ export class TagsInputComponent {
             this.formControl().setValue([...tags, value]);
         }
         this.autocompleteTrigger()?.closePanel();
+
+        this.#clearSearch();
     }
 
     tagRemoved(tag: string): void {
@@ -192,6 +198,8 @@ export class TagsInputComponent {
             this.formControl().setValue([...tags, event.option.viewValue]);
         }
         event.option.deselect();
+
+        this.#clearSearch();
     }
 
     tagActivated(event: MatAutocompleteActivatedEvent): void {
@@ -200,5 +208,13 @@ export class TagsInputComponent {
 
     panelClosed(): void {
         this.activatedOption.set(null);
+    }
+
+    #clearSearch(): void {
+        this.currentSearch.set('');
+        const input = this.input()?.nativeElement;
+        if (input) {
+            input.value = '';
+        }
     }
 }

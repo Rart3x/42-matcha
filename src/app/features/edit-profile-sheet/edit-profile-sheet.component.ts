@@ -3,7 +3,11 @@ import { SidesheetComponent } from '@app/shared/layouts/sidesheet-layout/sideshe
 import { MatButton } from '@angular/material/button';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { injectRpcClient } from '@app/core/http/rpc-client';
-import { injectMutation, injectQuery } from '@tanstack/angular-query-experimental';
+import {
+    injectMutation,
+    injectQuery,
+    injectQueryClient,
+} from '@tanstack/angular-query-experimental';
 import { regexValidator } from '@app/shared/validators/regex.validator';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { injectUsernameAvailableValidator } from '@app/shared/validators/username-available.validator';
@@ -249,6 +253,7 @@ import { TagsInputComponent } from '@app/shared/components/tags-input/tags-input
 export class EditProfileSheetComponent {
     #fb = inject(FormBuilder);
     #rpcClient = injectRpcClient();
+    #queryClient = injectQueryClient();
     #snackbar = inject(SnackBarService);
     #usernameAvailableValidator = injectUsernameAvailableValidator();
 
@@ -322,8 +327,9 @@ export class EditProfileSheetComponent {
 
     update = injectMutation(() => ({
         mutationFn: this.#rpcClient.patchPrincipalProfile,
-        onSuccess: () => {
+        onSuccess: async () => {
             this.#snackbar.enqueueSnackBar('Profile updated');
+            await this.#queryClient.invalidateQueries({ queryKey: ['profile'] });
         },
         onError: () => {
             this.#snackbar.enqueueSnackBar('Failed to update profile');

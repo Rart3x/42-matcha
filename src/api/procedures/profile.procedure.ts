@@ -80,7 +80,7 @@ export const getExistingTagsProcedure = procedure(
         const limit = limitValidator(params.limit);
 
         const existingTags = await sql<{ name: string; nbr: number }[]>`
-            SELECT name, COUNT(*) as nbr
+            SELECT name, COUNT(*) OVER () as nbr
             FROM tags
             WHERE name LIKE ${tag + '%'}
             GROUP BY name

@@ -1,8 +1,6 @@
 import {
     ChangeDetectionStrategy,
     Component,
-    computed,
-    effect,
     input,
     Signal,
     signal,
@@ -32,12 +30,13 @@ import {
 } from '@angular/material/chips';
 import { RxLet } from '@rx-angular/template/let';
 import { RestrictedInputDirective } from '@app/shared/directives/restricted-input.directive';
-import { injectInfiniteQuery } from '@tanstack/angular-query-experimental';
+import { injectQuery } from '@tanstack/angular-query-experimental';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { injectRpcClient } from '@app/core/http/rpc-client';
 import { NgxControlValueAccessor } from 'ngxtension/control-value-accessor';
 import { derivedFrom } from 'ngxtension/derived-from';
 import { map, pipe, startWith, switchMap } from 'rxjs';
+import { AfterViewInitDirective } from '@app/shared/directives/after-view-init.directive';
 
 @Component({
     selector: 'app-tags-input',
@@ -62,6 +61,7 @@ import { map, pipe, startWith, switchMap } from 'rxjs';
         CdkVirtualScrollViewport,
         CdkVirtualForOf,
         MatChipRemove,
+        AfterViewInitDirective,
     ],
     template: `
         <mat-form-field>
@@ -101,15 +101,11 @@ import { map, pipe, startWith, switchMap } from 'rxjs';
                 (optionActivated)="tagActivated($event)"
                 (closed)="panelClosed()"
             >
-                <cdk-virtual-scroll-viewport
-                    itemSize="25"
-                    class="h-[200px]"
-                    (scrolledIndexChange)="scrollIndex.set($event)"
-                >
-                    <mat-option *cdkVirtualFor="let tag of autocompletedTags()" [value]="tag">
+                @for (tag of autoCompletedTags.data()?.tags; track tag) {
+                    <mat-option [value]="tag">
                         {{ tag }}
                     </mat-option>
-                </cdk-virtual-scroll-viewport>
+                }
             </mat-autocomplete>
 
             <mat-hint>
@@ -132,84 +128,25 @@ import { map, pipe, startWith, switchMap } from 'rxjs';
     hostDirectives: [NgxControlValueAccessor],
 })
 export class TagsInputComponent {
+    PAGE_SIZE = 5;
+
     #rpcClient = injectRpcClient();
 
-    autocomplete = viewChild(MatAutocomplete);
     autocompleteTrigger = viewChild(MatAutocompleteTrigger);
-    virtualscroll = viewChild(CdkVirtualScrollViewport);
 
     currentSearch = signal('');
-    scrollIndex = signal(0);
-    activeIndex = signal<number | null>(null);
+    activatedOption = signal<MatOption | null>(null);
 
-    /* data fetching */
-
-    existingTags = injectInfiniteQuery(() => ({
+    autoCompletedTags = injectQuery(() => ({
         queryKey: ['tags', this.currentSearch()],
-        queryFn: ({ pageParam }) =>
+        queryFn: ({ queryKey: [_, currentSearch] }) =>
             this.#rpcClient.getExistingTags({
-                tag: this.currentSearch(),
-                offset: pageParam * 10,
-                limit: 10,
+                tag: currentSearch,
+                offset: 0,
+                limit: this.PAGE_SIZE,
             }),
-        initialPageParam: 0,
-        getNextPageParam: (lastPage, allPages, lastPageParam) => {
-            if (lastPage.tags.length === 0) {
-                return undefined;
-            }
-            return lastPageParam + 1;
-        },
-        enabled: this.currentSearch().length >= 3,
+        enabled: () => this.currentSearch().length > 0,
     }));
-
-    autocompletedTags = computed(() => {
-        const pages = this.existingTags.data()?.pages ?? [];
-
-        if (this.currentSearch().length < 3) {
-            return [];
-        }
-
-        return pages.flatMap((page) => page.tags);
-    });
-
-    autocompletedTagsCount = computed(() => this.autocompletedTags().length);
-
-    #scrollEffect = effect(async () => {
-        if (
-            this.scrollIndex() > this.autocompletedTagsCount() - 5 &&
-            this.autocompleteTrigger()?.panelOpen
-        ) {
-            await this.fetchNextPage();
-        }
-    });
-
-    #fetchedEffect = effect(async () => {
-        if (
-            this.existingTags.isFetched() &&
-            this.scrollIndex() > this.autocompletedTagsCount() - 5 &&
-            this.autocompleteTrigger()?.panelOpen
-        ) {
-            await this.fetchNextPage();
-        }
-    });
-
-    #autocompletedTagsChangedEffect = effect(() => {
-        void this.autocompletedTags(); // trigger computation
-        const activeIndex = this.activeIndex();
-
-        if (activeIndex !== null) {
-            this.autocomplete()?._keyManager?.setActiveItem(activeIndex);
-            console.log('autocomplete key manager set active item', activeIndex);
-        }
-    });
-
-    async fetchNextPage() {
-        console.log('fetching next page');
-        // Do nothing if already fetching
-        // TODO:add more exclusion logic
-        if (this.existingTags.isFetching()) return;
-        await this.existingTags.fetchNextPage();
-    }
 
     /* interaction */
 
@@ -230,10 +167,12 @@ export class TagsInputComponent {
         const tags = this.tags();
         const value = (event.value || '').trim();
 
-        if (value && !tags.includes(value)) {
+        const activatedOption = this.activatedOption();
+        if (activatedOption) {
+            activatedOption.select();
+        } else if (value && !tags.includes(value)) {
             this.formControl().setValue([...tags, value]);
         }
-        event.chipInput?.clear();
         this.autocompleteTrigger()?.closePanel();
     }
 
@@ -252,24 +191,14 @@ export class TagsInputComponent {
         if (!tags.includes(event.option.viewValue)) {
             this.formControl().setValue([...tags, event.option.viewValue]);
         }
-        this.currentSearch.set('');
         event.option.deselect();
     }
 
-    tagActivated(event: MatAutocompleteActivatedEvent) {
-        const tag = event.option?.value;
-        if (!tag) return;
-
-        const index = this.autocompletedTags().indexOf(tag);
-        if (index === -1) return;
-
-        console.log('tagActivated', { index, tag });
-        this.activeIndex.set(index);
-
-        this.virtualscroll()?.scrollToIndex(index);
+    tagActivated(event: MatAutocompleteActivatedEvent): void {
+        this.activatedOption.set(event.option);
     }
 
-    panelClosed() {
-        this.activeIndex.set(null);
+    panelClosed(): void {
+        this.activatedOption.set(null);
     }
 }

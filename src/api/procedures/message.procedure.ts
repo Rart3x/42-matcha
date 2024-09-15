@@ -31,10 +31,10 @@ export const getMessagesByUserIdProcedure = procedure(
             >`
                 SELECT DISTINCT ON (sender_id, receiver_id)
                     id, sender_id, receiver_id, message, seen, created_at
-                FROM 
-                    messages
+                FROM messages
                 WHERE 
-                    (sender_id = ${principal_user_id} AND receiver_id = ${user_id}) OR
+                    (sender_id = ${principal_user_id} AND receiver_id = ${user_id})
+                OR
                     (sender_id = ${user_id} AND receiver_id = ${principal_user_id})
                 ORDER BY created_at DESC
                 OFFSET ${offset} LIMIT ${limit}
@@ -72,12 +72,10 @@ export const getReadMessagesByUserIdProcedure = procedure(
             >`
                 SELECT DISTINCT ON (sender_id, receiver_id)
                     id, sender_id, receiver_id, message, seen, created_at
-                FROM 
-                    messages
-                WHERE 
-                    (sender_id = ${principal_user_id} AND receiver_id = ${user_id})
-                AND
-                    seen = TRUE
+                FROM messages
+                WHERE (sender_id = ${principal_user_id}
+                AND receiver_id = ${user_id})
+                AND seen = TRUE
                 ORDER BY created_at DESC
                 OFFSET ${offset} LIMIT ${limit}
             `;
@@ -113,12 +111,10 @@ export const getUnreadMessagesByUserIdProcedure = procedure(
             >`
                 SELECT DISTINCT ON (sender_id, receiver_id)
                     id, sender_id, receiver_id, message, seen, created_at
-                FROM 
-                    messages
-                WHERE 
-                    (sender_id = ${principal_user_id} AND receiver_id = ${user_id})
-                AND
-                    seen = FALSE
+                FROM messages
+                WHERE (sender_id = ${principal_user_id}
+                AND receiver_id = ${user_id})
+                AND seen = FALSE
                 ORDER BY created_at DESC
                 OFFSET ${offset} LIMIT ${limit}
             `;
@@ -144,12 +140,10 @@ export const getNumberOfUnreadMessagesByUserIdProcedure = procedure(
                 }[]
             >`
                 SELECT COUNT(*)
-                FROM 
-                    messages
-                WHERE 
-                    (sender_id = ${principal_user_id} AND receiver_id = ${user_id})
-                AND
-                    seen = FALSE
+                FROM messages
+                WHERE (sender_id = ${principal_user_id}
+                AND receiver_id = ${user_id})
+                AND seen = FALSE
             `;
             return { messages };
         });

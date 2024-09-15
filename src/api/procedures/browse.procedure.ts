@@ -49,7 +49,7 @@ export const browseUsersProcedure = procedure(
                 common_tags AS (
                     SELECT
                         ut1.user_id AS other_user_id,
-                        COUNT(*) AS count
+                        COUNT(*) AS common_tags_count
                     FROM users_tags ut1
                     JOIN users_tags ut2
                         ON ut1.tag_id = ut2.tag_id
@@ -59,29 +59,41 @@ export const browseUsersProcedure = procedure(
                     GROUP BY
                         ut1.user_id
                 ),
-                filters AS (
+                age_gaps AS (
                     SELECT
-                    COALESCE(${age}, principal_user.age) as age,
-                    COALESCE(${minimum_rating}, principal_user.fame_rating - 2) as minimum_rating,
-                    COALESCE(${minimum_common_tags}, 3) AS minimum_common_tags
-                    FROM principal_user
+                        users.id as other_user_id,
+                        ABS(principal_user.age - users.age) as age_gap
+                    FROM principal_user, users
+                    WHERE users.id != ${user_id}
                 )
                 SELECT
                     users.id,
                     users.username,
                     users.first_name,
                     users.last_name,
-                    users.fame_rating,
-                    COUNT(common_tags.count) as common_tags
-                FROM filters, users 
+                    users.age,
+                    users.fame_rating
+                FROM principal_user, users 
                 LEFT JOIN common_tags
                     ON users.id = common_tags.other_user_id
+                LEFT JOIN age_gaps
+                    ON users.id = age_gaps.other_user_id
                 WHERE
-                    users.age BETWEEN (filters.age - 5) AND (filters.age + 5)
-                    AND users.fame_rating >= filters.minimum_rating
-                    AND common_tags.count >= filters.minimum_common_tags
-                GROUP BY users.id, users.username, users.first_name, users.last_name, users.fame_rating
-                ORDER BY ${sql(orderBy)} DESC
+                    users.id != ${user_id}
+                    -- filters out users depending on the filters set by the principal user
+                    AND CASE WHEN ${age}::integer IS NOT NULL -- either minimum age or within 5 years of principal user
+                        THEN users.age > ${age} 
+                        ELSE age_gap < 5 END 
+                    AND CASE WHEN principal_user.sexual_pref = 'any' -- if principal user is bisexual, show everyone
+                        THEN true
+                        ELSE principal_user.sexual_pref = users.gender END
+                    AND CASE WHEN ${minimum_rating}::integer IS NOT NULL
+                        THEN users.fame_rating >= ${minimum_rating}
+                        ELSE true END
+                    AND CASE WHEN ${minimum_common_tags}::integer IS NOT NULL
+                        THEN common_tags_count >= ${minimum_common_tags}
+                        ELSE true END
+                ORDER BY ${orderBy} DESC, common_tags_count DESC, fame_rating DESC, age_gap -- order by the most important filter first
                 LIMIT 10;
         `;
 

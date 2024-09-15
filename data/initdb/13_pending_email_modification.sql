@@ -1,5 +1,3 @@
-DROP TABLE IF EXISTS pending_email_modification;
-
 CREATE TABLE pending_email_modification
 (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),

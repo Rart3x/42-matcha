@@ -22,3 +22,10 @@ export function validateTags(tags?: string[]) {
     }
     return tags.map(validateTag);
 }
+
+export function validateMinimumCommonTags(minimum_common_tags?: number) {
+    if (minimum_common_tags == null || minimum_common_tags < 0) {
+        throw badRequest();
+    }
+    return minimum_common_tags;
+}

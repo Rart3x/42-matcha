@@ -2,16 +2,21 @@ import { procedure } from '@api/lib/procedure';
 import { sql } from '@api/connections/database.connection';
 import { usePrincipalUser } from '@api/hooks/auth.hooks';
 import { validateUserId } from '@api/validators/profile.validators';
+import { limitValidator, offsetValidator } from '@api/validators/page.validators';
 
 export const getMessagesByUserIdProcedure = procedure(
     'getMessagesByUserId',
     {} as {
         user_id: number;
+        offset: number;
+        limit: number;
     },
     async (params) => {
         const principal_user_id = await usePrincipalUser();
 
         const user_id = validateUserId(params.user_id);
+        const offset = offsetValidator(params.offset);
+        const limit = limitValidator(params.limit);
 
         return await sql.begin(async (sql) => {
             const messages = sql<
@@ -32,6 +37,7 @@ export const getMessagesByUserIdProcedure = procedure(
                     (sender_id = ${principal_user_id} AND receiver_id = ${user_id}) OR
                     (sender_id = ${user_id} AND receiver_id = ${principal_user_id})
                 ORDER BY created_at DESC
+                OFFSET ${offset} LIMIT ${limit}
             `;
             return { messages };
         });
@@ -42,11 +48,16 @@ export const getReadMessagesByUserIdProcedure = procedure(
     'getMessagesReadByUserId',
     {} as {
         user_id: number;
+
+        offset: number;
+        limit: number;
     },
     async (params) => {
         const principal_user_id = await usePrincipalUser();
 
         const user_id = validateUserId(params.user_id);
+        const offset = offsetValidator(params.offset);
+        const limit = limitValidator(params.limit);
 
         return await sql.begin(async (sql) => {
             const messages = sql<
@@ -68,6 +79,7 @@ export const getReadMessagesByUserIdProcedure = procedure(
                 AND
                     seen = TRUE
                 ORDER BY created_at DESC
+                OFFSET ${offset} LIMIT ${limit}
             `;
             return { messages };
         });
@@ -78,11 +90,15 @@ export const getUnreadMessagesByUserIdProcedure = procedure(
     'getMessagesUnreadByUserId',
     {} as {
         user_id: number;
+        offset: number;
+        limit: number;
     },
     async (params) => {
         const principal_user_id = await usePrincipalUser();
 
         const user_id = validateUserId(params.user_id);
+        const offset = offsetValidator(params.offset);
+        const limit = limitValidator(params.limit);
 
         return await sql.begin(async (sql) => {
             const messages = sql<
@@ -104,6 +120,7 @@ export const getUnreadMessagesByUserIdProcedure = procedure(
                 AND
                     seen = FALSE
                 ORDER BY created_at DESC
+                OFFSET ${offset} LIMIT ${limit}
             `;
             return { messages };
         });

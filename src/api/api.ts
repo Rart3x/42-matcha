@@ -33,6 +33,11 @@ import {
     getNumberOfUnreadMessagesByUserIdProcedure,
     getReadMessagesByUserIdProcedure,
 } from '@api/procedures/message.procedure';
+import {
+    getNotificationsProcedure,
+    getNumberOfUnreadNotificationsProcedure,
+    getUnreadNotificationsProcedure,
+} from '@api/procedures/notifcation.procedure';
 
 export const apiRouter = Router();
 
@@ -47,6 +52,9 @@ const rpcRouter = createProcedureRouter([
     getExistingTagsProcedure,
     getMessagesByUserIdProcedure,
     getReadMessagesByUserIdProcedure,
+    getNotificationsProcedure,
+    getUnreadNotificationsProcedure,
+    getNumberOfUnreadNotificationsProcedure,
     getNumberOfUnreadMessagesByUserIdProcedure,
     getUnreadMessagesByUserIdProcedure,
     getPrincipalProfileProcedure,

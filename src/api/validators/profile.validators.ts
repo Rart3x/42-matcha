@@ -1,5 +1,18 @@
 import { badRequest } from '@api/errors/bad-request.error';
 
+export function validateUserId(user_id?: number): number {
+    if (!user_id) {
+        throw badRequest();
+    }
+    if (isNaN(user_id)) {
+        throw badRequest();
+    }
+    if (user_id < 0) {
+        throw badRequest();
+    }
+    return user_id;
+}
+
 export function validateAge(age?: number): number {
     if (!age) {
         throw badRequest();

@@ -27,6 +27,12 @@ import {
     getPrincipalUserVisitsProcedure,
 } from '@api/procedures/relation.procedure';
 import { browseUsersProcedure } from '@api/procedures/browse.procedure';
+import {
+    getMessagesByUserIdProcedure,
+    getUnreadMessagesByUserIdProcedure,
+    getNumberOfUnreadMessagesByUserIdProcedure,
+    getReadMessagesByUserIdProcedure,
+} from '@api/procedures/message.procedure';
 
 export const apiRouter = Router();
 
@@ -39,6 +45,10 @@ const rpcRouter = createProcedureRouter([
     confirmEmailModificationProcedure,
     emailAvailableProcedure,
     getExistingTagsProcedure,
+    getMessagesByUserIdProcedure,
+    getReadMessagesByUserIdProcedure,
+    getNumberOfUnreadMessagesByUserIdProcedure,
+    getUnreadMessagesByUserIdProcedure,
     getPrincipalProfileProcedure,
     getPrincipalUserLikesProcedure,
     getProfileByUsernameProcedure,

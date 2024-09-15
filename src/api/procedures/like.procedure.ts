@@ -1,7 +1,7 @@
 import { procedure } from '@api/lib/procedure';
 import { sql } from '@api/connections/database.connection';
 import { usePrincipalUser } from '@api/hooks/auth.hooks';
-import { offsetValidator, limitValidator } from '@api/validators/page.validators';
+import { limitValidator, offsetValidator } from '@api/validators/page.validators';
 import { validateUserId } from '@api/validators/profile.validators';
 
 export const createLikeProcedure = procedure(
@@ -12,7 +12,7 @@ export const createLikeProcedure = procedure(
     async (params) => {
         const liker_id = await usePrincipalUser();
 
-        const liked_id = validateUserId(params.liked_id);
+        const liked_id = await validateUserId(params.liked_id);
 
         return await sql`
             INSERT INTO likes (liker_id, liked_user_id)
@@ -29,7 +29,7 @@ export const deleteLikeProcedure = procedure(
     async (params) => {
         const liker_id = await usePrincipalUser();
 
-        const liked_id = validateUserId(params.liked_id);
+        const liked_id = await validateUserId(params.liked_id);
 
         return await sql`
             DELETE FROM likes
@@ -48,10 +48,10 @@ export const getLikesProcedure = procedure(
     async (params) => {
         const principal_user_id = await usePrincipalUser();
 
-        const offset = offsetValidator(params.offset);
-        const limit = limitValidator(params.limit);
+        const offset = await offsetValidator(params.offset);
+        const limit = await limitValidator(params.limit);
 
-        return sql`
+        return await sql`
             SELECT liker_id
             FROM likes
             WHERE liked_user_id = ${principal_user_id}

@@ -1,7 +1,7 @@
 import { procedure } from '@api/lib/procedure';
 import { sql } from '@api/connections/database.connection';
 import { usePrincipalUser } from '@api/hooks/auth.hooks';
-import { offsetValidator, limitValidator } from '@api/validators/page.validators';
+import { limitValidator, offsetValidator } from '@api/validators/page.validators';
 import { validateUserId } from '@api/validators/profile.validators';
 
 export const createVisitProcedure = procedure(
@@ -12,7 +12,7 @@ export const createVisitProcedure = procedure(
     async (params) => {
         const visitor_id = await usePrincipalUser();
 
-        const visited_id = validateUserId(params.visited_id);
+        const visited_id = await validateUserId(params.visited_id);
 
         return await sql`
             INSERT INTO visits (visitor_id, visited_user_id)
@@ -29,7 +29,7 @@ export const deleteVisitProcedure = procedure(
     async (params) => {
         const visitor_id = await usePrincipalUser();
 
-        const visited_id = validateUserId(params.visited_id);
+        const visited_id = await validateUserId(params.visited_id);
 
         return await sql`
             DELETE FROM visits
@@ -48,8 +48,8 @@ export const getVisitsProcedure = procedure(
     async (params) => {
         const principal_user_id = await usePrincipalUser();
 
-        const offset = offsetValidator(params.offset);
-        const limit = limitValidator(params.limit);
+        const offset = await offsetValidator(params.offset);
+        const limit = await limitValidator(params.limit);
 
         return sql`
             SELECT visitor_id

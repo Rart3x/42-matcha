@@ -11,7 +11,7 @@ export const createBlockProcedure = procedure(
     async (params) => {
         const blocker_id = await usePrincipalUser();
 
-        const blocked_id = validateUserId(params.blocked_id);
+        const blocked_id = await validateUserId(params.blocked_id);
 
         return await sql`
             INSERT INTO blocks (blocker_id, blocked_user_id)
@@ -28,7 +28,7 @@ export const deleteBlockProcedure = procedure(
     async (params) => {
         const blocker_id = await usePrincipalUser();
 
-        const blocked_id = validateUserId(params.blocked_id);
+        const blocked_id = await validateUserId(params.blocked_id);
 
         return await sql`
             DELETE FROM blocks

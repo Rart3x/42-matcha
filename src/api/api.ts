@@ -38,6 +38,17 @@ import {
     getNumberOfUnreadNotificationsProcedure,
     getUnreadNotificationsProcedure,
 } from '@api/procedures/notifcation.procedure';
+import { createBlockProcedure, deleteBlockProcedure } from '@api/procedures/block.procedure';
+import {
+    createLikeProcedure,
+    deleteLikeProcedure,
+    getLikesProcedure,
+} from '@api/procedures/like.procedure';
+import {
+    createVisitProcedure,
+    deleteVisitProcedure,
+    getVisitsProcedure,
+} from '@api/procedures/visit.procedure';
 
 export const apiRouter = Router();
 
@@ -48,8 +59,16 @@ const rpcRouter = createProcedureRouter([
     browseUsersProcedure,
     confirmEmailProcedure,
     confirmEmailModificationProcedure,
+    createBlockProcedure,
+    createLikeProcedure,
+    createVisitProcedure,
+    deleteBlockProcedure,
+    deleteLikeProcedure,
+    deleteVisitProcedure,
     emailAvailableProcedure,
     getExistingTagsProcedure,
+    getLikesProcedure,
+    getVisitsProcedure,
     getMessagesByUserIdProcedure,
     getReadMessagesByUserIdProcedure,
     getNotificationsProcedure,

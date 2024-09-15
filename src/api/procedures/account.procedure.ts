@@ -30,11 +30,11 @@ export const registerAccountProcedure = procedure(
         lastName: string;
     },
     async (params) => {
-        const email = validateEmail(params.email);
-        const username = validateUsername(params.username);
-        const password = validatePassword(params.password);
-        const firstName = validateName(params.firstName);
-        const lastName = validateName(params.lastName);
+        const email = await validateEmail(params.email);
+        const username = await validateUsername(params.username);
+        const password = await validatePassword(params.password);
+        const firstName = await validateName(params.firstName);
+        const lastName = await validateName(params.lastName);
 
         // JOIN users ON users.username = ${username} OR users.email = ${email}
         const [registration]: [{ token: string }?] = await sql`
@@ -85,7 +85,7 @@ export const confirmEmailProcedure = procedure(
     'confirmEmail',
     {} as { token: string },
     async (params) => {
-        const token = validateToken(params.token);
+        const token = await validateToken(params.token);
 
         const [user]: [{ username: string }?] = await sql`
             INSERT INTO users (email, username, password, first_name, last_name)
@@ -112,7 +112,7 @@ export const usernameAvailableProcedure = procedure(
     'usernameAvailable',
     {} as { username: string },
     async (params) => {
-        const username = validateUsername(params.username);
+        const username = await validateUsername(params.username);
 
         const user_id = await usePrincipalUser().catch(() => null);
 
@@ -143,7 +143,7 @@ export const emailAvailableProcedure = procedure(
     'emailAvailable',
     {} as { email: string },
     async (params) => {
-        const email = validateEmail(params.email);
+        const email = await validateEmail(params.email);
 
         const user_id = await usePrincipalUser().catch(() => null);
 
@@ -170,7 +170,7 @@ export const updateEmailProcedure = procedure(
     'updateEmail',
     {} as { email: string },
     async (params) => {
-        const email = validateEmail(params.email);
+        const email = await validateEmail(params.email);
 
         const user_id = await usePrincipalUser();
 
@@ -236,7 +236,7 @@ export const updatePasswordProcedure = procedure(
     'updatePassword',
     {} as { password: string },
     async (params) => {
-        const password = validatePassword(params.password);
+        const password = await validatePassword(params.password);
 
         const user_id = await usePrincipalUser().catch(() => null);
 
@@ -253,7 +253,7 @@ export const confirmEmailModificationProcedure = procedure(
     'confirmEmailModification',
     {} as { token: string },
     async (params) => {
-        const token = validateToken(params.token);
+        const token = await validateToken(params.token);
 
         const user_id = await usePrincipalUser();
 

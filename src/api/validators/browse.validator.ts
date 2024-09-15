@@ -1,15 +1,15 @@
 import { badRequest } from '@api/errors/bad-request.error';
 
-export function validateRating(rating: number | undefined): number {
+export async function validateRating(rating?: number) {
     if (rating == null || rating < 0 || rating > 5) {
         throw badRequest();
     }
     return rating;
 }
 
-export function validateOrderBy(orderBy: string | undefined): string {
-    if (!orderBy || !['age', 'location', 'rating', 'tag'].includes(orderBy)) {
+export async function validateOrderBy(orderBy?: string) {
+    if (!orderBy || !['age', 'location', 'fame_rating', 'common_tags'].includes(orderBy)) {
         throw badRequest();
     }
-    return orderBy;
+    return orderBy as 'age' | 'location' | 'rating' | 'tag';
 }

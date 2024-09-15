@@ -10,6 +10,7 @@ import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-
 import { injectMutation, injectQueryClient } from '@tanstack/angular-query-experimental';
 import { injectRpcClient } from '@app/core/http/rpc-client';
 import { SnackBarService } from '@app/core/services/snack-bar.service';
+import { BrowsePanelComponent } from '@app/features/browse-panel/browse-panel.component';
 
 @Component({
     selector: 'app-home-page',
@@ -26,6 +27,7 @@ import { SnackBarService } from '@app/core/services/snack-bar.service';
         MatCard,
         MatButtonToggleGroup,
         MatButtonToggle,
+        BrowsePanelComponent,
     ],
     template: `
         <mat-toolbar class="!bg-transparent">
@@ -35,7 +37,7 @@ import { SnackBarService } from '@app/core/services/snack-bar.service';
             </mat-toolbar-row>
         </mat-toolbar>
 
-        <div class="max-medium:flex-col relative flex grow">
+        <div class="relative flex grow max-medium:flex-col">
             <!-- Left pane -->
             <div class="relative flex flex-col pt-10 medium:w-[26rem]">
                 <div class="pb-4">
@@ -92,7 +94,7 @@ import { SnackBarService } from '@app/core/services/snack-bar.service';
             </div>
 
             <!-- Right pane -->
-            <div class="flex grow flex-col gap-2 p-4 pt-20"></div>
+            <app-browse-panel class="flex grow flex-col gap-2 p-4 pt-20" />
         </div>
     `,
     host: { class: 'flex min-h-full relative flex-col gap-1' },

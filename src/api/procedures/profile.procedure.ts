@@ -27,7 +27,7 @@ export const getProfileByUsernameProcedure = procedure(
     'getProfileByUsername',
     {} as { username: string },
     async (params) => {
-        const username = validateUsername(params.username);
+        const username = await validateUsername(params.username);
 
         const [profile]: [Profile?] = await sql`
             SELECT username, first_name, last_name, age, sexual_pref, biography, gender,
@@ -75,9 +75,9 @@ export const getExistingTagsProcedure = procedure(
         limit: number;
     },
     async (params) => {
-        const tag = validateTag(params.tag);
-        const offset = offsetValidator(params.offset);
-        const limit = limitValidator(params.limit);
+        const tag = await validateTag(params.tag);
+        const offset = await offsetValidator(params.offset);
+        const limit = await limitValidator(params.limit);
 
         const existingTags = await sql<{ name: string; nbr: number }[]>`
             SELECT name, COUNT(*) OVER () as nbr
@@ -101,14 +101,14 @@ export const patchPrincipalProfileProcedure = procedure(
     async (params) => {
         const user_id = await usePrincipalUser();
 
-        const username = validateUsername(params.username);
-        const first_name = validateName(params.first_name);
-        const last_name = validateName(params.last_name);
-        const age = validateAge(params.age);
-        const sexual_pref = validateSexualPref(params.sexual_pref);
-        const biography = validateBiography(params.biography);
-        const gender = validateGender(params.gender);
-        const tags = validateTags(params.tags);
+        const username = await validateUsername(params.username);
+        const first_name = await validateName(params.first_name);
+        const last_name = await validateName(params.last_name);
+        const age = await validateAge(params.age);
+        const sexual_pref = await validateSexualPref(params.sexual_pref);
+        const biography = await validateBiography(params.biography);
+        const gender = await validateGender(params.gender);
+        const tags = await validateTags(params.tags);
 
         const user = await sql.begin(async (sql) => {
             await sql`

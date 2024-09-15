@@ -12,8 +12,8 @@ export const getNotificationsProcedure = procedure(
     async (params) => {
         const principal_user_id = await usePrincipalUser();
 
-        const offset = offsetValidator(params.offset);
-        const limit = limitValidator(params.limit);
+        const offset = await offsetValidator(params.offset);
+        const limit = await limitValidator(params.limit);
 
         return await sql.begin(async (sql) => {
             const notifications = sql<
@@ -64,8 +64,8 @@ export const getUnreadNotificationsProcedure = procedure(
     async (params) => {
         const principal_user_id = await usePrincipalUser();
 
-        const offset = offsetValidator(params.offset);
-        const limit = limitValidator(params.limit);
+        const offset = await offsetValidator(params.offset);
+        const limit = await limitValidator(params.limit);
 
         return await sql.begin(async (sql) => {
             const notifications = sql<

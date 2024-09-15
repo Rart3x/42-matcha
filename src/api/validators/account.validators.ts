@@ -3,7 +3,7 @@ import { badRequest } from '@api/errors/bad-request.error';
 const ANGULAR_EMAIL_REGEX =
     /^(?=.{1,254}$)(?=.{1,64}@)[-!#$%&'*+/0-9=?A-Z^_`a-z{|}~]+(\.[-!#$%&'*+/0-9=?A-Z^_`a-z{|}~]+)*@[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$/;
 
-export function validateEmail(email?: string) {
+export async function validateEmail(email?: string) {
     if (!email) {
         throw badRequest();
     }
@@ -13,7 +13,7 @@ export function validateEmail(email?: string) {
     return email;
 }
 
-export function validateUsername(username?: string) {
+export async function validateUsername(username?: string) {
     if (!username) {
         throw badRequest();
     }
@@ -29,7 +29,7 @@ export function validateUsername(username?: string) {
     return username;
 }
 
-export function validateName(name?: string) {
+export async function validateName(name?: string) {
     if (!name) {
         throw badRequest();
     }
@@ -48,7 +48,7 @@ export function validateName(name?: string) {
     return name;
 }
 
-export function validatePassword(password?: string) {
+export async function validatePassword(password?: string) {
     if (!password) {
         throw badRequest();
     }
@@ -75,7 +75,7 @@ export function validatePassword(password?: string) {
 
 const UUID_REGEX = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
 
-export function validateToken(token?: string) {
+export async function validateToken(token?: string) {
     if (!token) {
         throw badRequest();
     }

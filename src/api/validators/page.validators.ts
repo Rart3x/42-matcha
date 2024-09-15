@@ -1,21 +1,21 @@
 import { badRequest } from '@api/errors/bad-request.error';
 
-export function offsetValidator(offset?: number): number {
+export async function offsetValidator(offset?: number) {
     if (offset === undefined) {
         throw badRequest();
     }
     if (offset < 0 && offset > 50) {
-        throw new Error('Offset must be a positive number');
+        throw badRequest();
     }
     return offset;
 }
 
-export function limitValidator(limit?: number): number {
+export async function limitValidator(limit?: number) {
     if (limit === undefined) {
         throw badRequest();
     }
     if (limit < 0 && limit > 50) {
-        throw new Error('Limit must be a positive number');
+        throw badRequest();
     }
     return limit;
 }

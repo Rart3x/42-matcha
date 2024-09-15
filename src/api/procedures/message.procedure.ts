@@ -14,9 +14,9 @@ export const getMessagesByUserIdProcedure = procedure(
     async (params) => {
         const principal_user_id = await usePrincipalUser();
 
-        const user_id = validateUserId(params.user_id);
-        const offset = offsetValidator(params.offset);
-        const limit = limitValidator(params.limit);
+        const user_id = await validateUserId(params.user_id);
+        const offset = await offsetValidator(params.offset);
+        const limit = await limitValidator(params.limit);
 
         return await sql.begin(async (sql) => {
             const messages = sql<
@@ -55,9 +55,9 @@ export const getReadMessagesByUserIdProcedure = procedure(
     async (params) => {
         const principal_user_id = await usePrincipalUser();
 
-        const user_id = validateUserId(params.user_id);
-        const offset = offsetValidator(params.offset);
-        const limit = limitValidator(params.limit);
+        const user_id = await validateUserId(params.user_id);
+        const offset = await offsetValidator(params.offset);
+        const limit = await limitValidator(params.limit);
 
         return await sql.begin(async (sql) => {
             const messages = sql<
@@ -94,9 +94,9 @@ export const getUnreadMessagesByUserIdProcedure = procedure(
     async (params) => {
         const principal_user_id = await usePrincipalUser();
 
-        const user_id = validateUserId(params.user_id);
-        const offset = offsetValidator(params.offset);
-        const limit = limitValidator(params.limit);
+        const user_id = await validateUserId(params.user_id);
+        const offset = await offsetValidator(params.offset);
+        const limit = await limitValidator(params.limit);
 
         return await sql.begin(async (sql) => {
             const messages = sql<
@@ -131,7 +131,7 @@ export const getNumberOfUnreadMessagesByUserIdProcedure = procedure(
     async (params) => {
         const principal_user_id = await usePrincipalUser();
 
-        const user_id = validateUserId(params.user_id);
+        const user_id = await validateUserId(params.user_id);
 
         return await sql.begin(async (sql) => {
             const messages = sql<

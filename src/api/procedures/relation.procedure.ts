@@ -33,8 +33,8 @@ export const getPrincipalUserLikesProcedure = procedure(
         limit: number;
     },
     async (params) => {
-        const offset = offsetValidator(params.offset);
-        const limit = limitValidator(params.limit);
+        const offset = await offsetValidator(params.offset);
+        const limit = await limitValidator(params.limit);
         const user_id = await usePrincipalUser();
 
         return sql<
@@ -63,8 +63,8 @@ export const getPrincipalUserVisitsProcedure = procedure(
         limit: number;
     },
     async (params) => {
-        const offset = offsetValidator(params.offset);
-        const limit = limitValidator(params.limit);
+        const offset = await offsetValidator(params.offset);
+        const limit = await limitValidator(params.limit);
         const user_id = await usePrincipalUser();
 
         return sql<

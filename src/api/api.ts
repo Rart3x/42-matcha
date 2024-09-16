@@ -55,6 +55,7 @@ import {
     deleteFakeUserReportProcedure,
 } from '@api/procedures/fake_user_report.procedure';
 import { searchUsersProcedure } from '@api/procedures/search.procedure';
+import { picturesRouter } from '@api/pictures/pictures.router';
 
 export const apiRouter = Router();
 
@@ -103,4 +104,5 @@ const rpcRouter = createProcedureRouter([
 
 export type RpcRouter = typeof rpcRouter;
 
+apiRouter.use('/pictures', picturesRouter);
 apiRouter.use(rpcRouter);

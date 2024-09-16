@@ -50,7 +50,7 @@ export const searchUsersProcedure = procedure(
             WITH
                 principal_user AS (
                     SELECT users.id, username, first_name, last_name, age, sexual_pref, gender, fame_rating,
-                           array_remove(ARRAY_AGG(tags.name), NULL) as tags
+                        array_remove(ARRAY_AGG(tags.name), NULL) as tags
                     FROM users
                          LEFT JOIN users_tags ON users_tags.user_id = users.id
                          LEFT JOIN tags ON tags.id = users_tags.tag_id

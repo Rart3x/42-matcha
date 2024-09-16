@@ -131,7 +131,51 @@ async function seed() {
         ON CONFLICT DO NOTHING;
     `;
 
-    await sql.end();
+    console.log('seeding users/likes...');
+
+    await sql`
+        WITH random_users AS (
+            SELECT id 
+            FROM users
+            ORDER BY RANDOM()
+            LIMIT 500
+        ),
+        likes_candidates AS (
+            SELECT u1.id AS user_id, u2.id AS liked_user_id,
+                   ROW_NUMBER() OVER (PARTITION BY u1.id ORDER BY RANDOM()) AS rn
+            FROM random_users u1
+            JOIN random_users u2 ON u1.id <> u2.id  -- Ensure no self-likes
+        )
+        INSERT INTO likes (user_id, liked_user_id)
+        SELECT user_id, liked_user_id
+        FROM likes_candidates
+        WHERE rn <= 10  -- Ensure each user likes at most 10 other users
+        ORDER BY RANDOM()
+        LIMIT 500;
+    `;
+
+    console.log('seeding users/visits...');
+
+    await sql`
+        WITH random_users AS (
+            SELECT id 
+            FROM users
+            ORDER BY RANDOM()
+            LIMIT 500
+        ),
+        visits_candidates AS (
+            SELECT u1.id AS user_id, u2.id AS visited_user_id,
+                   ROW_NUMBER() OVER (PARTITION BY u1.id ORDER BY RANDOM()) AS rn
+            FROM random_users u1
+            JOIN random_users u2 ON u1.id <> u2.id  -- Ensure no self-visits
+        )
+        INSERT INTO visits (user_id, visited_user_id)
+        SELECT user_id, visited_user_id
+        FROM visits_candidates
+        WHERE rn <= 10  -- Ensure each user visits at most 10 other users
+        ORDER BY RANDOM()
+        LIMIT 500;
+    `;
 
     process.exit(0);
 }

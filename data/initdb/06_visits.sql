@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS visits CASCADE;
+
 CREATE TABLE visits
 (
     user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -11,7 +13,7 @@ CREATE TABLE visits
 CREATE OR REPLACE FUNCTION create_visit_notification()
     RETURNS TRIGGER AS $$
 BEGIN
-    EXECUTE 'INSERT INTO notifications (user_id, type, message) VALUES ($1, $2, $3)'
+    EXECUTE 'INSERT INTO notifications (user_id, type, content) VALUES ($1, $2, $3)'
     USING NEW.visited_user_id, 'visit', 'You have a new visit!';
     RETURN NEW;
 END;

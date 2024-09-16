@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS likes CASCADE;
+
 CREATE TABLE likes
 (
     user_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -11,7 +13,7 @@ CREATE TABLE likes
 CREATE OR REPLACE FUNCTION create_like_notification()
     RETURNS TRIGGER AS $$
 BEGIN
-    EXECUTE 'INSERT INTO notifications (user_id, type, message) VALUES ($1, $2, $3)'
+    EXECUTE 'INSERT INTO notifications (user_id, type, content) VALUES ($1, $2, $3)'
     USING NEW.liked_user_id, 'like', 'You have a new like!';
     RETURN NEW;
 END;

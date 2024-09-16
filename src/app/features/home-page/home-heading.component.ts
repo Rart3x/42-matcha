@@ -1,14 +1,24 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ScoreIndicatorComponent } from '@app/shared/components/score-indicator/score-indicator.component';
 import { MatTooltip } from '@angular/material/tooltip';
-import { MatAnchor, MatButton } from '@angular/material/button';
+import { MatAnchor, MatButton, MatIconButton } from '@angular/material/button';
 import { Router, RouterLink } from '@angular/router';
 import { MatSuffix } from '@angular/material/form-field';
+import { MatIcon } from '@angular/material/icon';
 
 @Component({
     selector: 'app-home-heading',
     standalone: true,
-    imports: [ScoreIndicatorComponent, MatTooltip, MatAnchor, RouterLink, MatButton, MatSuffix],
+    imports: [
+        ScoreIndicatorComponent,
+        MatTooltip,
+        MatAnchor,
+        RouterLink,
+        MatButton,
+        MatSuffix,
+        MatIconButton,
+        MatIcon,
+    ],
     host: { class: 'flex gap-4' },
     template: `
         <div class="pb-4">
@@ -43,16 +53,32 @@ import { MatSuffix } from '@angular/material/form-field';
             </div>
         </div>
 
-        <div class="flex flex-col justify-center gap-2 px-8">
-            <a
-                mat-flat-button
-                routerLink="/profile"
-                class="btn-secondary !text-sm"
-                (click)="openEditProfileSheet()"
-            >
-                Edit profile
-            </a>
-            <button mat-flat-button class="btn-secondary">Settings</button>
+        <div class="flex flex-col justify-center px-8">
+            <div class="grid grid-cols-2 place-items-center gap-y-1">
+                <button
+                    mat-flat-button
+                    class="btn-secondary col-span-2"
+                    (click)="openEditProfileSheet()"
+                >
+                    Edit profile
+                </button>
+                <button
+                    mat-icon-button
+                    matTooltip="Edit email"
+                    class="btn-secondary col-span-1"
+                    (click)="openEditEmailSheet()"
+                >
+                    <mat-icon>email</mat-icon>
+                </button>
+                <button
+                    mat-icon-button
+                    matTooltip="Edit password"
+                    class="btn-secondary col-span-1"
+                    (click)="openEditPasswordSheet()"
+                >
+                    <mat-icon>lock</mat-icon>
+                </button>
+            </div>
         </div>
     `,
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -70,5 +96,13 @@ export class HomeHeadingComponent {
 
     async openEditProfileSheet() {
         await this.#router.navigate([{ outlets: { sidesheet: 'edit-profile' } }]);
+    }
+
+    async openEditEmailSheet() {
+        await this.#router.navigate([{ outlets: { sidesheet: 'edit-email' } }]);
+    }
+
+    async openEditPasswordSheet() {
+        await this.#router.navigate([{ outlets: { sidesheet: 'edit-password' } }]);
     }
 }

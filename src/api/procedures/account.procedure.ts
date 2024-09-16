@@ -166,6 +166,22 @@ export const emailAvailableProcedure = procedure(
     },
 );
 
+export const getEmailProcedure = procedure('getEmail', async () => {
+    const user_id = await usePrincipalUser();
+
+    const [user]: [{ email: string }?] = await sql`
+        SELECT email
+        FROM users
+        WHERE id = ${user_id}
+    `;
+
+    if (!user) {
+        throw badRequest();
+    }
+
+    return { email: user.email };
+});
+
 export const updateEmailProcedure = procedure(
     'updateEmail',
     {} as { email: string },
@@ -234,16 +250,26 @@ export const updateEmailProcedure = procedure(
 
 export const updatePasswordProcedure = procedure(
     'updatePassword',
-    {} as { password: string },
+    {} as {
+        old_password: string;
+        password: string;
+    },
     async (params) => {
-        const password = await validatePassword(params.password);
+        const user_id = await usePrincipalUser();
 
-        const user_id = await usePrincipalUser().catch(() => null);
+        const old_password = await validatePassword(params.old_password);
+        const new_password = await validatePassword(params.password);
 
-        await sql`
-            SET password = crypt(${password}, gen_salt('bf', 8))
+        const res = await sql`
+            SET password = crypt(${new_password}, gen_salt('bf', 8))
             WHERE id = ${user_id}
+                AND password = crypt(${old_password}, password)
+            returning id
         `;
+
+        if (res.count === 0) {
+            throw badRequest();
+        }
 
         return { message: 'ok' };
     },
@@ -260,11 +286,12 @@ export const confirmEmailModificationProcedure = procedure(
         const user = await sql.begin(async (sql) => {
             const [user]: [{ username: string }?] = await sql`
                 UPDATE users
-                SET email = 'lol'
+                SET email = pending_email_modification.new_email
                 FROM users
                          JOIN pending_email_modification
                               ON users.id = pending_email_modification.user_id
                 WHERE token = ${token}
+                  AND pending_email_modification.expires_at > NOW()
                   AND user_id = ${user_id}
                 returning username
             `;

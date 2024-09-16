@@ -79,6 +79,22 @@ export const routes: Routes = [
                         (m) => m.EditPicturesSheetComponent,
                     ),
             },
+            {
+                outlet: 'sidesheet',
+                path: 'edit-email',
+                loadComponent: () =>
+                    import('@app/features/edit-email-sheet/edit-email-sheet.component').then(
+                        (m) => m.EditEmailSheetComponent,
+                    ),
+            },
+            {
+                outlet: 'sidesheet',
+                path: 'edit-password',
+                loadComponent: () =>
+                    import('@app/features/edit-password-sheet/edit-password-sheet.component').then(
+                        (m) => m.EditPasswordSheetComponent,
+                    ),
+            },
         ],
         canActivate: [isLoggedInGuard],
     },

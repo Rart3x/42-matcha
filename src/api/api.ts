@@ -10,6 +10,7 @@ import {
     confirmEmailModificationProcedure,
     confirmEmailProcedure,
     emailAvailableProcedure,
+    getEmailProcedure,
     registerAccountProcedure,
     updateEmailProcedure,
     updatePasswordProcedure,
@@ -29,9 +30,9 @@ import {
 import { browseUsersProcedure } from '@api/procedures/browse.procedure';
 import {
     getMessagesByUserIdProcedure,
-    getUnreadMessagesByUserIdProcedure,
     getNumberOfUnreadMessagesByUserIdProcedure,
     getReadMessagesByUserIdProcedure,
+    getUnreadMessagesByUserIdProcedure,
 } from '@api/procedures/message.procedure';
 import {
     getNotificationsProcedure,
@@ -97,6 +98,7 @@ const rpcRouter = createProcedureRouter([
     updateEmailProcedure,
     updatePasswordProcedure,
     verifySessionProcedure,
+    getEmailProcedure,
 ]);
 
 export type RpcRouter = typeof rpcRouter;

@@ -94,7 +94,7 @@ import { BrowsePanelComponent } from '@app/features/browse-panel/browse-panel.co
             </div>
 
             <!-- Right pane -->
-            <app-browse-panel class="flex grow flex-col gap-2 p-4 pt-20" />
+            <app-browse-panel class="m-4 mt-20 grow" />
         </div>
     `,
     host: { class: 'flex min-h-full relative flex-col gap-1' },

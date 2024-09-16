@@ -1,6 +1,7 @@
 import {
     ChangeDetectionStrategy,
     Component,
+    computed,
     inject,
     signal,
     TemplateRef,
@@ -17,6 +18,12 @@ import { MatFormField, MatFormFieldModule } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { RestrictedInputDirective } from '@app/shared/directives/restricted-input.directive';
 import { MatSliderModule } from '@angular/material/slider';
+import {
+    CdkFixedSizeVirtualScroll,
+    CdkVirtualForOf,
+    CdkVirtualScrollableElement,
+    CdkVirtualScrollViewport,
+} from '@angular/cdk/scrolling';
 
 @Component({
     selector: 'app-browse-panel',
@@ -33,32 +40,12 @@ import { MatSliderModule } from '@angular/material/slider';
         MatFormFieldModule,
         RestrictedInputDirective,
         MatSliderModule,
+        CdkVirtualScrollViewport,
+        CdkVirtualForOf,
+        CdkFixedSizeVirtualScroll,
+        CdkVirtualScrollableElement,
     ],
     template: `
-        <!-- heading -->
-        <div class="flex">
-            <div class="grow">
-                <h2 class="mat-display-small">Recommendations</h2>
-                <p class="mat-title-large">Here's some profiles we think you might like</p>
-            </div>
-            <div class="flex flex-col justify-end gap-1">
-                <button mat-stroked-button class="w-fit self-end" (click)="openFiltersDialog()">
-                    <mat-icon>filter_list</mat-icon>
-                    add filters
-                </button>
-                <div class="mb-3 flex items-center gap-2">
-                    <span class="mat-body-1">Sort by:</span>
-                    <mat-button-toggle-group [(ngModel)]="sortBy" aria-label="Sort by">
-                        <mat-button-toggle value="age">Age gap</mat-button-toggle>
-                        <!--                    <mat-button-toggle value="location">Location</mat-button-toggle>-->
-                        <mat-button-toggle value="fame_rating">Fame rating</mat-button-toggle>
-                        <mat-button-toggle value="common_tags">Common tags</mat-button-toggle>
-                    </mat-button-toggle-group>
-                </div>
-            </div>
-        </div>
-
-        <!-- filters dialog -->
         <ng-template #filtersDialog>
             <h2 mat-dialog-title>Filters</h2>
             <mat-dialog-content>
@@ -106,18 +93,62 @@ import { MatSliderModule } from '@angular/material/slider';
             </mat-dialog-actions>
         </ng-template>
 
-        <!-- grid -->
-        <div class="grid grid-cols-2 gap-4">
-            @for (user of recommendations.data()?.users; track user.id) {
-                <div class="rounded-lg bg-surface p-4">
-                    <div>{{ user.username }}</div>
-                    <div>{{ user.first_name }} {{ user.last_name }}</div>
-                    <div>{{ user.age }}</div>
-                    <div>{{ user.fame_rating }}</div>
+        <div cdkVirtualScrollingElement class="p-2">
+            <!-- heading -->
+            <div class="flex">
+                <div class="grow">
+                    <h2 class="mat-display-small">Recommendations</h2>
+                    <p class="mat-title-large">Here's some profiles we think you might like</p>
                 </div>
-            }
+                <div class="flex flex-col justify-end gap-1">
+                    <button mat-stroked-button class="w-fit self-end" (click)="openFiltersDialog()">
+                        <mat-icon>filter_list</mat-icon>
+                        add filters
+                    </button>
+                    <div class="mb-3 flex items-center gap-2">
+                        <span class="mat-body-1">Sort by:</span>
+                        <mat-button-toggle-group [(ngModel)]="sortBy" aria-label="Sort by">
+                            <mat-button-toggle value="age">Age gap</mat-button-toggle>
+                            <!--                    <mat-button-toggle value="location">Location</mat-button-toggle>-->
+                            <mat-button-toggle value="fame_rating">Fame rating</mat-button-toggle>
+                            <mat-button-toggle value="common_tags">Common tags</mat-button-toggle>
+                        </mat-button-toggle-group>
+                    </div>
+                </div>
+            </div>
+
+            <!-- filters dialog -->
+
+            <!-- grid -->
+            <cdk-virtual-scroll-viewport itemSize="50">
+                <div class="flex flex-col gap-2">
+                    <div
+                        class="grid grid-cols-2 gap-2"
+                        *cdkVirtualFor="let pair of recommendationsPairs()"
+                    >
+                        @if (pair[0]; as user) {
+                            <div class="rounded-lg bg-surface p-4">
+                                <div>{{ user.username }}</div>
+                                <div>{{ user.first_name }} {{ user.last_name }}</div>
+                                <div>{{ user.age }}</div>
+                                <div>{{ user.fame_rating }}</div>
+                            </div>
+                        }
+                        @if (pair[1]; as user) {
+                            <div class="rounded-lg bg-surface p-4">
+                                <div>{{ user.username }}</div>
+                                <div>{{ user.first_name }} {{ user.last_name }}</div>
+                                <div>{{ user.age }}</div>
+                                <div>{{ user.fame_rating }}</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </cdk-virtual-scroll-viewport>
         </div>
     `,
+    host: { class: 'grid place-content-stretch' },
+    styles: [``],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BrowsePanelComponent {
@@ -145,6 +176,23 @@ export class BrowsePanelComponent {
         ] as const,
         queryFn: ({ queryKey: [_, params] }) => this.#rpcClient.browseUsers(params),
     }));
+
+    recommendationsPairs = computed(() => {
+        const recommendations = this.recommendations.data()?.users;
+
+        if (!recommendations) {
+            return [];
+        }
+
+        const pairs = [];
+
+        for (let i = 0; i < recommendations.length; i += 2) {
+            const pair = recommendations.slice(i, i + 2);
+            pairs.push(pair);
+        }
+
+        return pairs;
+    });
 
     openFiltersDialog() {
         const filtersDialog = this.filtersDialog();

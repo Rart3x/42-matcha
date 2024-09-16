@@ -53,6 +53,7 @@ import {
     createFakeUserReportProcedure,
     deleteFakeUserReportProcedure,
 } from '@api/procedures/fake_user_report.procedure';
+import { researchUsersProcedure } from '@api/procedures/research.procedure';
 
 export const apiRouter = Router();
 
@@ -91,6 +92,7 @@ const rpcRouter = createProcedureRouter([
     logoutProcedure,
     patchPrincipalProfileProcedure,
     registerAccountProcedure,
+    researchUsersProcedure,
     usernameAvailableProcedure,
     updateEmailProcedure,
     updatePasswordProcedure,

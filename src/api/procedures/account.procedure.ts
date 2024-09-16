@@ -281,19 +281,15 @@ export const confirmEmailModificationProcedure = procedure(
     async (params) => {
         const token = await validateToken(params.token);
 
-        const user_id = await usePrincipalUser();
-
         const user = await sql.begin(async (sql) => {
             const [user]: [{ username: string }?] = await sql`
                 UPDATE users
                 SET email = pending_email_modification.new_email
-                FROM users
-                         JOIN pending_email_modification
-                              ON users.id = pending_email_modification.user_id
-                WHERE token = ${token}
-                  AND pending_email_modification.expires_at > NOW()
-                  AND user_id = ${user_id}
-                returning username
+                FROM pending_email_modification
+                WHERE pending_email_modification.token = ${token}
+                    AND pending_email_modification.expires_at > NOW()
+                    AND pending_email_modification.user_id = users.id
+                returning users.username as username;
             `;
 
             if (!user) {
@@ -304,8 +300,8 @@ export const confirmEmailModificationProcedure = procedure(
                 DELETE
                 FROM pending_email_modification
                 WHERE token = ${token}
-                  AND user_id = ${user_id}
             `;
+
             return user;
         });
 

@@ -2,11 +2,6 @@ import { Routes } from '@angular/router';
 
 export const routes: Routes = [
     {
-        path: 'confirm-email/:token',
-        loadComponent: () =>
-            import('./pages/confirm-email-page.component').then((m) => m.ConfirmEmailPageComponent),
-    },
-    {
         path: '',
         loadComponent: () =>
             import('./layouts/auth-layout.component').then((m) => m.AuthLayoutComponent),

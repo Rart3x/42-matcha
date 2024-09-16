@@ -17,6 +17,20 @@ export const routes: Routes = [
         data: { animation: 'auth' },
     },
     {
+        path: 'confirm-email/:token',
+        loadComponent: () =>
+            import('@app/features/email-confirmation-pages/confirm-email-page.component').then(
+                (m) => m.ConfirmEmailPageComponent,
+            ),
+    },
+    {
+        path: 'confirm-email-modification/:token',
+        loadComponent: () =>
+            import(
+                '@app/features/email-confirmation-pages/confirm-email-modification-page.component'
+            ).then((m) => m.ConfirmEmailModificationPageComponent),
+    },
+    {
         path: '',
         loadComponent: () =>
             import('@app/shared/layouts/navigation-layout.component').then(
@@ -100,6 +114,7 @@ export const routes: Routes = [
     },
     {
         path: '**',
+        pathMatch: 'full',
         redirectTo: 'home',
     },
 ];

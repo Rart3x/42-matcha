@@ -2,6 +2,8 @@ import { ChangeDetectionStrategy, Component, inject, isDevMode } from '@angular/
 import { ChildrenOutletContexts, RouterOutlet } from '@angular/router';
 import { animate, group, query, style, transition, trigger } from '@angular/animations';
 import { AngularQueryDevtools } from '@tanstack/angular-query-devtools-experimental';
+import { MatAnchor, MatFabAnchor } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
 
 const blinkAnimation = () => [
     style({ position: 'relative' }),
@@ -25,7 +27,7 @@ const blinkAnimation = () => [
 @Component({
     selector: 'app-root',
     standalone: true,
-    imports: [RouterOutlet, AngularQueryDevtools],
+    imports: [RouterOutlet, AngularQueryDevtools, MatFabAnchor, MatIcon, MatAnchor],
     changeDetection: ChangeDetectionStrategy.OnPush,
     template: `
         <div [@routeAnimations]="getRouteAnimationData()">
@@ -34,6 +36,15 @@ const blinkAnimation = () => [
 
         @defer (when isDevMode()) {
             <angular-query-devtools />
+        }
+
+        @if (isDevMode()) {
+            <div class="fixed bottom-2 left-2 z-50 h-fit w-fit">
+                <a mat-fab extended href="http://localhost:8025/" target="_blank">
+                    <mat-icon>email</mat-icon>
+                    mailhog
+                </a>
+            </div>
         }
     `,
     animations: [

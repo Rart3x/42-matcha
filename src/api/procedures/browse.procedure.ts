@@ -81,8 +81,8 @@ export const browseUsersProcedure = procedure(
                 WHERE
                     users.id != ${user_id}
                     -- filters out users depending on the filters set by the principal user
-                    AND CASE WHEN ${age}::integer IS NOT NULL -- either minimum age or within 5 years of principal user
-                        THEN users.age > ${age} 
+                    AND CASE WHEN ${age}::integer IS NOT NULL -- either show users within a certain age range or within 5 years of the principal user's age
+                        THEN ${age} - 5 < users.age AND users.age < ${age} + 5
                         ELSE age_gap < 5 END 
                     AND CASE WHEN principal_user.sexual_pref = 'any' -- if principal user is bisexual, show everyone
                         THEN true
@@ -93,10 +93,19 @@ export const browseUsersProcedure = procedure(
                     AND CASE WHEN ${minimum_common_tags}::integer IS NOT NULL
                         THEN common_tags_count >= ${minimum_common_tags}
                         ELSE true END
-                ORDER BY ${orderBy} DESC, common_tags_count DESC, fame_rating DESC, age_gap -- order by the most important filter first
+                ORDER BY 
+                    CASE  -- order by the principal user's preference first (sets the order)
+                        WHEN ${orderBy} = 'age' THEN age_gap
+                        -- TODO: implement location filter
+                    END,
+                    CASE -- sets the direction of the order
+                        WHEN ${orderBy} = 'fame_rating' THEN users.fame_rating
+                        WHEN ${orderBy} = 'common_tags' THEN common_tags_count
+                    END DESC, 
+                    common_tags_count DESC, users.fame_rating DESC, age_gap -- order by the most important filter first
                 LIMIT 10;
         `;
 
-        return { users };
+        return { users: users };
     },
 );

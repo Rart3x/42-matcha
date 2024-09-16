@@ -20,11 +20,11 @@ import { SidesheetLayoutComponent } from '@app/shared/layouts/sidesheet-layout/s
     template: `
         <app-sidesheet-layout>
             <div
-                class="min-w-screen max-medium:flex-col-reverse max-medium:h-screen flex min-h-screen"
+                class="min-w-screen flex min-h-screen bg-surface-container-low max-medium:h-screen max-medium:flex-col-reverse"
             >
                 <!-- navigation rail -->
                 <div
-                    class="max-medium:min-h-20 flex justify-center medium:h-screen medium:w-20 medium:flex-col"
+                    class="flex justify-center medium:h-screen medium:w-20 medium:flex-col max-medium:min-h-20"
                 >
                     <nav class="flex gap-3 medium:flex-col">
                         <app-navigation-rail-link

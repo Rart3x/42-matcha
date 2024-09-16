@@ -11,5 +11,5 @@ export async function validateOrderBy(orderBy?: string) {
     if (!orderBy || !['age', 'location', 'fame_rating', 'common_tags'].includes(orderBy)) {
         throw badRequest();
     }
-    return orderBy as 'age' | 'location' | 'rating' | 'tag';
+    return orderBy as 'age' | 'location' | 'fame_rating' | 'tag';
 }

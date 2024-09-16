@@ -17,8 +17,8 @@ import { MatCard } from '@angular/material/card';
 import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
 import { HomeHeadingComponent } from '@app/features/home-page/home-heading.component';
 import {
+    injectInfiniteQuery,
     injectMutation,
-    injectQuery,
     injectQueryClient,
 } from '@tanstack/angular-query-experimental';
 import { injectRpcClient } from '@app/core/http/rpc-client';
@@ -41,6 +41,7 @@ import { MatFormField, MatHint, MatLabel } from '@angular/material/form-field';
 import { RestrictedInputDirective } from '@app/shared/directives/restricted-input.directive';
 import { MatInput } from '@angular/material/input';
 import { MatSlider, MatSliderThumb } from '@angular/material/slider';
+import { MatProgressSpinner } from '@angular/material/progress-spinner';
 
 @Component({
     selector: 'app-home-page',
@@ -75,6 +76,7 @@ import { MatSlider, MatSliderThumb } from '@angular/material/slider';
         MatSlider,
         MatDialogClose,
         MatSliderThumb,
+        MatProgressSpinner,
     ],
     host: { class: 'flex min-h-full relative flex-col gap-1' },
     template: `
@@ -120,40 +122,47 @@ import { MatSlider, MatSliderThumb } from '@angular/material/slider';
                                 <mat-button-toggle value="age">Age gap</mat-button-toggle>
                                 <!--                    <mat-button-toggle value="location">Location</mat-button-toggle>-->
                                 <mat-button-toggle value="fame_rating"
-                                    >Fame rating</mat-button-toggle
-                                >
+                                    >Fame rating
+                                </mat-button-toggle>
                                 <mat-button-toggle value="common_tags"
-                                    >Common tags</mat-button-toggle
-                                >
+                                    >Common tags
+                                </mat-button-toggle>
                             </mat-button-toggle-group>
                         </div>
                     </div>
                 </div>
 
                 <!-- Recommendations grid -->
-                <cdk-virtual-scroll-viewport itemSize="50">
+                <cdk-virtual-scroll-viewport itemSize="200">
                     <div class="flex flex-col gap-2">
                         <div
-                            class="grid grid-cols-2 gap-2"
-                            *cdkVirtualFor="let pair of recommendationsPairs()"
+                            class="grid h-[200px] grid-cols-2 gap-2"
+                            *cdkVirtualFor="let row of rows()"
                         >
-                            @if (pair[0]; as user) {
+                            @for (user of row; track $index) {
                                 <div class="rounded-lg bg-surface p-4">
-                                    <div>{{ user.username }}</div>
-                                    <div>{{ user.first_name }} {{ user.last_name }}</div>
-                                    <div>{{ user.age }}</div>
-                                    <div>{{ user.fame_rating }}</div>
-                                </div>
-                            }
-                            @if (pair[1]; as user) {
-                                <div class="rounded-lg bg-surface p-4">
-                                    <div>{{ user.username }}</div>
-                                    <div>{{ user.first_name }} {{ user.last_name }}</div>
-                                    <div>{{ user.age }}</div>
-                                    <div>{{ user.fame_rating }}</div>
+                                    @if (user) {
+                                        <div>{{ user.username }}</div>
+                                        <div>{{ user.first_name }} {{ user.last_name }}</div>
+                                        <div>{{ user.age }}</div>
+                                        <div>{{ user.fame_rating }}</div>
+                                    } @else {
+                                        loading...
+                                    }
                                 </div>
                             }
                         </div>
+                    </div>
+                    <div class="m-4 flex justify-center">
+                        @if (recommendations.isFetchingNextPage()) {
+                            <mat-progress-spinner diameter="32" mode="indeterminate" />
+                        } @else if (!recommendations.hasNextPage()) {
+                            <span class="mat-body-1">No more recommendations</span>
+                        } @else {
+                            <button mat-button (click)="recommendations.fetchNextPage()">
+                                Load more
+                            </button>
+                        }
                     </div>
                 </cdk-virtual-scroll-viewport>
             </div>
@@ -210,6 +219,8 @@ import { MatSlider, MatSliderThumb } from '@angular/material/slider';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomePageComponent {
+    PAGE_SIZE = 20;
+
     #rpcClient = injectRpcClient();
     #queryClient = injectQueryClient();
     #snackBar = inject(SnackBarService);
@@ -223,7 +234,9 @@ export class HomePageComponent {
     minimumRating = signal<number | null>(null);
     minimumCommonTags = signal<number>(1);
 
-    recommendations = injectQuery(() => ({
+    numColumns = signal(2);
+
+    recommendations = injectInfiniteQuery(() => ({
         queryKey: [
             'recommendations',
             {
@@ -231,28 +244,32 @@ export class HomePageComponent {
                 age: this.age() ?? undefined,
                 minimum_rating: this.minimumRating() ?? undefined,
                 minimum_common_tags: this.minimumCommonTags() ?? undefined,
-                offset: 0,
-                limit: 20,
             },
         ] as const,
-        queryFn: ({ queryKey: [_, params] }) => this.#rpcClient.browseUsers(params),
+        queryFn: ({ queryKey: [_, params], pageParam }) =>
+            this.#rpcClient.browseUsers({
+                ...params,
+                offset: pageParam * this.PAGE_SIZE,
+                limit: this.PAGE_SIZE,
+            }),
+        initialPageParam: 0,
+        getNextPageParam: (lastPage, allPages, lastPageParam) => {
+            if (lastPage.users.length === 0) {
+                return undefined;
+            }
+            return lastPageParam + 1;
+        },
     }));
 
-    recommendationsPairs = computed(() => {
-        const recommendations = this.recommendations.data()?.users;
+    rows = computed(() => {
+        const pages = this.recommendations.data()?.pages ?? [];
 
-        if (!recommendations) {
-            return [];
+        const users = pages.flatMap((page) => page.users);
+        const rows = [];
+        for (let i = 0; i < users.length; i += this.numColumns()) {
+            rows.push(users.slice(i, i + this.numColumns()));
         }
-
-        const pairs = [];
-
-        for (let i = 0; i < recommendations.length; i += 2) {
-            const pair = recommendations.slice(i, i + 2);
-            pairs.push(pair);
-        }
-
-        return pairs;
+        return rows;
     });
 
     openFiltersDialog() {

@@ -40,6 +40,7 @@ export const browseUsersProcedure = procedure(
                 last_name: string;
                 age: number;
                 fame_rating: number;
+                total_count: number;
             }[]
         >`
             WITH 
@@ -78,7 +79,8 @@ export const browseUsersProcedure = procedure(
                     users.first_name,
                     users.last_name,
                     users.age,
-                    users.fame_rating
+                    users.fame_rating,
+                    COUNT(*) over () as total_count
                 FROM principal_user, users 
                 LEFT JOIN common_tags
                     ON users.id = common_tags.other_user_id
@@ -113,6 +115,8 @@ export const browseUsersProcedure = procedure(
                 LIMIT ${limit}
         `;
 
-        return { users: users };
+        const total_count = users[0]?.total_count || 0;
+
+        return { users: users, total_count };
     },
 );

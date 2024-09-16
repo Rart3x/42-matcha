@@ -20,7 +20,7 @@ import { SidesheetLayoutComponent } from '@app/shared/layouts/sidesheet-layout/s
     template: `
         <app-sidesheet-layout>
             <div
-                class="min-w-screen flex min-h-screen bg-surface-container-low max-medium:h-screen max-medium:flex-col-reverse"
+                class="min-w-screen flex min-h-screen bg-surface-container max-medium:h-screen max-medium:flex-col-reverse"
             >
                 <!-- navigation rail -->
                 <div

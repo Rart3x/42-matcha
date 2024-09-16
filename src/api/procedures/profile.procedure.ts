@@ -10,7 +10,7 @@ import {
     validateSexualPref,
 } from '@api/validators/profile.validators';
 import { validateTag, validateTags } from '@api/validators/tag.validators';
-import { limitValidator, offsetValidator } from '@api/validators/page.validators';
+import { validateLimit, validateOffset } from '@api/validators/page.validators';
 
 export type Profile = {
     username: string;
@@ -76,13 +76,13 @@ export const getExistingTagsProcedure = procedure(
     },
     async (params) => {
         const tag = await validateTag(params.tag);
-        const offset = await offsetValidator(params.offset);
-        const limit = await limitValidator(params.limit);
+        const offset = await validateOffset(params.offset);
+        const limit = await validateLimit(params.limit);
 
         const existingTags = await sql<{ name: string; nbr: number }[]>`
             SELECT name, COUNT(*) OVER () as nbr
             FROM tags
-            WHERE name LIKE ${tag + '%'}
+            WHERE name ILIKE ${tag + '%'}
             GROUP BY name
             ORDER BY name
             OFFSET ${offset}

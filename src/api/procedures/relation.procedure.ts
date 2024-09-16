@@ -1,7 +1,7 @@
 import { procedure } from '@api/lib/procedure';
 import { sql } from '@api/connections/database.connection';
 import { usePrincipalUser } from '@api/hooks/auth.hooks';
-import { limitValidator, offsetValidator } from '@api/validators/page.validators';
+import { validateLimit, validateOffset } from '@api/validators/page.validators';
 import { badRequest } from '@api/errors/bad-request.error';
 
 export const getPrincipalUserStatsProcedure = procedure('getPrincipalUserStats', async () => {
@@ -33,8 +33,8 @@ export const getPrincipalUserLikesProcedure = procedure(
         limit: number;
     },
     async (params) => {
-        const offset = await offsetValidator(params.offset);
-        const limit = await limitValidator(params.limit);
+        const offset = await validateOffset(params.offset);
+        const limit = await validateLimit(params.limit);
         const user_id = await usePrincipalUser();
 
         return sql<
@@ -63,8 +63,8 @@ export const getPrincipalUserVisitsProcedure = procedure(
         limit: number;
     },
     async (params) => {
-        const offset = await offsetValidator(params.offset);
-        const limit = await limitValidator(params.limit);
+        const offset = await validateOffset(params.offset);
+        const limit = await validateLimit(params.limit);
         const user_id = await usePrincipalUser();
 
         return sql<

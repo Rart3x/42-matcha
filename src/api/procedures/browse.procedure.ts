@@ -4,11 +4,14 @@ import { usePrincipalUser } from '@api/hooks/auth.hooks';
 import { validateAge } from '@api/validators/profile.validators';
 import { validateMinimumCommonTags } from '@api/validators/tag.validators';
 import { validateOrderBy, validateRating } from '@api/validators/browse.validator';
+import { validateLimit, validateOffset } from '@api/validators/page.validators';
 
 //TODO: implement location filter
 export const browseUsersProcedure = procedure(
     'browseUsers',
     {} as {
+        offset: number;
+        limit: number;
         orderBy: 'age' | 'location' | 'fame_rating' | 'common_tags';
         age?: number;
         location?: string;
@@ -25,6 +28,9 @@ export const browseUsersProcedure = procedure(
         const minimum_common_tags = await validateMinimumCommonTags(
             params.minimum_common_tags,
         ).catch(() => null);
+
+        const offset = await validateOffset(params.offset);
+        const limit = await validateLimit(params.limit);
 
         const users = await sql<
             {
@@ -103,7 +109,8 @@ export const browseUsersProcedure = procedure(
                         WHEN ${orderBy} = 'common_tags' THEN common_tags_count
                     END DESC, 
                     common_tags_count DESC, users.fame_rating DESC, age_gap -- order by the most important filter first
-                LIMIT 10;
+                OFFSET ${offset}
+                LIMIT ${limit}
         `;
 
         return { users: users };

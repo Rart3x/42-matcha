@@ -1,7 +1,7 @@
 import { procedure } from '@api/lib/procedure';
 import { sql } from '@api/connections/database.connection';
 import { usePrincipalUser } from '@api/hooks/auth.hooks';
-import { limitValidator, offsetValidator } from '@api/validators/page.validators';
+import { validateLimit, validateOffset } from '@api/validators/page.validators';
 import { validateUserId } from '@api/validators/profile.validators';
 
 export const createLikeProcedure = procedure(
@@ -48,8 +48,8 @@ export const getLikesProcedure = procedure(
     async (params) => {
         const principal_user_id = await usePrincipalUser();
 
-        const offset = await offsetValidator(params.offset);
-        const limit = await limitValidator(params.limit);
+        const offset = await validateOffset(params.offset);
+        const limit = await validateLimit(params.limit);
 
         return await sql`
             SELECT liker_id

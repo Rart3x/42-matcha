@@ -1,6 +1,6 @@
 import { badRequest } from '@api/errors/bad-request.error';
 
-export async function offsetValidator(offset?: number) {
+export async function validateOffset(offset?: number) {
     if (offset === undefined) {
         throw badRequest();
     }
@@ -10,7 +10,7 @@ export async function offsetValidator(offset?: number) {
     return offset;
 }
 
-export async function limitValidator(limit?: number) {
+export async function validateLimit(limit?: number) {
     if (limit === undefined) {
         throw badRequest();
     }

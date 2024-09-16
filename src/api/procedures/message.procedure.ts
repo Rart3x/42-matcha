@@ -2,7 +2,7 @@ import { procedure } from '@api/lib/procedure';
 import { sql } from '@api/connections/database.connection';
 import { usePrincipalUser } from '@api/hooks/auth.hooks';
 import { validateUserId } from '@api/validators/profile.validators';
-import { limitValidator, offsetValidator } from '@api/validators/page.validators';
+import { validateLimit, validateOffset } from '@api/validators/page.validators';
 
 export const getMessagesByUserIdProcedure = procedure(
     'getMessagesByUserId',
@@ -15,8 +15,8 @@ export const getMessagesByUserIdProcedure = procedure(
         const principal_user_id = await usePrincipalUser();
 
         const user_id = await validateUserId(params.user_id);
-        const offset = await offsetValidator(params.offset);
-        const limit = await limitValidator(params.limit);
+        const offset = await validateOffset(params.offset);
+        const limit = await validateLimit(params.limit);
 
         return await sql.begin(async (sql) => {
             const messages = sql<
@@ -56,8 +56,8 @@ export const getReadMessagesByUserIdProcedure = procedure(
         const principal_user_id = await usePrincipalUser();
 
         const user_id = await validateUserId(params.user_id);
-        const offset = await offsetValidator(params.offset);
-        const limit = await limitValidator(params.limit);
+        const offset = await validateOffset(params.offset);
+        const limit = await validateLimit(params.limit);
 
         return await sql.begin(async (sql) => {
             const messages = sql<
@@ -95,8 +95,8 @@ export const getUnreadMessagesByUserIdProcedure = procedure(
         const principal_user_id = await usePrincipalUser();
 
         const user_id = await validateUserId(params.user_id);
-        const offset = await offsetValidator(params.offset);
-        const limit = await limitValidator(params.limit);
+        const offset = await validateOffset(params.offset);
+        const limit = await validateLimit(params.limit);
 
         return await sql.begin(async (sql) => {
             const messages = sql<

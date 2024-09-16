@@ -139,6 +139,8 @@ export class BrowsePanelComponent {
                 age: this.age() ?? undefined,
                 minimum_rating: this.minimumRating() ?? undefined,
                 minimum_common_tags: this.minimumCommonTags() ?? undefined,
+                offset: 0,
+                limit: 10,
             },
         ] as const,
         queryFn: ({ queryKey: [_, params] }) => this.#rpcClient.browseUsers(params),

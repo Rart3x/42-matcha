@@ -308,3 +308,19 @@ export const confirmEmailModificationProcedure = procedure(
         return { username: user.username };
     },
 );
+
+export const isOnlineByIdProcedure = procedure('isOnlineById', {} as {}, async (params) => {
+    const user_id = await usePrincipalUser();
+
+    return await sql`
+        SELECT CASE
+           WHEN EXISTS (
+               SELECT 1
+               FROM sessions
+               WHERE sessions.user_id = ${user_id} AND
+                   sessions.expires_at > NOW() - INTERVAL '1 minute'
+           ) THEN TRUE
+           ELSE FALSE
+           END AS is_online;
+    `;
+});

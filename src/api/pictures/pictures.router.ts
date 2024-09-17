@@ -149,6 +149,11 @@ picturesRouter.get('/by_id/:user_id/:idx', verifySession, async (req, res, _) =>
                 AND position = ${idxNumber};
         `;
 
+        if (!picture && idxNumber === 0) {
+            res.redirect('/default_avatar.jpg');
+            return;
+        }
+
         if (!picture) {
             // no picture at this index
             const error = badRequest();

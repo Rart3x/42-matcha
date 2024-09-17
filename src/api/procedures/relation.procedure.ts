@@ -75,12 +75,13 @@ export const getPrincipalUserVisitsProcedure = procedure(
                 first_name: string;
                 last_name: string;
                 age: number;
+                biography: string;
             }[]
         >`
-            SELECT id, username, first_name, last_name, age
+            SELECT id, username, first_name, last_name, age, biography
             FROM visits
-                     LEFT JOIN users ON users.id = visits.visited_at
-            WHERE visits.user_id = ${user_id}
+                INNER JOIN users ON users.id = visits.user_id
+            WHERE visits.visited_user_id = ${user_id}
             ORDER BY visits.visited_at DESC
             OFFSET ${offset} LIMIT ${limit}
         `;

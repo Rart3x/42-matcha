@@ -157,7 +157,7 @@ import { NgClass } from '@angular/common';
                             @for (user of row; track user.id) {
                                 <a
                                     mat-list-item
-                                    class="h-[80px]"
+                                    class="h-[80px] !rounded-xl !bg-surface"
                                     (click)="openProfileInSideSheet(user.id)"
                                 >
                                     <img

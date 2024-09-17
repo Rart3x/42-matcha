@@ -45,6 +45,8 @@ export const searchUsersProcedure = procedure(
                 age: number;
                 fame_rating: number;
                 total_count: number;
+                longitude: number;
+                latitude: number;
             }[]
         >`
             WITH
@@ -84,12 +86,15 @@ export const searchUsersProcedure = procedure(
                     users.last_name,
                     users.age,
                     users.fame_rating,
+                    location.longitude,
+                    location.latitude,
                     COUNT(*) over () as total_count
-                FROM principal_user, users
+                FROM principal_user, users, location
                 LEFT JOIN common_tags
                     ON users.id = common_tags.other_user_id
                 LEFT JOIN age_gaps
                     ON users.id = age_gaps.other_user_id
+                LEFT JOIN location ON users.id = location.user_id
                 WHERE
                     users.id != ${user_id}
                     -- filters out users depending on the filters set by the principal user

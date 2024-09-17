@@ -41,8 +41,7 @@ export const browseUsersProcedure = procedure(
                 age: number;
                 fame_rating: number;
                 total_count: number;
-                longitude: number;
-                latitude: number;
+                biography: string;
             }[]
         >`
             WITH 
@@ -85,10 +84,9 @@ export const browseUsersProcedure = procedure(
                     users.username,
                     users.first_name,
                     users.last_name,
+                    users.biography,
                     users.age,
                     users.fame_rating,
-                    locations.longitude,
-                    locations.latitude,
                     COUNT(*) over () as total_count
                 FROM principal_user, users
                 LEFT JOIN common_tags

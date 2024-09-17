@@ -42,6 +42,18 @@ import { RestrictedInputDirective } from '@app/shared/directives/restricted-inpu
 import { MatInput } from '@angular/material/input';
 import { MatSlider, MatSliderThumb } from '@angular/material/slider';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
+import {
+    MatListItem,
+    MatListItemAvatar,
+    MatListItemLine,
+    MatListItemMeta,
+    MatListItemTitle,
+    MatNavList,
+} from '@angular/material/list';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'app-home-page',
@@ -77,6 +89,13 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
         MatDialogClose,
         MatSliderThumb,
         MatProgressSpinner,
+        MatNavList,
+        MatListItem,
+        MatListItemTitle,
+        MatListItemAvatar,
+        MatListItemLine,
+        MatListItemMeta,
+        NgClass,
     ],
     host: { class: 'flex min-h-full relative flex-col gap-1' },
     template: `
@@ -94,7 +113,7 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
         </mat-toolbar>
 
         <div
-            class="relative flex grow flex-col gap-8 rounded-tl-2xl pr-6"
+            class="relative flex grow flex-col gap-8 rounded-tl-2xl pr-3 expanded:pr-6"
             cdkVirtualScrollingElement
         >
             <app-home-heading />
@@ -102,61 +121,59 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
             <!-- Recommendations -->
             <div class="">
                 <!-- Recommendations heading -->
-                <div class="flex">
-                    <div class="grow">
-                        <h2 class="mat-display-small">Recommendations</h2>
-                        <p class="mat-title-large">Here's some profiles we think you might like</p>
-                    </div>
-                    <div class="flex flex-col justify-end gap-1">
-                        <button
-                            mat-stroked-button
-                            class="w-fit self-end"
-                            (click)="openFiltersDialog()"
+                <div class="flex max-expanded:justify-between max-expanded:pl-3">
+                    <div class="expanded:grow max-expanded:flex max-expanded:items-center">
+                        <h2
+                            [ngClass]="[
+                                isCompactScreen()
+                                    ? 'mat-headline-small'
+                                    : isMediumScreen()
+                                      ? 'mat-headline-large'
+                                      : 'mat-display-small',
+                            ]"
+                            class="max-expanded:!mb-0 max-expanded:block"
                         >
+                            Recommendations
+                        </h2>
+                        <p class="mat-title-large max-expanded:hidden">
+                            Here's some profiles we think you might like
+                        </p>
+                    </div>
+                    <div class="flex justify-end gap-1 expanded:flex-col max-expanded:items-center">
+                        <button mat-stroked-button class="w-fit" (click)="openFiltersDialog()">
                             <mat-icon>filter_list</mat-icon>
                             add filters
                         </button>
-                        <div class="mb-3 flex items-center gap-2">
-                            <span class="mat-body-1">Sort by:</span>
-                            <mat-button-toggle-group [(ngModel)]="sortBy" aria-label="Sort by">
-                                <mat-button-toggle value="age">Age gap</mat-button-toggle>
-                                <!--                    <mat-button-toggle value="location">Location</mat-button-toggle>-->
-                                <mat-button-toggle value="fame_rating"
-                                    >Fame rating
-                                </mat-button-toggle>
-                                <mat-button-toggle value="common_tags"
-                                    >Common tags
-                                </mat-button-toggle>
-                            </mat-button-toggle-group>
-                        </div>
                     </div>
                 </div>
 
                 <!-- Recommendations grid -->
-                <cdk-virtual-scroll-viewport itemSize="200">
-                    <div class="flex flex-col gap-2">
+                <cdk-virtual-scroll-viewport itemSize="80">
+                    <mat-nav-list class="flex flex-col !p-2">
                         <div
-                            class="grid h-[200px] grid-cols-2 gap-2"
+                            class="grid h-[80px] gap-2 expanded:grid-cols-2"
                             *cdkVirtualFor="let row of rows()"
                         >
                             @for (user of row; track user.id) {
-                                <div class="flex gap-2 rounded-lg bg-surface p-4">
-                                    <div>
-                                        <img
-                                            [src]="'/api/pictures/by_id/' + user.id + '/0'"
-                                            class="aspect-square w-24 rounded-xl"
-                                        />
-                                    </div>
-                                    <div class="grow">
-                                        <div>{{ user.username }}</div>
-                                        <div>{{ user.first_name }} {{ user.last_name }}</div>
-                                        <div>{{ user.age }}</div>
-                                        <div>{{ user.fame_rating }}</div>
-                                    </div>
-                                </div>
+                                <a
+                                    mat-list-item
+                                    class="h-[80px]"
+                                    (click)="openProfileInSideSheet(user.id)"
+                                >
+                                    <img
+                                        matListItemAvatar
+                                        [src]="'/api/pictures/by_id/' + user.id + '/0'"
+                                        alt="Avatar"
+                                    />
+                                    <span matListItemTitle>{{ user.first_name }}</span>
+                                    <span matListItemLine class="max-w-60 text-ellipsis">
+                                        {{ user.biography }}
+                                    </span>
+                                    <span matListItemMeta> {{ user.age }} yo </span>
+                                </a>
                             }
                         </div>
-                    </div>
+                    </mat-nav-list>
                     <div class="m-4 flex justify-center">
                         @if (recommendations.isFetchingNextPage()) {
                             <mat-progress-spinner diameter="32" mode="indeterminate" />
@@ -204,6 +221,7 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
                         <mat-hint>Leave empty to ignore</mat-hint>
                     </mat-form-field>
                     <div class="flex items-center gap-3">
+                        <span class="mat-body-1">Minimum common tags:</span>
                         <mat-slider [min]="0" [max]="15" [discrete]="false" [disabled]="false">
                             <input
                                 matSliderThumb
@@ -212,6 +230,27 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
                             />
                         </mat-slider>
                         <span class="mat-body-1">{{ minimumCommonTags() }}</span>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <span class="mat-body-1">Sort by:</span>
+                        <mat-button-toggle-group
+                            [(ngModel)]="sortBy"
+                            aria-label="Sort by"
+                            [hideSingleSelectionIndicator]="isMediumScreen()"
+                        >
+                            <mat-button-toggle value="age">
+                                age
+                                <span class="max-expanded:hidden"> gap </span>
+                            </mat-button-toggle>
+                            <!--                            <mat-button-toggle value="location">Location</mat-button-toggle>-->
+                            <mat-button-toggle value="fame_rating">
+                                <span class="max-expanded:hidden">fame </span>rating
+                            </mat-button-toggle>
+                            <mat-button-toggle value="common_tags">
+                                <span class="max-expanded:hidden"> common </span>tags
+                            </mat-button-toggle>
+                        </mat-button-toggle-group>
                     </div>
                 </div>
             </mat-dialog-content>
@@ -231,6 +270,20 @@ export class HomePageComponent {
     #router = inject(Router);
     #dialog = inject(MatDialog);
 
+    #breakpointObserver = inject(BreakpointObserver);
+
+    isMediumScreen = toSignal(
+        this.#breakpointObserver
+            .observe('(max-width: 840px)')
+            .pipe(map((result) => result.matches)),
+    );
+
+    isCompactScreen = toSignal(
+        this.#breakpointObserver
+            .observe('(max-width: 600px)')
+            .pipe(map((result) => result.matches)),
+    );
+
     filtersDialog = viewChild<TemplateRef<any>>('filtersDialog');
 
     sortBy = signal<'age' | 'fame_rating' | 'common_tags' | 'location'>('fame_rating');
@@ -238,7 +291,7 @@ export class HomePageComponent {
     minimumRating = signal<number | null>(null);
     minimumCommonTags = signal<number>(1);
 
-    numColumns = signal(2);
+    numColumns = computed(() => (this.isMediumScreen() ? 1 : 2));
 
     recommendations = injectInfiniteQuery(() => ({
         queryKey: [
@@ -294,4 +347,8 @@ export class HomePageComponent {
             this.#snackBar.enqueueSnackBar('Failed to logout');
         },
     }));
+
+    openProfileInSideSheet(user_id: string) {
+        void this.#router.navigate([{ outlets: { sidesheet: ['profile', user_id] } }]);
+    }
 }

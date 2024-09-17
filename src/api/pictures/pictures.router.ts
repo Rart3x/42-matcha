@@ -113,8 +113,60 @@ picturesRouter.post(
     },
 );
 
-picturesRouter.get('/:user_id/:idx', verifySession, async (req, res, _) => {
+picturesRouter.get('/by_id/:user_id/:idx', verifySession, async (req, res, _) => {
     const userId = req.params['user_id'] as string; // id from the url
+    const idx = req.params['idx'] as string;
+
+    if (!/^\d+$/.test(idx)) {
+        // idx must be a number
+        const error = badRequest();
+
+        res.status(error.code).send(error.message);
+        return;
+    }
+
+    const idxNumber = parseInt(idx, 10);
+
+    if (idxNumber < 0 || 4 < idxNumber) {
+        // idx must be between 0 and 4
+        const error = badRequest();
+
+        res.status(error.code).send(error.message);
+        return;
+    }
+
+    try {
+        const [picture]: [{ url: string; mime_type: string }] = await sql`
+            SELECT url, mime_type
+            FROM pictures
+                INNER JOIN public.users u on u.id = pictures.user_id
+            WHERE u.id = ${userId}
+                AND position = ${idxNumber};
+        `;
+
+        if (!picture) {
+            // no picture at this index
+            const error = badRequest();
+
+            res.status(error.code).send(error.message);
+            return;
+        }
+
+        res.sendFile(picture.url, {
+            headers: {
+                'Content-Type': picture.mime_type,
+            },
+            root: '.',
+        });
+    } catch (e) {
+        const error = badRequest();
+
+        res.status(error.code).send(error.message);
+    }
+});
+
+picturesRouter.get('/principal/:idx', verifySession, async (req, res, _) => {
+    const userId = (req as any)['user_id'] as string; // id from the session
     const idx = req.params['idx'] as string;
 
     if (!/^\d+$/.test(idx)) {

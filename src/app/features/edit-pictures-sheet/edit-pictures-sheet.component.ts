@@ -230,10 +230,9 @@ export class EditPicturesSheetComponent implements OnDestroy {
     );
 
     #fetchPicture(index: number) {
-        // TODO: use principal user id
         return lastValueFrom(
             this.#httpClient
-                .get<Blob>(`/api/pictures/1/${index}`, {
+                .get<Blob>(`/api/pictures/principal/${index}`, {
                     responseType: 'blob' as 'json',
                 })
                 .pipe(catchError(() => of(null))),

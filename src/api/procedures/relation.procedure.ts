@@ -63,11 +63,12 @@ export const getPrincipalUserVisitsProcedure = procedure(
         limit: number;
     },
     async (params) => {
-        const offset = await validateOffset(params.offset);
-        const limit = await validateLimit(params.limit);
         const user_id = await usePrincipalUser();
 
-        return sql<
+        const offset = await validateOffset(params.offset);
+        const limit = await validateLimit(params.limit);
+
+        const users = await sql<
             {
                 id: number;
                 username: string;
@@ -83,5 +84,9 @@ export const getPrincipalUserVisitsProcedure = procedure(
             ORDER BY visits.visited_at DESC
             OFFSET ${offset} LIMIT ${limit}
         `;
+
+        return {
+            users,
+        };
     },
 );

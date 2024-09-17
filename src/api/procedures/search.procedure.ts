@@ -72,6 +72,11 @@ export const searchUsersProcedure = procedure(
                     GROUP BY
                         ut1.user_id
                 ),
+                blocked_users AS (
+                    SELECT user_id, blocked_user_id
+                    FROM blokcs 
+                    WHERE user_id = ${user_id} OR blocked_user_id = ${user_id}
+                ),
                 age_gaps AS (
                     SELECT
                         users.id as other_user_id,
@@ -109,6 +114,8 @@ export const searchUsersProcedure = procedure(
 --                  AND CASE WHEN ::integer IS NOT NULL
 --                         THEN common_tags_count >= ::integer -- show users with at least this many common tags 
 --                         ELSE true END
+                AND users.id NOT IN (SELECT blocked_user_id FROM blocked_users)
+                AND users.id NOT IN (SELECT user_id FROM blocked_users)
                 ORDER BY
                     CASE  -- order by the principal user's preference first (sets the order)
                         WHEN ${orderBy} = 'age' THEN age_gap

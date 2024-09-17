@@ -68,6 +68,11 @@ export const browseUsersProcedure = procedure(
                     GROUP BY
                         ut1.user_id
                 ),
+                blocked_users AS (
+                    SELECT user_id, blocked_user_id
+                    FROM blokcs
+                    WHERE user_id = ${user_id} OR blocked_user_id = ${user_id}
+                ),
                 age_gaps AS (
                     SELECT
                         users.id as other_user_id,
@@ -106,6 +111,8 @@ export const browseUsersProcedure = procedure(
                     AND CASE WHEN ${minimum_common_tags}::integer IS NOT NULL
                         THEN common_tags_count >= ${minimum_common_tags}
                         ELSE true END
+                AND users.id NOT IN (SELECT blocked_user_id FROM blocked_users)
+                AND users.id NOT IN (SELECT user_id FROM blocked_users)
                 ORDER BY 
                     CASE  -- order by the principal user's preference first (sets the order)
                         WHEN ${orderBy} = 'age' THEN age_gap

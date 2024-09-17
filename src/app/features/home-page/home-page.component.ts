@@ -139,16 +139,20 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
                             class="grid h-[200px] grid-cols-2 gap-2"
                             *cdkVirtualFor="let row of rows()"
                         >
-                            @for (user of row; track $index) {
-                                <div class="rounded-lg bg-surface p-4">
-                                    @if (user) {
+                            @for (user of row; track user.id) {
+                                <div class="flex gap-2 rounded-lg bg-surface p-4">
+                                    <div>
+                                        <img
+                                            [src]="'/api/pictures/by_id/' + user.id + '/0'"
+                                            class="aspect-square w-24 rounded-xl"
+                                        />
+                                    </div>
+                                    <div class="grow">
                                         <div>{{ user.username }}</div>
                                         <div>{{ user.first_name }} {{ user.last_name }}</div>
                                         <div>{{ user.age }}</div>
                                         <div>{{ user.fame_rating }}</div>
-                                    } @else {
-                                        loading...
-                                    }
+                                    </div>
                                 </div>
                             }
                         </div>
@@ -265,7 +269,7 @@ export class HomePageComponent {
         const pages = this.recommendations.data()?.pages ?? [];
 
         const users = pages.flatMap((page) => page.users);
-        const rows = [];
+        const rows = [] as (typeof users)[];
         for (let i = 0; i < users.length; i += this.numColumns()) {
             rows.push(users.slice(i, i + this.numColumns()));
         }

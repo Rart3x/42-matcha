@@ -21,8 +21,10 @@ import {
 import { HttpClient } from '@angular/common/http';
 import { catchError, lastValueFrom, of } from 'rxjs';
 import { AsyncPipe } from '@angular/common';
-import { MatButton } from '@angular/material/button';
+import { MatButton, MatIconButton } from '@angular/material/button';
 import { SnackBarService } from '@app/core/services/snack-bar.service';
+import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
+import { Profile } from '@api/procedures/profile.procedure';
 
 type Picture = {
     url: string;
@@ -32,14 +34,86 @@ type Picture = {
 @Component({
     selector: 'app-edit-pictures-sheet',
     standalone: true,
-    imports: [SidesheetComponent, MatTooltip, MatRipple, MatIcon, AsyncPipe, MatButton],
+    imports: [
+        SidesheetComponent,
+        MatTooltip,
+        MatRipple,
+        MatIcon,
+        AsyncPipe,
+        MatButton,
+        CdkDropList,
+        CdkDrag,
+        MatIconButton,
+    ],
+    styles: [
+        `
+            .cdk-drag-preview .item {
+                border-radius: 4px;
+                box-shadow:
+                    0 5px 5px -3px rgba(0, 0, 0, 0.2),
+                    0 8px 10px 1px rgba(0, 0, 0, 0.14),
+                    0 3px 14px 2px rgba(0, 0, 0, 0.12);
+            }
+            .cdk-drag-preview {
+                overflow: hidden;
+            }
+            .cdk-drag-preview button {
+                visibility: hidden;
+            }
+
+            .cdk-drag-placeholder {
+                opacity: 0;
+            }
+
+            .cdk-drag-animating {
+                transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+            }
+
+            .list.cdk-drop-list-dragging .item:not(.cdk-drag-placeholder) {
+                transition: transform 250ms cubic-bezier(0, 0, 0.2, 1);
+            }
+        `,
+    ],
     template: `
         <app-sidesheet heading="Edit Pictures">
             <p class="mat-body-large">Choose beautiful pictures for your profile</p>
 
-            @for (picture of pictures(); track picture) {
-                <img class="h-20 w-20 rounded-lg" [src]="picture.url" alt="Picture" />
-            }
+            <div
+                class="list mb-4 flex flex-wrap content-evenly"
+                cdkDropList
+                cdkDropListOrientation="mixed"
+                (cdkDropListDropped)="onReorder($event)"
+            >
+                @for (picture of pictures(); let i = $index; track picture) {
+                    <div
+                        cdkDrag
+                        class="item group rounded-lg border-2 border-t-0 border-transparent first:border-primary-container first:bg-primary-container"
+                    >
+                        <div
+                            class="invisible text-center text-sm text-on-primary-container group-first:visible"
+                        >
+                            profile
+                        </div>
+                        <div class="relative size-fit">
+                            <button
+                                (click)="onRemove(i)"
+                                matTooltip="Remove picture"
+                                [style.display]="i === 0 ? 'none' : 'block'"
+                                class="!absolute right-0 top-0 !z-50 -translate-y-1/2 translate-x-1/2 scale-75"
+                                mat-icon-button
+                            >
+                                <mat-icon>close</mat-icon>
+                            </button>
+                            <img
+                                class="h-20 w-20 cursor-move rounded-lg"
+                                [src]="picture.url"
+                                [matTooltip]="i === 0 ? 'Profile picture' : null"
+                                alt="Picture"
+                            />
+                        </div>
+                    </div>
+                }
+            </div>
 
             @if (pictures().length < 5) {
                 <div
@@ -197,5 +271,17 @@ export class EditPicturesSheetComponent implements OnDestroy {
 
     onReset() {
         this.pictures.set(this.#downloadedPictures());
+    }
+
+    onReorder($event: CdkDragDrop<Profile[]>) {
+        const pictures = this.pictures();
+        moveItemInArray(this.pictures(), $event.previousIndex, $event.currentIndex);
+        this.pictures.set(pictures);
+    }
+
+    onRemove(index: number) {
+        const pictures = this.pictures();
+        pictures.splice(index, 1);
+        this.pictures.set(pictures);
     }
 }

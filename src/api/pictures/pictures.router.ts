@@ -57,6 +57,7 @@ picturesRouter.post(
 
         // validate the files
         for (const file of files) {
+            console.log('hey');
             if (!/^image\//.test(file.mimetype)) {
                 // only images are allowed
                 const error = badRequest();
@@ -103,7 +104,7 @@ picturesRouter.post(
                 `;
             });
 
-            res.send('ok');
+            res.send({ message: 'Pictures uploaded successfully' });
         } catch {
             const error = badRequest();
 

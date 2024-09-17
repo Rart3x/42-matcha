@@ -1,6 +1,8 @@
 import {
     ChangeDetectionStrategy,
     Component,
+    computed,
+    effect,
     ElementRef,
     inject,
     OnDestroy,
@@ -11,28 +13,35 @@ import { SidesheetComponent } from '@app/shared/layouts/sidesheet-layout/sideshe
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatRipple } from '@angular/material/core';
 import { MatIcon } from '@angular/material/icon';
-import { injectQuery } from '@tanstack/angular-query-experimental';
+import {
+    injectMutation,
+    injectQuery,
+    injectQueryClient,
+} from '@tanstack/angular-query-experimental';
 import { HttpClient } from '@angular/common/http';
-import { catchError, filter, lastValueFrom, map, of } from 'rxjs';
-import { toObservable } from '@angular/core/rxjs-interop';
+import { catchError, lastValueFrom, of } from 'rxjs';
 import { AsyncPipe } from '@angular/common';
-import { rxEffect } from 'ngxtension/rx-effect';
+import { MatButton } from '@angular/material/button';
+import { SnackBarService } from '@app/core/services/snack-bar.service';
+
+type Picture = {
+    url: string;
+    blob: Blob;
+};
 
 @Component({
     selector: 'app-edit-pictures-sheet',
     standalone: true,
-    imports: [SidesheetComponent, MatTooltip, MatRipple, MatIcon, AsyncPipe],
+    imports: [SidesheetComponent, MatTooltip, MatRipple, MatIcon, AsyncPipe, MatButton],
     template: `
         <app-sidesheet heading="Edit Pictures">
             <p class="mat-body-large">Choose beautiful pictures for your profile</p>
 
-            @for (url of urls(); track url) {
-                @if (url) {
-                    <img class="h-20 w-20 rounded-lg" [src]="url" alt="Picture" />
-                }
+            @for (picture of pictures(); track picture) {
+                <img class="h-20 w-20 rounded-lg" [src]="picture.url" alt="Picture" />
             }
 
-            @if (urls().length < 5) {
+            @if (pictures().length < 5) {
                 <div
                     matRipple
                     matTooltip="Upload a picture"
@@ -63,12 +72,23 @@ import { rxEffect } from 'ngxtension/rx-effect';
                     </div>
                 </div>
             }
+
+            <ng-container bottom-actions>
+                <button type="button" (click)="onSubmit()" mat-flat-button class="btn-primary">
+                    Save
+                </button>
+                <button type="button" (click)="onReset()" mat-stroked-button class="btn-primary">
+                    Reset
+                </button>
+            </ng-container>
         </app-sidesheet>
     `,
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EditPicturesSheetComponent implements OnDestroy {
     #httpClient = inject(HttpClient);
+    #snackBar = inject(SnackBarService);
+    #queryClient = injectQueryClient();
 
     #urlsToRevoke = new Set<string>();
 
@@ -76,35 +96,62 @@ export class EditPicturesSheetComponent implements OnDestroy {
         this.#urlsToRevoke.forEach((url) => URL.revokeObjectURL(url));
     }
 
-    #downloadedPictures = injectQuery(() => ({
+    #downloadedPicturesQuery = injectQuery(() => ({
         queryKey: ['pictures'],
         queryFn: () => {
             return Promise.all(Array.from({ length: 5 }, (_, index) => this.#fetchPicture(index)));
         },
     }));
 
-    /**
-     * Urls show in the UI
-     */
-    urls = signal<string[]>([]);
+    #uploadedPicturesMutation = injectMutation(() => ({
+        mutationFn: (pictures: Picture[]) => {
+            const formData = new FormData();
+            pictures.forEach((picture) => {
+                formData.append(
+                    'pictures',
+                    picture.blob,
+                    `picture-${Date.now()}.${picture.blob.type.split('/')[1]}`,
+                );
+            });
+            return lastValueFrom(this.#httpClient.post('/api/pictures', formData));
+        },
+        onSuccess: async () => {
+            this.#snackBar.enqueueSnackBar('Pictures uploaded successfully');
+            await this.#queryClient.invalidateQueries({ queryKey: ['pictures'] });
+        },
+        onError: () => {
+            this.#snackBar.enqueueSnackBar('Failed to upload pictures');
+        },
+    }));
+
+    pictures = signal([] as Picture[]);
 
     /**
      * Replace the pictures shown in the UI with the downloaded pictures on change
      */
-    #downloadedPicturesEffect = rxEffect(
-        toObservable(this.#downloadedPictures.data).pipe(
-            filter((pictures) => pictures !== undefined),
-            map((pictures) =>
-                pictures.map((picture) => (picture ? URL.createObjectURL(picture) : null)),
-            ),
-        ),
-        (urls) => {
-            const nonNullUrls = urls.filter((url) => url !== null);
+    #downloadedPictures = computed(() => {
+        const pictures = this.#downloadedPicturesQuery
+            .data()
+            ?.filter((picture) => picture !== null)
+            ?.map((blob, index) => ({
+                url: blob ? URL.createObjectURL(blob) : '',
+                blob: blob,
+            }));
 
-            for (const url of nonNullUrls) {
+        if (pictures) {
+            for (const { url } of pictures) {
                 this.#urlsToRevoke.add(url);
             }
-            this.urls.set(nonNullUrls);
+        }
+        return pictures ?? [];
+    });
+
+    #downloadedPicturesChangeEffect = effect(
+        () => {
+            this.pictures.set(this.#downloadedPictures());
+        },
+        {
+            allowSignalWrites: true,
         },
     );
 
@@ -122,19 +169,33 @@ export class EditPicturesSheetComponent implements OnDestroy {
     fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 
     onFileChange(event: Event) {
-        console.log('onFileChange');
+        if (this.pictures().length >= 5) {
+            return;
+        }
+
         const target = event.target as HTMLInputElement;
         const file = target.files?.[0] as File | undefined;
 
         if (file) {
             const url = URL.createObjectURL(file);
             this.#urlsToRevoke.add(url);
-            this.urls.set([...this.urls(), url]);
+
+            const blob = new Blob([file], { type: file.type });
+
+            this.pictures.set([...this.pictures(), { url, blob: blob }]);
 
             const fileInput = this.fileInput()?.nativeElement;
             if (fileInput) {
                 fileInput.value = '';
             }
         }
+    }
+
+    onSubmit() {
+        this.#uploadedPicturesMutation.mutate(this.pictures());
+    }
+
+    onReset() {
+        this.pictures.set(this.#downloadedPictures());
     }
 }

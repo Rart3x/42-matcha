@@ -1,7 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { SidesheetComponent } from '@app/shared/layouts/sidesheet-layout/sidesheet.component';
 import { injectRpcClient } from '@app/core/http/rpc-client';
-import { injectQuery } from '@tanstack/angular-query-experimental';
+import {
+    injectMutation,
+    injectQuery,
+    injectQueryClient,
+} from '@tanstack/angular-query-experimental';
 import { MatChip, MatChipSet } from '@angular/material/chips';
 import { MatDivider } from '@angular/material/divider';
 import { MatIcon } from '@angular/material/icon';
@@ -30,20 +34,24 @@ import { MatButton, MatFabButton, MatIconButton } from '@angular/material/button
         <app-sidesheet [heading]="heading()">
             <div class="flex py-4">
                 <div class="relative flex w-32 flex-col justify-center">
-                    <img [src]="profilePictureUrl()" class="mx-auto rounded-full" />
+                    <img
+                        [src]="profilePictureUrl()"
+                        class="mx-auto rounded-full"
+                        alt="Profile picture"
+                    />
                 </div>
 
                 <div class="h-32">
                     <div class="mb-4 box-border flex grow flex-col px-4">
                         <div class="mat-headline-small !mb-0">
-                            {{ profile.data()?.first_name }} {{ profile.data()?.last_name }}
+                            {{ fullName() }}
                         </div>
                         <div class="mat-body-medium">
-                            <span>{{ profile.data()?.age }} years old</span>
-                            @if (profile.data()?.gender !== 'other') {
-                                <span> {{ profile.data()?.gender }}</span>
+                            <span>{{ data()?.age }} years old</span>
+                            @if (data()?.gender !== 'other') {
+                                <span> {{ data()?.gender }}</span>
                             }
-                            <span>, looking for {{ profile.data()?.sexual_pref }}</span>
+                            <span>, looking for {{ data()?.sexual_pref }}</span>
                         </div>
                     </div>
 
@@ -57,7 +65,6 @@ import { MatButton, MatFabButton, MatIconButton } from '@angular/material/button
                                 <mat-icon>mood_bad</mat-icon>
                             </div>
                         }
-
                         @if (connection_status() === 'liked') {
                             <div
                                 matRipple
@@ -67,7 +74,6 @@ import { MatButton, MatFabButton, MatIconButton } from '@angular/material/button
                                 <mat-icon>favorite</mat-icon>
                             </div>
                         }
-
                         @if (connection_status() === 'connected') {
                             <div
                                 matRipple
@@ -77,14 +83,13 @@ import { MatButton, MatFabButton, MatIconButton } from '@angular/material/button
                                 <mat-icon class="material-symbols-filled">favorite</mat-icon>
                             </div>
                         }
-
                         <div
                             matTooltip="Fame rating"
                             matRipple
                             class="mat-elevation-z1 flex w-fit items-center gap-0.5 rounded-xl bg-primary-container p-2 text-on-primary-container"
                         >
                             <span class="translate-y-[0.075rem] leading-none">
-                                {{ profile.data()?.fame_rating }}
+                                {{ data()?.fame_rating }}
                             </span>
                             <mat-icon>whatshot</mat-icon>
                         </div>
@@ -97,7 +102,7 @@ import { MatButton, MatFabButton, MatIconButton } from '@angular/material/button
             <div class="py-4">
                 <h3 class="mat-title-large">Biography</h3>
 
-                <div class="mat-body">{{ profile.data()?.biography }}</div>
+                <div class="mat-body">{{ data()?.biography }}</div>
             </div>
 
             <mat-divider />
@@ -128,18 +133,58 @@ import { MatButton, MatFabButton, MatIconButton } from '@angular/material/button
             </div>
 
             <ng-container bottom-actions>
-                <button type="button" mat-flat-button class="btn-primary">
-                    <mat-icon>favorite</mat-icon>
-                    Like
-                </button>
-                <button type="button" mat-flat-button class="btn-secondary">
-                    <mat-icon>chat</mat-icon>
-                    Chat
-                </button>
-                <button type="button" mat-icon-button matTooltip="block user">
+                @if (data()?.likes_principal) {
+                    <button
+                        type="button"
+                        mat-flat-button
+                        class="btn-primary"
+                        matTooltip="remove like"
+                        (click)="unlikeUserMutation.mutate()"
+                    >
+                        <mat-icon class="material-symbols-filled">favorite</mat-icon>
+                        Liked
+                    </button>
+                } @else {
+                    <button
+                        type="button"
+                        mat-flat-button
+                        class="btn-primary"
+                        matTooltip="like user"
+                        (click)="likeUserMutation.mutate()"
+                    >
+                        <mat-icon>favorite</mat-icon>
+                        Like
+                    </button>
+                }
+                <div
+                    [matTooltip]="
+                        connection_status() === 'connected' ? 'open chat' : 'connect first'
+                    "
+                >
+                    <button
+                        type="button"
+                        mat-flat-button
+                        class="btn-secondary"
+                        [disabled]="connection_status() !== 'connected'"
+                    >
+                        <mat-icon>chat</mat-icon>
+                        Chat
+                    </button>
+                </div>
+                <button
+                    type="button"
+                    mat-icon-button
+                    matTooltip="block user"
+                    (click)="blockUserMutation.mutate()"
+                >
                     <mat-icon>block</mat-icon>
                 </button>
-                <button type="button" mat-icon-button matTooltip="report as fake account">
+                <button
+                    type="button"
+                    mat-icon-button
+                    matTooltip="report as fake account"
+                    (click)="reportUserMutation.mutate()"
+                >
                     <mat-icon>report</mat-icon>
                 </button>
             </ng-container>
@@ -158,6 +203,7 @@ import { MatButton, MatFabButton, MatIconButton } from '@angular/material/button
 })
 export class ProfileSheetComponent {
     #rpcClient = injectRpcClient();
+    #queryClient = injectQueryClient();
 
     id = input.required<string>();
 
@@ -179,36 +225,25 @@ export class ProfileSheetComponent {
         return +id;
     });
 
-    profilePictureUrl = computed(() => {
-        return `/api/pictures/by_id/${this.validatedId()}/0`;
-    });
+    profilePictureUrl = computed(() => `/api/pictures/by_id/${this.validatedId()}/0`);
 
-    profile = injectQuery(() => ({
+    profileQuery = injectQuery(() => ({
         queryKey: ['profile-by-id', { id: this.id() }],
         queryFn: () => this.#rpcClient.getProfileById({ user_id: this.validatedId() }),
     }));
+    data = computed(() => this.profileQuery.data());
 
-    tags = computed(() => this.profile.data()?.tags ?? ([] as string[]));
+    heading = computed(() => this.data()?.username ?? 'Profile');
+    fullName = computed(() => `${this.data()?.first_name} ${this.data()?.last_name}`);
+    tags = computed(() => this.data()?.tags ?? ([] as string[]));
 
-    heading = computed(() => {
-        const data = this.profile.data();
-
-        if (data) {
-            return data.username;
-        }
-
-        return 'Profile';
-    });
-
-    connection_status = computed(() => {
-        const data = this.profile.data();
-
-        if (data) {
-            return data.liked_by_principal ? 'liked' : data.likes_principal ? 'connected' : 'none';
-        }
-
-        return 'none';
-    });
+    connection_status = computed(() =>
+        this.data()?.liked_by_principal
+            ? 'liked'
+            : this.data()?.likes_principal
+              ? 'connected'
+              : 'none',
+    );
 
     getImageUrl(i: number) {
         return `/api/pictures/by_id/${this.validatedId()}/${i}`;
@@ -218,4 +253,29 @@ export class ProfileSheetComponent {
         const target = event.target as HTMLImageElement;
         target.style.display = 'none';
     }
+
+    likeUserMutation = injectMutation(() => ({
+        mutationKey: ['like-user', { id: this.validatedId() }],
+        mutationFn: () => this.#rpcClient.createLike({ liked_id: this.validatedId() }),
+        onSuccess: () =>
+            this.#queryClient.invalidateQueries({ queryKey: ['profile-by-id', { id: this.id() }] }),
+    }));
+
+    unlikeUserMutation = injectMutation(() => ({
+        mutationKey: ['unlike-user', { id: this.validatedId() }],
+        mutationFn: () => this.#rpcClient.deleteLike({ liked_id: this.validatedId() }),
+        onSuccess: () =>
+            this.#queryClient.invalidateQueries({ queryKey: ['profile-by-id', { id: this.id() }] }),
+    }));
+
+    // TODO: consider closing the sheet after blocking/reporting
+    blockUserMutation = injectMutation(() => ({
+        mutationKey: ['block-user', { id: this.validatedId() }],
+        mutationFn: () => this.#rpcClient.createBlock({ blocked_id: this.validatedId() }),
+    }));
+
+    reportUserMutation = injectMutation(() => ({
+        mutationKey: ['report-user', { id: this.validatedId() }],
+        mutationFn: () => this.#rpcClient.createFakeUserReport({ reported_id: this.validatedId() }),
+    }));
 }

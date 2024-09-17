@@ -12,6 +12,7 @@ import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatRipple } from '@angular/material/core';
 import { MatButton, MatFabButton, MatIconButton } from '@angular/material/button';
+import { CdkScrollable } from '@angular/cdk/scrolling';
 
 // TODO: online status (badge on profile picture with tooltip for last online)
 
@@ -29,6 +30,7 @@ import { MatButton, MatFabButton, MatIconButton } from '@angular/material/button
         MatButton,
         MatFabButton,
         MatIconButton,
+        CdkScrollable,
     ],
     template: `
         <app-sidesheet [heading]="heading()">

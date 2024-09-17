@@ -35,7 +35,7 @@ import { MatProgressBar } from '@angular/material/progress-bar';
         @if (loading()) {
             <mat-progress-bar mode="indeterminate" />
         }
-        <div class="relative grow px-6">
+        <div class="relative grow overflow-y-auto px-6">
             <div [hidden]="loading()">
                 <ng-content />
             </div>

@@ -84,7 +84,7 @@ type Picture = {
                 cdkDropListOrientation="mixed"
                 (cdkDropListDropped)="onReorder($event)"
             >
-                @for (picture of pictures(); let i = $index; track picture) {
+                @for (picture of pictures(); let i = $index; track picture.blob) {
                     <div
                         cdkDrag
                         class="item group rounded-lg border-2 border-t-0 border-transparent first:border-primary-container first:bg-primary-container"

@@ -11,7 +11,7 @@ import {
     confirmEmailProcedure,
     emailAvailableProcedure,
     getEmailProcedure,
-    isOnlineByIdProcedure,
+    getOnlineStatusByIdProcedure,
     registerAccountProcedure,
     updateEmailProcedure,
     updatePasswordProcedure,
@@ -107,7 +107,7 @@ const rpcRouter = createProcedureRouter([
     getEmailProcedure,
     createLocationProcedure,
     getLocationsByUserIdProcedure,
-    isOnlineByIdProcedure,
+    getOnlineStatusByIdProcedure,
 ]);
 
 export type RpcRouter = typeof rpcRouter;

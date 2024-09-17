@@ -10,6 +10,7 @@ import { badRequest } from '@api/errors/bad-request.error';
 import { mailer } from '@api/connections/mailer.connection';
 import { sql } from '@api/connections/database.connection';
 import { usePrincipalUser } from '@api/hooks/auth.hooks';
+import { validateUserId } from '@api/validators/profile.validators';
 
 const HOST = process.env['APP_HOST'] || 'localhost';
 const PORT = process.env['APP_PORT'] || '4200';
@@ -309,18 +310,36 @@ export const confirmEmailModificationProcedure = procedure(
     },
 );
 
-export const isOnlineByIdProcedure = procedure('isOnlineById', {} as {}, async (params) => {
-    const user_id = await usePrincipalUser();
+export const getOnlineStatusByIdProcedure = procedure(
+    'getOnlineStatusById',
+    {} as {
+        user_id: number;
+    },
+    async (params) => {
+        void (await usePrincipalUser());
 
-    return await sql`
-        SELECT CASE
-           WHEN EXISTS (
-               SELECT 1
-               FROM sessions
-               WHERE sessions.user_id = ${user_id} AND
-                   sessions.expires_at > NOW() - INTERVAL '1 minute'
-           ) THEN TRUE
-           ELSE FALSE
-           END AS is_online;
-    `;
-});
+        const user_id = await validateUserId(params.user_id);
+
+        const [session]: [{ online: boolean; last_seen: string }] = await sql`
+            SELECT updated_at > NOW() - INTERVAL '5 minutes' as online, updated_at as last_seen
+            FROM sessions
+            WHERE user_id = ${user_id}
+                AND expires_at > NOW()
+            ORDER BY updated_at DESC
+            LIMIT 1
+        `;
+
+        if (!session) {
+            return { online: false, last_seen: 'more than 3 days ago' };
+        }
+
+        const last_seen = new Date(session.last_seen).toLocaleString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            day: '2-digit',
+            month: 'short',
+        });
+
+        return { online: session.online, last_seen };
+    },
+);

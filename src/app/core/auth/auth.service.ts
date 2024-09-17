@@ -17,7 +17,7 @@ export class AuthService {
         queryKey: ['verifySession'],
         refetchOnWindowFocus: 'always',
         retry: false,
-        staleTime: /* 10 minutes */ 1000 * 60 * 10,
+        refetchInterval: /* 10 minutes */ 1000 * 60 * 10,
         queryFn: () => this.#rpc.verifySession(),
     }));
 

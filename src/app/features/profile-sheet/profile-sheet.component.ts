@@ -39,6 +39,12 @@ import { MatButton, MatFabButton, MatIconButton } from '@angular/material/button
                         class="mx-auto rounded-full"
                         alt="Profile picture"
                     />
+                    <div
+                        [matTooltip]="online() ? 'online' : 'last seen ' + lastSeen()"
+                        matTooltipPosition="above"
+                        class="absolute right-[10%] top-[12%] aspect-square w-[15%] rounded-full bg-gray-500 outline outline-2 outline-surface data-[online=true]:bg-green-500"
+                        [attr.data-online]="online()"
+                    ></div>
                 </div>
 
                 <div class="h-32">
@@ -227,10 +233,20 @@ export class ProfileSheetComponent {
 
     profilePictureUrl = computed(() => `/api/pictures/by_id/${this.validatedId()}/0`);
 
+    onlineStatusQuery = injectQuery(() => ({
+        queryKey: ['online-status', { id: this.id() }],
+        queryFn: () => this.#rpcClient.getOnlineStatusById({ user_id: this.validatedId() }),
+        refetchInterval: /* 1 minute */ 60_000,
+    }));
+
+    online = computed(() => this.onlineStatusQuery.data()?.online);
+    lastSeen = computed(() => this.onlineStatusQuery.data()?.last_seen ?? 'more than 3 days ago');
+
     profileQuery = injectQuery(() => ({
         queryKey: ['profile-by-id', { id: this.id() }],
         queryFn: () => this.#rpcClient.getProfileById({ user_id: this.validatedId() }),
     }));
+
     data = computed(() => this.profileQuery.data());
 
     heading = computed(() => this.data()?.username ?? 'Profile');

@@ -42,10 +42,14 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
     template: `
         <app-sidesheet heading="Views History">
             <div class="absolute inset-0 flex flex-col" cdkVirtualScrollingElement>
-                <div class="mat-body-large p-4">People who visited your profile recently</div>
+                @if (users().length > 0) {
+                    <div class="mat-body-large p-4">People who visited your profile recently</div>
+                } @else {
+                    <div class="p-4 text-gray-500">Nobody has visited your profile yet.</div>
+                }
 
-                <div class="relative grow">
-                    @if (users().length > 0) {
+                @if (users().length > 0) {
+                    <div class="relative grow">
                         <cdk-virtual-scroll-viewport [itemSize]="64" class="absolute inset-0">
                             <mat-nav-list class="!p-2">
                                 <a
@@ -77,10 +81,8 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
                                 }
                             </div>
                         </cdk-virtual-scroll-viewport>
-                    } @else {
-                        <div class="text-gray-500">Nobody has visited your profile yet.</div>
-                    }
-                </div>
+                    </div>
+                }
             </div>
         </app-sidesheet>
     `,

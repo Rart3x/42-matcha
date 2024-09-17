@@ -33,26 +33,32 @@ export const getPrincipalUserLikesProcedure = procedure(
         limit: number;
     },
     async (params) => {
-        const offset = await validateOffset(params.offset);
-        const limit = await validateLimit(params.limit);
         const user_id = await usePrincipalUser();
 
-        return sql<
+        const offset = await validateOffset(params.offset);
+        const limit = await validateLimit(params.limit);
+
+        const users = await sql<
             {
                 id: number;
                 username: string;
                 first_name: string;
                 last_name: string;
                 age: number;
+                biography: string;
             }[]
         >`
-            SELECT id, username, first_name, last_name, age
+            SELECT id, username, first_name, last_name, age, biography
             FROM likes
-                     LEFT JOIN users ON users.id = likes.liked_user_id
-            WHERE likes.user_id = ${user_id}
+                INNER JOIN users ON users.id = likes.user_id
+            WHERE likes.liked_user_id = ${user_id}
             ORDER BY likes.created_at DESC
             OFFSET ${offset} LIMIT ${limit}
         `;
+
+        return {
+            users,
+        };
     },
 );
 

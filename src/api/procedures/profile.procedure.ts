@@ -8,6 +8,7 @@ import {
     validateBiography,
     validateGender,
     validateSexualPref,
+    validateUserId,
 } from '@api/validators/profile.validators';
 import { validateTag, validateTags } from '@api/validators/tag.validators';
 import { validateLimit, validateOffset } from '@api/validators/page.validators';
@@ -23,27 +24,51 @@ export type Profile = {
     tags: string[];
 };
 
-export const getProfileByUsernameProcedure = procedure(
-    'getProfileByUsername',
-    {} as { username: string },
+export const getProfileByIdProcedure = procedure(
+    'getProfileById',
+    {} as { user_id: number },
     async (params) => {
-        const username = await validateUsername(params.username);
+        const principal_id = await usePrincipalUser();
+
+        const user_id = await validateUserId(params.user_id);
 
         const [profile]: [Profile?] = await sql`
-            SELECT username, first_name, last_name, age, sexual_pref, biography, gender,
-                   array_remove(ARRAY_AGG(tags.name), NULL) as tags
+            WITH liked_by_principal AS (SELECT 1
+                                        FROM likes
+                                        WHERE user_id = ${user_id}
+                                          AND liked_user_id = ${principal_id}),
+                 likes_principal AS (SELECT 1
+                                     FROM likes
+                                     WHERE user_id = ${principal_id}
+                                       AND liked_user_id = ${user_id})
+
+            SELECT username,
+                   first_name,
+                   last_name,
+                   age,
+                   sexual_pref,
+                   biography,
+                   gender,
+                   fame_rating,
+                   array_remove(ARRAY_AGG(tags.name), NULL) as tags,
+                     EXISTS(SELECT 1 FROM liked_by_principal) as liked_by_principal,
+                        EXISTS(SELECT 1 FROM likes_principal) as likes_principal
             FROM users
-                LEFT JOIN users_tags ON users_tags.user_id = users.id
-                LEFT JOIN tags ON tags.id = users_tags.tag_id
-            WHERE username = ${username}
-            GROUP BY username, first_name, last_name, age, sexual_pref, biography, gender
+                     LEFT JOIN users_tags ON users_tags.user_id = users.id
+                     LEFT JOIN tags ON tags.id = users_tags.tag_id
+            WHERE users.id = ${user_id}
+            GROUP BY username, first_name, last_name, age, sexual_pref, biography, gender, fame_rating
         `;
 
         if (!profile) {
             throw badRequest();
         }
 
-        return profile;
+        return profile as Profile & {
+            fame_rating: number;
+            liked_by_principal: boolean;
+            likes_principal: boolean;
+        };
     },
 );
 

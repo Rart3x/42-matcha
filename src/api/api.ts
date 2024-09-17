@@ -19,7 +19,7 @@ import {
 import {
     getExistingTagsProcedure,
     getPrincipalProfileProcedure,
-    getProfileByUsernameProcedure,
+    getProfileByIdProcedure,
     patchPrincipalProfileProcedure,
 } from '@api/procedures/profile.procedure';
 import {
@@ -87,7 +87,7 @@ const rpcRouter = createProcedureRouter([
     getUnreadMessagesByUserIdProcedure,
     getPrincipalProfileProcedure,
     getPrincipalUserLikesProcedure,
-    getProfileByUsernameProcedure,
+    getProfileByIdProcedure,
     getPrincipalUserStatsProcedure,
     getPrincipalUserVisitsProcedure,
     loginProcedure,

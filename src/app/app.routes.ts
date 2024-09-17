@@ -109,6 +109,14 @@ export const routes: Routes = [
                         (m) => m.EditPasswordSheetComponent,
                     ),
             },
+            {
+                outlet: 'sidesheet',
+                path: 'profile/:id',
+                loadComponent: () =>
+                    import('@app/features/profile-sheet/profile-sheet.component').then(
+                        (m) => m.ProfileSheetComponent,
+                    ),
+            },
         ],
         canActivate: [isLoggedInGuard],
     },

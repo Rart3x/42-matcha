@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed } from '@angular/core';
 import { SidesheetComponent } from '@app/shared/layouts/sidesheet-layout/sidesheet.component';
 import { injectInfiniteQuery } from '@tanstack/angular-query-experimental';
 import { injectRpcClient } from '@app/core/http/rpc-client';
@@ -19,7 +19,7 @@ import {
 } from '@angular/cdk/scrolling';
 import { MatButton } from '@angular/material/button';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 
 @Component({
     selector: 'app-views-history-sheet',
@@ -96,7 +96,6 @@ export class ViewsHistorySheetComponent {
     #PAGE_SIZE = 10;
 
     #rpcClient = injectRpcClient();
-    #router = inject(Router);
 
     query = injectInfiniteQuery(() => ({
         queryKey: ['views'],
@@ -115,10 +114,4 @@ export class ViewsHistorySheetComponent {
     }));
 
     users = computed(() => this.query.data()?.pages.flatMap((page) => page.users) ?? []);
-
-    openProfileById(id: string) {
-        this.#router.navigate([{ outlets: { sidesheet: ['profile', id] } }]);
-    }
-
-    protected readonly Router = Router;
 }

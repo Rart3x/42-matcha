@@ -19,6 +19,7 @@ import {
 } from '@angular/material/list';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatButton } from '@angular/material/button';
+import { RouterLink } from '@angular/router';
 
 @Component({
     selector: 'app-likes-history-sheet',
@@ -38,6 +39,7 @@ import { MatButton } from '@angular/material/button';
         CdkVirtualScrollableElement,
         MatButton,
         MatProgressSpinner,
+        RouterLink,
     ],
     template: `
         <app-sidesheet heading="Likes History">
@@ -56,6 +58,7 @@ import { MatButton } from '@angular/material/button';
                                     mat-list-item
                                     *cdkVirtualFor="let user of users()"
                                     class="h-[64px]"
+                                    [routerLink]="['..', 'profile', user.id]"
                                 >
                                     <img
                                         matListItemAvatar

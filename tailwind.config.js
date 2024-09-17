@@ -25,6 +25,8 @@ module.exports = {
                 'on-secondary-container': 'var(--sys-on-secondary-container)',
                 'on-tertiary-container': 'var(--sys-on-tertiary-container)',
                 'on-surface-variant': 'var(--sys-on-surface-variant)',
+                'inverse-surface': 'var(--sys-inverse-surface)',
+                'inverse-on-surface': 'var(--sys-inverse-on-surface)',
             },
         },
         screens: {

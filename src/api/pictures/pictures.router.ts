@@ -53,7 +53,7 @@ picturesRouter.post(
     upload.array('pictures', 5),
     async (req: Request, res: Response, _: NextFunction) => {
         const principal_user_id = (req as any)['user_id'] as string; // id from the session
-        const files = req.files as Express.Multer.File[];
+        const files = (req.files as Express.Multer.File[]) || [];
 
         // validate the files
         for (const file of files) {
@@ -90,6 +90,11 @@ picturesRouter.post(
                     DELETE FROM pictures WHERE user_id = ${principal_user_id}; 
                 `;
 
+                if (files.length === 0) {
+                    // no files were uploaded
+                    return;
+                }
+
                 // insert the new pictures
                 const entries = files.map((file, index) => [
                     principal_user_id,
@@ -104,7 +109,7 @@ picturesRouter.post(
                 `;
             });
 
-            res.send({ message: 'Pictures uploaded successfully' });
+            res.send({ message: 'ok' });
         } catch {
             const error = badRequest();
 

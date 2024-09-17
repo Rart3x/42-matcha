@@ -33,7 +33,6 @@ export const searchUsersProcedure = procedure(
         const offset = await validateOffset(params.offset);
         const limit = await validateLimit(params.limit);
 
-        // TODO: implement location filter
         // TODO: implement tags filter
 
         const users = await sql<

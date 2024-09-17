@@ -70,7 +70,7 @@ export const browseUsersProcedure = procedure(
                 ),
                 blocked_users AS (
                     SELECT user_id, blocked_user_id
-                    FROM blokcs
+                    FROM blocks
                     WHERE user_id = ${user_id} OR blocked_user_id = ${user_id}
                 ),
                 age_gaps AS (
@@ -87,15 +87,15 @@ export const browseUsersProcedure = procedure(
                     users.last_name,
                     users.age,
                     users.fame_rating,
-                    location.longitude,
-                    location.latitude,
+                    locations.longitude,
+                    locations.latitude,
                     COUNT(*) over () as total_count
-                FROM principal_user, users, location
+                FROM principal_user, users
                 LEFT JOIN common_tags
                     ON users.id = common_tags.other_user_id
                 LEFT JOIN age_gaps
                     ON users.id = age_gaps.other_user_id
-                LEFT JOIN location ON users.id = location.user_id
+                LEFT JOIN locations ON users.id = locations.user_id
                 WHERE
                     users.id != ${user_id}
                     -- filters out users depending on the filters set by the principal user

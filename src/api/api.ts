@@ -56,6 +56,10 @@ import {
 } from '@api/procedures/fake_user_report.procedure';
 import { searchUsersProcedure } from '@api/procedures/search.procedure';
 import { picturesRouter } from '@api/pictures/pictures.router';
+import {
+    createLocationProcedure,
+    getLocationsByUserIdProcedure,
+} from '@api/procedures/locations.procedure';
 
 export const apiRouter = Router();
 
@@ -100,6 +104,8 @@ const rpcRouter = createProcedureRouter([
     updatePasswordProcedure,
     verifySessionProcedure,
     getEmailProcedure,
+    createLocationProcedure,
+    getLocationsByUserIdProcedure,
 ]);
 
 export type RpcRouter = typeof rpcRouter;

@@ -142,7 +142,7 @@ type Picture = {
                                 <span> to upload</span>
                             </label>
                         </div>
-                        <p class="mt-1 text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                        <p class="mt-1 text-xs text-gray-500">PNG, JPG, WEBP up to 5MB</p>
                     </div>
                 </div>
             }

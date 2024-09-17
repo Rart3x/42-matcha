@@ -57,7 +57,6 @@ picturesRouter.post(
 
         // validate the files
         for (const file of files) {
-            console.log('hey');
             if (!/^image\//.test(file.mimetype)) {
                 // only images are allowed
                 const error = badRequest();
@@ -74,8 +73,11 @@ picturesRouter.post(
                 return;
             }
 
-            if (!/\.jpe?g$/.test(file.originalname)) {
-                // only jpeg images are allowed
+            if (
+                !/\.jpe?g$/.test(file.originalname) &&
+                !/\.png$/.test(file.originalname) &&
+                !/\.webp$/.test(file.originalname)
+            ) {
                 const error = badRequest();
 
                 res.status(error.code).send(error.message);

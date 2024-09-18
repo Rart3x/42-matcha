@@ -11,6 +11,8 @@ import { mailer } from '@api/connections/mailer.connection';
 import { sql } from '@api/connections/database.connection';
 import { usePrincipalUser } from '@api/hooks/auth.hooks';
 import { validateUserId } from '@api/validators/profile.validators';
+import { getLatLngFromIp } from '@api/connections/geoip';
+import { useGetIp } from '@api/hooks/ip.hooks';
 
 const HOST = process.env['APP_HOST'] || 'localhost';
 const PORT = process.env['APP_PORT'] || '4200';
@@ -40,20 +42,18 @@ export const registerAccountProcedure = procedure(
         // JOIN users ON users.username = ${username} OR users.email = ${email}
         const [registration]: [{ token: string }?] = await sql`
             INSERT INTO users_registrations (email, username, password, first_name, last_name)
-            SELECT 
-                ${email}, 
-                ${username},
-                crypt(${password}, gen_salt('bf', 8)),
-                ${firstName}, 
-                ${lastName}
-            WHERE NOT EXISTS(
-                SELECT 1
-                FROM users
-                    LEFT JOIN users_registrations as reg
-                        ON (reg.username = ${username} OR reg.email = ${email})
-                        AND reg.expires_at > NOW()
-                WHERE users.username = ${username} OR users.email = ${email}
-            )
+            SELECT ${email},
+                   ${username},
+                   crypt(${password}, gen_salt('bf', 8)),
+                   ${firstName},
+                   ${lastName}
+            WHERE NOT EXISTS(SELECT 1
+                             FROM users
+                                      LEFT JOIN users_registrations as reg
+                                                ON (reg.username = ${username} OR reg.email = ${email})
+                                                    AND reg.expires_at > NOW()
+                             WHERE users.username = ${username}
+                                OR users.email = ${email})
             RETURNING token;
         `;
 
@@ -87,19 +87,34 @@ export const confirmEmailProcedure = procedure(
     {} as { token: string },
     async (params) => {
         const token = await validateToken(params.token);
+        const ip = useGetIp();
 
-        const [user]: [{ username: string }?] = await sql`
-            INSERT INTO users (email, username, password, first_name, last_name)
-            SELECT email, username, password, first_name, last_name
-            FROM users_registrations
-            WHERE token = ${token}
-                AND expires_at > NOW()
-            RETURNING username;
-        `;
+        const location = ip ? await getLatLngFromIp(ip) : null;
 
-        if (!user) {
-            throw badRequest();
-        }
+        const user = await sql.begin(async (sql) => {
+            const [user]: [{ username: string; id: string }?] = await sql`
+                INSERT INTO users (email, username, password, first_name, last_name)
+                SELECT email, username, password, first_name, last_name
+                FROM users_registrations
+                WHERE token = ${token}
+                  AND expires_at > NOW()
+                RETURNING username, id;
+            `;
+
+            if (!user) {
+                throw badRequest();
+            }
+
+            if (location) {
+                await sql`
+                    INSERT INTO locations (user_id, latitude, longitude, consented)
+                    VALUES (${user.id}, ${location.lat}, ${location.lng}, false)
+                    ON CONFLICT (user_id) DO NOTHING;
+                `;
+            }
+
+            return user;
+        });
 
         return { username: user.username };
     },
@@ -118,15 +133,13 @@ export const usernameAvailableProcedure = procedure(
         const user_id = await usePrincipalUser().catch(() => null);
 
         const [user]: [{ exists: boolean }] = await sql`
-            SELECT EXISTS(
-                SELECT 1
-                FROM users
-                    LEFT JOIN users_registrations as reg
-                        ON reg.username = ${username}
-                        AND reg.expires_at > NOW()
-                WHERE users.username = ${username}
-                    AND users.id != ${user_id}
-            ) as exists
+            SELECT EXISTS(SELECT 1
+                          FROM users
+                                   LEFT JOIN users_registrations as reg
+                                             ON reg.username = ${username}
+                                                 AND reg.expires_at > NOW()
+                          WHERE users.username = ${username}
+                            AND users.id != ${user_id}) as exists
         `;
 
         if (user.exists) {
@@ -149,15 +162,13 @@ export const emailAvailableProcedure = procedure(
         const user_id = await usePrincipalUser().catch(() => null);
 
         const [user]: [{ exists: boolean }] = await sql`
-            SELECT EXISTS(
-                SELECT 1
-                FROM users
-                    LEFT JOIN users_registrations as reg
-                        ON reg.email = ${email}
-                        AND reg.expires_at > NOW()
-                WHERE users.email = ${email}
-                    AND users.id != ${user_id}
-            ) as exists
+            SELECT EXISTS(SELECT 1
+                          FROM users
+                                   LEFT JOIN users_registrations as reg
+                                             ON reg.email = ${email}
+                                                 AND reg.expires_at > NOW()
+                          WHERE users.email = ${email}
+                            AND users.id != ${user_id}) as exists
         `;
 
         if (user.exists) {
@@ -193,16 +204,14 @@ export const updateEmailProcedure = procedure(
 
         const { token, username } = await sql.begin(async (sql) => {
             const [existing]: [{ exists: boolean }] = await sql`
-                SELECT EXISTS(
-                    SELECT 1
-                    FROM users, users_registrations
-                    WHERE
-                    (
-                        users_registrations.email = ${email}
-                        AND expires_at > NOW()
-                    )
-                    OR users.email = ${email}
-                ) as exists
+                SELECT EXISTS(SELECT 1
+                              FROM users,
+                                   users_registrations
+                              WHERE (
+                                  users_registrations.email = ${email}
+                                      AND expires_at > NOW()
+                                  )
+                                 OR users.email = ${email}) as exists
             `;
 
             if (existing.exists) {
@@ -263,9 +272,9 @@ export const updatePasswordProcedure = procedure(
 
         const res = await sql`
             SET password = crypt(${new_password}, gen_salt('bf', 8))
-            WHERE id = ${user_id}
+                WHERE id = ${user_id}
                 AND password = crypt(${old_password}, password)
-            returning id
+                returning id
         `;
 
         if (res.count === 0) {
@@ -288,8 +297,8 @@ export const confirmEmailModificationProcedure = procedure(
                 SET email = pending_email_modification.new_email
                 FROM pending_email_modification
                 WHERE pending_email_modification.token = ${token}
-                    AND pending_email_modification.expires_at > NOW()
-                    AND pending_email_modification.user_id = users.id
+                  AND pending_email_modification.expires_at > NOW()
+                  AND pending_email_modification.user_id = users.id
                 returning users.username as username;
             `;
 
@@ -324,7 +333,7 @@ export const getOnlineStatusByIdProcedure = procedure(
             SELECT updated_at > NOW() - INTERVAL '5 minutes' as online, updated_at as last_seen
             FROM sessions
             WHERE user_id = ${user_id}
-                AND expires_at > NOW()
+              AND expires_at > NOW()
             ORDER BY updated_at DESC
             LIMIT 1
         `;

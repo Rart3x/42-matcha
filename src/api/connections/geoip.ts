@@ -1,5 +1,13 @@
+import { validateLatitude, validateLongitude } from '@api/validators/location.validators';
+
 const IS_PRODUCTION = process.env?.['NODE_ENV'] === 'production';
 const IS_DEVELOPMENT = !IS_PRODUCTION;
+
+// during assessment, the application is served on a local network
+// so we can't use the client's ip address, we'll use a mocked ip address instead
+const MOCKED_IP = '23.90.210.20';
+
+const IS_ASSESSMENT = process.env?.['APP_IS_ASSESSMENT'] === 'true';
 
 export async function getLatLngFromIp(ip: string) {
     if (IS_DEVELOPMENT) {
@@ -10,10 +18,13 @@ export async function getLatLngFromIp(ip: string) {
         };
     }
 
+    const ipToUse = IS_ASSESSMENT ? MOCKED_IP : ip;
+
     return fetch(`https://api.hackertarget.com/geoip/?q=${ip}&output=json"`)
         .then((response) => response.json())
-        .then((data) => ({
-            lat: data.latitude,
-            lng: data.longitude,
-        }));
+        .then(async (data) => ({
+            lat: await validateLatitude(data.latitude),
+            lng: await validateLongitude(data.longitude),
+        }))
+        .catch(() => null);
 }

@@ -5,12 +5,6 @@ import { validateLatitude, validateLongitude } from '@api/validators/location.va
 import { useGetIp } from '@api/hooks/ip.hooks';
 import { getLatLngFromIp } from '@api/connections/geoip';
 
-// during assessment, the application is served on a local network
-// so we can't use the client's ip address, we'll use a mocked ip address instead
-const MOCKED_IP = '23.90.210.20';
-
-const IS_ASSESSMENT = process.env?.['APP_IS_ASSESSMENT'] === 'true';
-
 export const upsertLocationProcedure = procedure(
     'upsertLocation',
     {} as {
@@ -21,7 +15,7 @@ export const upsertLocationProcedure = procedure(
     },
     async (params) => {
         const principal_user_id = await usePrincipalUser();
-        const ip = IS_ASSESSMENT ? MOCKED_IP : useGetIp();
+        const ip = useGetIp();
 
         if (!params.location) {
             await sql`

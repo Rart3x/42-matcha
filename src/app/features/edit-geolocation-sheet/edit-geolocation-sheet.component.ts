@@ -80,7 +80,8 @@ export class EditGeolocationSheetComponent {
 
             if (location) {
                 const marker = this.options.layers[1] as Marker;
-                marker.setLatLng(latLng(location.latitude, location.longitude));
+                marker.setLatLng(latLng(location.latitude, location.longitude)); // reposition marker
+                this.options.center = latLng(location.latitude, location.longitude); // recenter map
                 this.#changeDetection.markForCheck();
 
                 this.positionShared.set(true);

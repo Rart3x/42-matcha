@@ -18,12 +18,6 @@ export const upsertLocationProcedure = procedure(
         const ip = useGetIp();
 
         if (!params.location) {
-            await sql`
-                DELETE
-                FROM locations
-                WHERE user_id = ${principal_user_id}
-            `;
-
             if (ip) {
                 const location = await getLatLngFromIp(ip);
 
@@ -46,7 +40,7 @@ export const upsertLocationProcedure = procedure(
                 await sql`
                     with upsert as (
                         UPDATE locations
-                            SET latitude = ${latitude}, longitude = ${longitude}, consented = true
+                            SET latitude = ${latitude}, longitude = ${longitude}, consented = false
                             WHERE user_id = ${principal_user_id})
                     INSERT
                     INTO locations (user_id, latitude, longitude, consented)
@@ -91,17 +85,20 @@ export const getPrincipalUserLocationProcedure = procedure('getPrincipalUserLoca
             {
                 latitude: number;
                 longitude: number;
+                consented: boolean;
             }?,
         ] = await sql`
-            SELECT latitude, longitude
+            SELECT latitude, longitude, consented
             FROM locations
             WHERE locations.user_id = ${principal_user_id}
         `;
 
-        if (!location) {
+        if (!location || !location.consented) {
             return { location: null };
         }
 
-        return { location };
+        const { latitude, longitude } = location;
+
+        return { location: { latitude, longitude } };
     });
 });

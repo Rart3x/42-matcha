@@ -149,7 +149,7 @@ import { NgClass } from '@angular/common';
 
                 <!-- Recommendations grid -->
                 <cdk-virtual-scroll-viewport itemSize="80">
-                    <mat-nav-list class="flex flex-col !p-2">
+                    <mat-nav-list class="flex flex-col max-medium:!pl-2">
                         <div
                             class="grid h-[80px] gap-2 expanded:grid-cols-2"
                             *cdkVirtualFor="let row of rows()"

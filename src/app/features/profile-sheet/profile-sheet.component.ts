@@ -12,7 +12,7 @@ import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatRipple } from '@angular/material/core';
 import { MatButton, MatFabButton, MatIconButton } from '@angular/material/button';
-import { CdkScrollable } from '@angular/cdk/scrolling';
+import { CdkScrollable } from '@angular/cdk/scrolling'; // TODO: online status (badge on profile picture with tooltip for last online)
 
 // TODO: online status (badge on profile picture with tooltip for last online)
 
@@ -34,7 +34,7 @@ import { CdkScrollable } from '@angular/cdk/scrolling';
     ],
     template: `
         <app-sidesheet [heading]="heading()">
-            <div class="flex py-4">
+            <div class="grid grid-cols-[auto_auto] py-4">
                 <div class="relative flex w-32 flex-col justify-center">
                     <img
                         [src]="profilePictureUrl()"
@@ -49,7 +49,7 @@ import { CdkScrollable } from '@angular/cdk/scrolling';
                     ></div>
                 </div>
 
-                <div class="h-32">
+                <div class="min-h-32">
                     <div class="mb-4 box-border flex grow flex-col px-4">
                         <div class="mat-headline-small !mb-0">
                             {{ fullName() }}

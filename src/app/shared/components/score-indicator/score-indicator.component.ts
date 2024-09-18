@@ -11,7 +11,7 @@ import { MatIcon } from '@angular/material/icon';
         >
             {{ icon() }}
         </mat-icon>
-        <span class="text-on-surface-variant"> {{ score() }} </span>
+        <span class="text-on-surface-variant"> {{ score() ?? '??' }} </span>
     `,
     styles: ``,
     host: { class: 'flex flex-col items-center justify-center' },
@@ -19,5 +19,5 @@ import { MatIcon } from '@angular/material/icon';
 })
 export class ScoreIndicatorComponent {
     icon = input.required<string>();
-    score = input.required<number>();
+    score = input.required<number | undefined>();
 }

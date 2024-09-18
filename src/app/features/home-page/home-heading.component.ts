@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, OnDestroy } from '@angular/core';
 import { ScoreIndicatorComponent } from '@app/shared/components/score-indicator/score-indicator.component';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatAnchor, MatButton, MatIconButton } from '@angular/material/button';
@@ -9,6 +9,7 @@ import { catchError, lastValueFrom, map, of, tap } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { injectQuery } from '@tanstack/angular-query-experimental';
 import { MatRipple } from '@angular/material/core';
+import { injectRpcClient } from '@app/core/http/rpc-client';
 
 @Component({
     selector: 'app-home-heading',
@@ -75,19 +76,19 @@ import { MatRipple } from '@angular/material/core';
         <div class="flex gap-4 max-medium:justify-between">
             <div class="flex flex-col justify-center gap-3">
                 <p class="mat-headline-small !m-0 block max-medium:hidden">
-                    Welcome back, John Doe!
+                    {{ title() }}
                 </p>
 
                 <div class="flex gap-6">
                     <app-score-indicator
                         icon="whatshot"
-                        [score]="5"
+                        [score]="statsQuery.data()?.fame_rating"
                         matTooltip="Fame rating"
                         matTooltipPosition="above"
                     />
                     <app-score-indicator
                         icon="visibility"
-                        [score]="13"
+                        [score]="statsQuery.data()?.visits"
                         matTooltip="Views"
                         matTooltipPosition="above"
                         (click)="openViewsHistorySheet()"
@@ -95,7 +96,7 @@ import { MatRipple } from '@angular/material/core';
                     />
                     <app-score-indicator
                         icon="thumb_up"
-                        [score]="6"
+                        [score]="statsQuery.data()?.likes"
                         matTooltip="Likes"
                         matTooltipPosition="above"
                         (click)="openLikesHistorySheet()"
@@ -148,6 +149,7 @@ import { MatRipple } from '@angular/material/core';
 export class HomeHeadingComponent implements OnDestroy {
     #router = inject(Router);
     #httpClient = inject(HttpClient);
+    #rpcClient = injectRpcClient();
 
     #urlsToRevoke = new Set<string>();
 
@@ -166,6 +168,29 @@ export class HomeHeadingComponent implements OnDestroy {
                     ),
             ),
     }));
+
+    profileQuery = injectQuery(() => ({
+        queryKey: ['profile'],
+        queryFn: () => this.#rpcClient.getPrincipalProfile(),
+    }));
+
+    statsQuery = injectQuery(() => ({
+        queryKey: ['stats'],
+        queryFn: () => this.#rpcClient.getPrincipalUserStats(),
+    }));
+
+    title = computed(() => {
+        const firstName = this.profileQuery.data()?.first_name;
+        const lastName = this.profileQuery.data()?.last_name;
+
+        if (!firstName) {
+            return 'Welcome back!';
+        }
+        if (!lastName) {
+            return `Welcome back, ${firstName}!`;
+        }
+        return `Welcome back, ${firstName} ${lastName}!`;
+    });
 
     ngOnDestroy() {
         for (const url of this.#urlsToRevoke) {

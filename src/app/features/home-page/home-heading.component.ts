@@ -108,24 +108,33 @@ import { MatRipple } from '@angular/material/core';
             <div class="flex flex-col justify-center pr-4 medium:px-8">
                 <div class="grid grid-cols-2 place-items-center gap-y-1">
                     <button
-                        mat-flat-button
-                        class="btn-secondary col-span-2"
+                        mat-icon-button
+                        matTooltip="Edit profile"
+                        class="btn-secondary"
                         (click)="openEditProfileSheet()"
                     >
-                        Edit profile
+                        <mat-icon>Person</mat-icon>
                     </button>
                     <button
                         mat-icon-button
                         matTooltip="Edit email"
-                        class="btn-secondary col-span-1"
+                        class="btn-secondary"
                         (click)="openEditEmailSheet()"
                     >
                         <mat-icon>email</mat-icon>
                     </button>
                     <button
                         mat-icon-button
+                        matTooltip="Edit location"
+                        class="btn-secondary"
+                        (click)="openEditLocationSheet()"
+                    >
+                        <mat-icon>location_on</mat-icon>
+                    </button>
+                    <button
+                        mat-icon-button
                         matTooltip="Edit password"
-                        class="btn-secondary col-span-1"
+                        class="btn-secondary"
                         (click)="openEditPasswordSheet()"
                     >
                         <mat-icon>lock</mat-icon>
@@ -186,5 +195,9 @@ export class HomeHeadingComponent implements OnDestroy {
 
     async openEditPicturesSheet() {
         await this.#router.navigate([{ outlets: { sidesheet: 'edit-pictures' } }]);
+    }
+
+    async openEditLocationSheet() {
+        await this.#router.navigate([{ outlets: { sidesheet: 'edit-geolocation' } }]);
     }
 }

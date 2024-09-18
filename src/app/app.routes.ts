@@ -111,6 +111,14 @@ export const routes: Routes = [
             },
             {
                 outlet: 'sidesheet',
+                path: 'edit-geolocation',
+                loadComponent: () =>
+                    import(
+                        '@app/features/edit-geolocation-sheet/edit-geolocation-sheet.component'
+                    ).then((m) => m.EditGeolocationSheetComponent),
+            },
+            {
+                outlet: 'sidesheet',
                 path: 'profile/:id',
                 loadComponent: () =>
                     import('@app/features/profile-sheet/profile-sheet.component').then(

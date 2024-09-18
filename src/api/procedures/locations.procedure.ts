@@ -2,53 +2,67 @@ import { procedure } from '@api/lib/procedure';
 import { sql } from '@api/connections/database.connection';
 import { usePrincipalUser } from '@api/hooks/auth.hooks';
 import { validateLatitude, validateLongitude } from '@api/validators/location.validators';
-import { validateLimit, validateOffset } from '@api/validators/page.validators';
 
-export const createLocationProcedure = procedure(
-    'createLocation',
+export const upsertLocationProcedure = procedure(
+    'upsertLocation',
     {} as {
-        latitude: number;
-        longitude: number;
+        location?: {
+            latitude: number;
+            longitude: number;
+        };
     },
     async (params) => {
         const principal_user_id = await usePrincipalUser();
 
-        const latitude = await validateLatitude(params.latitude);
-        const longitude = await validateLongitude(params.longitude);
-
-        return await sql`
-            INSERT INTO locations (user_id, latitude, longitude)
-            VALUES (${principal_user_id}, ${latitude}, ${longitude})
-        `;
-    },
-);
-
-export const getLocationsByUserIdProcedure = procedure(
-    'getLocationsByUserId',
-    {} as {
-        offset: number;
-        limit: number;
-    },
-    async (params) => {
-        const principal_user_id = await usePrincipalUser();
-
-        const offset = await validateOffset(params.offset);
-        const limit = await validateLimit(params.limit);
-
-        return await sql.begin(async (sql) => {
-            const locations = await sql<
-                {
-                    latitude: number;
-                    longitude: number;
-                }[]
-            >`
-                SELECT latitude, longitude
-                FROM user, locations
-                LEFT JOIN users ON users.id = locations.user_id
-                WHERE locations.user_id = ${principal_user_id}
-                OFFSET ${offset} LIMIT ${limit}
+        if (!params.location) {
+            await sql`
+                DELETE
+                FROM locations
+                WHERE user_id = ${principal_user_id}
             `;
-            return { locations };
-        });
+
+            // TODO use geoip to get the location
+
+            return { message: 'Location deleted' };
+        }
+
+        const latitude = await validateLatitude(params.location.latitude);
+        const longitude = await validateLongitude(params.location.longitude);
+
+        await sql`
+            with upsert as (
+                UPDATE locations
+                    SET latitude = ${latitude}, longitude = ${longitude}, consented = true
+                    WHERE user_id = ${principal_user_id})
+            INSERT
+            INTO locations (user_id, latitude, longitude, consented)
+            VALUES (${principal_user_id}, ${latitude}, ${longitude}, true)
+            ON CONFLICT (user_id) DO NOTHING;
+        `;
+
+        return { message: 'Location updated' };
     },
 );
+
+export const getPrincipalUserLocationProcedure = procedure('getPrincipalUserLocation', async () => {
+    const principal_user_id = await usePrincipalUser();
+
+    return await sql.begin(async (sql) => {
+        const [location]: [
+            {
+                latitude: number;
+                longitude: number;
+            }?,
+        ] = await sql`
+            SELECT latitude, longitude
+            FROM locations
+            WHERE locations.user_id = ${principal_user_id}
+        `;
+
+        if (!location) {
+            return { location: null };
+        }
+
+        return { location };
+    });
+});

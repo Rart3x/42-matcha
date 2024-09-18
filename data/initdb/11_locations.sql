@@ -7,5 +7,7 @@ CREATE TABLE locations
     longitude       FLOAT NOT NULL,
     latitude        FLOAT NOT NULL,
 
+    consented       BOOLEAN NOT NULL DEFAULT FALSE,
+
     PRIMARY KEY (user_id)
 );

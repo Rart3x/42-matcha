@@ -172,8 +172,8 @@ export const getChattableUsersProcedure = procedure(
         const offset = await validateOffset(params.offset);
         const limit = await validateLimit(params.limit);
 
-        return await sql.begin(async (sql) => {
-            const users = sql<
+        const { users } = await sql.begin(async (sql) => {
+            const users = await sql<
                 {
                     id: number;
                     username: string;
@@ -183,26 +183,28 @@ export const getChattableUsersProcedure = procedure(
                     last_message_created_at: Date;
                 }[]
             >`
-                SELECT users.id,
-                       users.username,
-                       messages.message    as last_message_content,
-                       messages.seen       as last_message_seen,
-                       messages.sender_id  as last_message_author_id,
-                       messages.created_at as last_message_created_at
-                FROM users
-                         LEFT JOIN messages
-                                   ON (users.id = messages.sender_id AND messages.receiver_id = ${principal_user_id})
-                                       OR
-                                      (users.id = messages.receiver_id AND messages.sender_id = ${principal_user_id})
-                         LEFT JOIN blocks
-                                   ON (users.id = blocks.user_id AND blocks.blocked_user_id = ${principal_user_id})
-                                       OR (users.id = blocks.blocked_user_id AND blocks.user_id = ${principal_user_id})
-                WHERE users.id != ${principal_user_id} -- can't chat with self
-                  AND blocks.blocked_user_id IS NULL   -- can't see blocked users or be seen by them
-                ORDER BY messages.created_at DESC, messages.seen, users.username, messages.message == NULL DESC
-                OFFSET ${offset} LIMIT ${limit}
+                WITH mutual_likes AS (
+                    -- Find mutual likes
+                    SELECT l1.user_id as user_1, l1.liked_user_id as user_2
+                    FROM likes l1
+                             JOIN likes l2 ON l1.user_id = l2.liked_user_id
+                        AND l1.liked_user_id = l2.user_id),
+                candidates AS (
+                         -- Find users who share mutual likes with the principal user
+                         SELECT DISTINCT on (other_user.id) *
+                         FROM users other_user
+                                  JOIN mutual_likes ml ON other_user.id IN (ml.user_1, ml.user_2)
+                         WHERE other_user.id != ${principal_user_id})
+                
+                   
+
+
+
             `;
+
             return { users };
         });
+
+        return { users };
     },
 );

@@ -30,6 +30,7 @@ import {
 } from '@api/procedures/relation.procedure';
 import { browseUsersProcedure } from '@api/procedures/browse.procedure';
 import {
+    getChattableUsersProcedure,
     getMessagesByUserIdProcedure,
     getNumberOfUnreadMessagesByUserIdProcedure,
     getReadMessagesByUserIdProcedure,
@@ -108,6 +109,7 @@ const rpcRouter = createProcedureRouter([
     upsertLocationProcedure,
     getOnlineStatusByIdProcedure,
     getPrincipalUserLocationProcedure,
+    getChattableUsersProcedure,
 ]);
 
 export type RpcRouter = typeof rpcRouter;

@@ -13,10 +13,12 @@ export const createFakeUserReportProcedure = procedure(
 
         const reported_id = await validateUserId(params.reported_id);
 
-        return await sql`
+        await sql`
             INSERT INTO fake_user_reports (reporter_user_id, reported_user_id)
             VALUES (${reporter_id}, ${reported_id})
         `;
+
+        return { message: 'ok' };
     },
 );
 
@@ -30,10 +32,13 @@ export const deleteFakeUserReportProcedure = procedure(
 
         const reported_id = await validateUserId(params.reported_id);
 
-        return await sql`
-            DELETE FROM fake_user_reports
-            WHERE reporter_user_id = ${reporter_id}
-            AND reported_user_id = ${reported_id}
+        await sql`
+            DELETE
+              FROM fake_user_reports
+             WHERE reporter_user_id = ${reporter_id}
+               AND reported_user_id = ${reported_id}
         `;
+
+        return { message: 'ok' };
     },
 );

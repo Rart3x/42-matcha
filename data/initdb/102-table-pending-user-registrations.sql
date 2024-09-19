@@ -1,8 +1,10 @@
+--- Require the pgcrypto extension to generate UUIDs
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
-DROP TABLE IF EXISTS users_registrations CASCADE;
-
-CREATE TABLE IF NOT EXISTS users_registrations
+--- Table: pending_user_registrations
+--- Table for pending user registrations that have not been confirmed yet
+--- The token is used to confirm the registration
+CREATE TABLE pending_user_registrations
 (
     id         INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 
@@ -17,14 +19,9 @@ CREATE TABLE IF NOT EXISTS users_registrations
     last_name  TEXT NOT NULL CHECK (length(last_name) <= 30),
 
     created_at TIMESTAMP            DEFAULT now(),
-    updated_at TIMESTAMP            DEFAULT now(),
-    expires_at TIMESTAMP            GENERATED ALWAYS AS ( created_at + INTERVAL '10 minutes' ) STORED
+    expires_at TIMESTAMP GENERATED ALWAYS AS ( created_at + INTERVAL '10 minutes' ) STORED
 );
 
-CREATE INDEX IF NOT EXISTS idx_token ON users_registrations (token);
-
-CREATE OR REPLACE TRIGGER update_timestamp
-    BEFORE UPDATE
-    ON users_registrations
-    FOR EACH ROW
-EXECUTE FUNCTION update_timestamp();
+--- Index: idx_pending_user_registrations_token
+--- Index for the token column as it is used in the registration process
+CREATE INDEX idx_pending_user_registrations_token ON pending_user_registrations (token);

@@ -68,9 +68,9 @@ export const browseUsersProcedure = procedure(
                         ut1.user_id
                 ),
                 blocked_users AS (
-                    SELECT user_id, blocked_user_id
+                    SELECT blocker_user_id, blocked_user_id
                     FROM blocks
-                    WHERE user_id = ${user_id} OR blocked_user_id = ${user_id}
+                    WHERE blocker_user_id = ${user_id} OR blocked_user_id = ${user_id}
                 ),
                 age_gaps AS (
                     SELECT

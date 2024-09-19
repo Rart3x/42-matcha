@@ -15,7 +15,7 @@ export const createLikeProcedure = procedure(
         const liked_id = await validateUserId(params.liked_id);
 
         return await sql`
-            INSERT INTO likes (user_id, liked_user_id)
+            INSERT INTO likes (liker_user_id, liked_user_id)
             VALUES (${liker_id}, ${liked_id})
         `;
     },
@@ -33,7 +33,7 @@ export const deleteLikeProcedure = procedure(
 
         return await sql`
             DELETE FROM likes
-            WHERE user_id = ${liker_id}
+            WHERE liker_user_id = ${liker_id}
             AND liked_user_id = ${liked_id}
         `;
     },
@@ -53,7 +53,7 @@ export const getLikesProcedure = procedure(
         const limit = await validateLimit(params.limit);
 
         return await sql`
-            SELECT user_id
+            SELECT liker_user_id
             FROM likes
             WHERE liked_user_id = ${principal_user_id}
             ORDER BY created_at DESC

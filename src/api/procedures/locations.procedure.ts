@@ -40,10 +40,10 @@ export const upsertLocationProcedure = procedure(
                 await sql`
                     with upsert as (
                         UPDATE locations
-                            SET latitude = ${latitude}, longitude = ${longitude}, consented = false
+                            SET latitude = ${latitude}, longitude = ${longitude}, is_consented = false
                             WHERE user_id = ${principal_user_id})
                     INSERT
-                    INTO locations (user_id, latitude, longitude, consented)
+                    INTO locations (user_id, latitude, longitude, is_consented)
                     VALUES (${principal_user_id}, ${latitude}, ${longitude}, true)
                     ON CONFLICT (user_id) DO NOTHING;
                 `;
@@ -65,10 +65,10 @@ export const upsertLocationProcedure = procedure(
         await sql`
             with upsert as (
                 UPDATE locations
-                    SET latitude = ${latitude}, longitude = ${longitude}, consented = true
+                    SET latitude = ${latitude}, longitude = ${longitude}, is_consented = true
                     WHERE user_id = ${principal_user_id})
             INSERT
-            INTO locations (user_id, latitude, longitude, consented)
+            INTO locations (user_id, latitude, longitude, is_consented)
             VALUES (${principal_user_id}, ${latitude}, ${longitude}, true)
             ON CONFLICT (user_id) DO NOTHING;
         `;
@@ -88,7 +88,7 @@ export const getPrincipalUserLocationProcedure = procedure('getPrincipalUserLoca
                 consented: boolean;
             }?,
         ] = await sql`
-            SELECT latitude, longitude, consented
+            SELECT latitude, longitude, is_consented
             FROM locations
             WHERE locations.user_id = ${principal_user_id}
         `;

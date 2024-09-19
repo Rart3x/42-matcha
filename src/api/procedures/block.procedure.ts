@@ -14,7 +14,7 @@ export const createBlockProcedure = procedure(
         const blocked_id = await validateUserId(params.blocked_id);
 
         return await sql`
-            INSERT INTO blocks (user_id, blocked_user_id)
+            INSERT INTO blocks (blocker_user_id, blocked_user_id)
             VALUES (${blocker_id}, ${blocked_id})
         `;
     },
@@ -32,7 +32,7 @@ export const deleteBlockProcedure = procedure(
 
         return await sql`
             DELETE FROM blocks
-            WHERE user_id = ${blocker_id}
+            WHERE blocker_user_id = ${blocker_id}
             AND blocked_user_id = ${blocked_id}
         `;
     },

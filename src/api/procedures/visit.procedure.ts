@@ -15,7 +15,7 @@ export const createVisitProcedure = procedure(
         const visited_id = await validateUserId(params.visited_id);
 
         return await sql`
-            INSERT INTO visits (visitor_id, visited_user_id)
+            INSERT INTO visits (visiter_user_id, visited_user_id)
             VALUES (${visitor_id}, ${visited_id})
         `;
     },
@@ -27,18 +27,22 @@ export const deleteVisitProcedure = procedure(
         visited_id: number;
     },
     async (params) => {
-        const visitor_id = await usePrincipalUser();
+        const visiter_id = await usePrincipalUser();
 
         const visited_id = await validateUserId(params.visited_id);
 
-        return await sql`
-            DELETE FROM visits
-            WHERE visitor_id = ${visitor_id}
-            AND visited_user_id = ${visited_id}
+        await sql`
+            DELETE
+              FROM visits
+             WHERE visiter_user_id = ${visiter_id}
+               AND visited_user_id = ${visited_id}
         `;
+
+        return { message: 'ok' };
     },
 );
 
+// TODO: review procedure name
 export const getVisitsProcedure = procedure(
     'getVisitsByUserId',
     {} as {
@@ -51,12 +55,14 @@ export const getVisitsProcedure = procedure(
         const offset = await validateOffset(params.offset);
         const limit = await validateLimit(params.limit);
 
-        return sql`
-            SELECT visitor_id
-            FROM visits
-            WHERE visited_user_id = ${principal_user_id}
-            ORDER BY created_at DESC
+        const visits = sql<{ visiter_user_id: string }[]>`
+            SELECT visiter_user_id
+              FROM visits
+             WHERE visited_user_id = ${principal_user_id}
+             ORDER BY created_at DESC
             OFFSET ${offset} LIMIT ${limit}
         `;
+
+        return { visits };
     },
 );

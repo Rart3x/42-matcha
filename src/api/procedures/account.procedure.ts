@@ -39,20 +39,24 @@ export const registerAccountProcedure = procedure(
         const firstName = await validateName(params.firstName);
         const lastName = await validateName(params.lastName);
 
-        const [registration]: [{ token: string }?] = await sql`
+        const registration = await sql.begin(async (sql) => {
+            await sql`
+                -- Delete registration record with the same username if it has expired
+                DELETE
+                  FROM pending_user_registrations
+                 WHERE (username = ${username} OR email = ${email})
+                   AND expires_at < NOW();
+            `;
 
-        WITH delete_expired_registrations AS (
-            DELETE
-                FROM pending_user_registrations
-                    WHERE expires_at < NOW())
-        INSERT
-        INTO pending_user_registrations (email, username, password, first_name, last_name)
-        SELECT ${email},
-               ${username},
-               crypt(${password}, gen_salt('bf', 8)),
-               ${firstName},
-               ${lastName}
-        RETURNING token`;
+            const [registration]: [{ token: string }?] = await sql`
+                -- Create a new registration record failing if the username or email is already in use
+                   INSERT INTO pending_user_registrations (email, username, password, first_name, last_name)
+                   SELECT ${email}, ${username}, crypt(${password}, gen_salt('bf', 8)), ${firstName}, ${lastName}
+                RETURNING token;
+            `;
+
+            return registration;
+        });
 
         if (!registration) {
             throw badRequest();
@@ -88,32 +92,39 @@ export const confirmEmailProcedure = procedure(
 
         const location = ip ? await getLatLngFromIp(ip) : null;
 
+        if (!location) {
+            throw badRequest();
+        }
+
         const user = await sql.begin(async (sql) => {
             const [user]: [{ username: string; id: string }?] = await sql`
-
-            WITH delete_expired_registrations AS (
-                DELETE
-                    FROM pending_user_registrations
-                        WHERE expires_at < NOW())
-            INSERT
-            INTO users (email, username, password, first_name, last_name)
-            SELECT email, username, password, first_name, last_name
-            FROM pending_user_registrations
-            WHERE token = ${token}
-              AND expires_at > NOW()
-            RETURNING username, id;`;
+                -- Create a new user from the registration record
+                   INSERT INTO users (email, username, password, first_name, last_name)
+                   SELECT email, username, password, first_name, last_name
+                     FROM pending_user_registrations
+                    WHERE token = ${token}
+                      AND expires_at > NOW()
+                RETURNING username, id;
+            `;
 
             if (!user) {
                 throw badRequest();
             }
 
-            if (location) {
-                await sql`
-                INSERT INTO locations (user_id, latitude, longitude, is_consented)
-                VALUES (${user.id}, ${location.lat}, ${location.lng}, false)
-                ON CONFLICT (user_id) DO NOTHING;
+            await sql`
+                -- Delete the registration record after creating the user
+                -- and delete any expired registration records
+                DELETE
+                  FROM pending_user_registrations
+                 WHERE token = ${token}
+                    OR expires_at < NOW();
             `;
-            }
+
+            await sql`
+                -- Create a new location record for the user
+                INSERT INTO locations (user_id, latitude, longitude, is_consented)
+                VALUES (${user.id}, ${location.lat}, ${location.lng}, FALSE);
+            `;
 
             return user;
         });
@@ -132,17 +143,21 @@ export const usernameAvailableProcedure = procedure(
     async (params) => {
         const username = await validateUsername(params.username);
 
-        const user_id = await usePrincipalUser().catch(() => null);
+        const user_id = await usePrincipalUser().catch(() => null); // Catch the error if the user is not authenticated
 
         const [user]: [{ exists: boolean }] = await sql`
-        SELECT EXISTS(SELECT 1
-                      FROM users
-                               LEFT JOIN pending_user_registrations as reg
-                                         ON reg.username = ${username}
-                                             AND reg.expires_at > NOW()
-                      WHERE users.username = ${username}
-                        AND users.id != ${user_id}) as exists
-    `;
+            -- Check if the username is already in use by a user or a pending registration
+            SELECT EXISTS(SELECT 1
+                            FROM (SELECT 1
+                                    FROM users
+                                   WHERE username = ${username}
+                                     AND id != ${user_id}
+                                   UNION ALL
+                                  SELECT 1
+                                    FROM pending_user_registrations
+                                   WHERE username = ${username}
+                                     AND expires_at > NOW())) AS exists;
+        `;
 
         if (user.exists) {
             return { available: 'false' as const };
@@ -161,17 +176,26 @@ export const emailAvailableProcedure = procedure(
     async (params) => {
         const email = await validateEmail(params.email);
 
-        const user_id = await usePrincipalUser().catch(() => null);
+        const user_id = await usePrincipalUser().catch(() => null); // Catch the error if the user is not authenticated
 
         const [user]: [{ exists: boolean }] = await sql`
-        SELECT EXISTS(SELECT 1
-                      FROM users
-                               LEFT JOIN pending_user_registrations as reg
-                                         ON reg.email = ${email}
-                                             AND reg.expires_at > NOW()
-                      WHERE users.email = ${email}
-                        AND users.id != ${user_id}) as exists
-    `;
+            -- Check if the email is already in use by a user, a pending registration, or a pending email modification
+            SELECT EXISTS(SELECT 1
+                            FROM (SELECT 1
+                                    FROM users
+                                   WHERE email = ${email}
+                                     AND id != ${user_id}
+                                   UNION ALL
+                                  SELECT 1
+                                    FROM pending_user_registrations
+                                   WHERE email = ${email}
+                                     AND expires_at > NOW()
+                                   UNION ALL
+                                  SELECT 1
+                                    FROM pending_email_modifications
+                                   WHERE new_email = ${email}
+                                     AND expires_at > NOW())) AS exists;
+        `;
 
         if (user.exists) {
             return { available: 'false' as const };
@@ -184,9 +208,10 @@ export const getEmailProcedure = procedure('getEmail', async () => {
     const user_id = await usePrincipalUser();
 
     const [user]: [{ email: string }?] = await sql`
+        -- Get the email of the authenticated user
         SELECT email
-        FROM users
-        WHERE id = ${user_id}
+          FROM users
+         WHERE id = ${user_id}
     `;
 
     if (!user) {
@@ -205,42 +230,42 @@ export const updateEmailProcedure = procedure(
         const user_id = await usePrincipalUser();
 
         const { token, username } = await sql.begin(async (sql) => {
-            const [existing]: [{ exists: boolean }] = await sql`
-            SELECT EXISTS(SELECT 1
-                          FROM users,
-                               pending_user_registrations
-                          WHERE (
-                              pending_user_registrations.email = ${email}
-                                  AND expires_at > NOW()
-                              )
-                             OR users.email = ${email}) as exists
-        `;
+            const [conflicting_user]: [{ exists: boolean }] = await sql`
+                -- Check if the email is already in use by a user, a pending registration, or a pending email modification
+                SELECT EXISTS(SELECT 1
+                                FROM (SELECT 1
+                                        FROM users
+                                       WHERE email = ${email}
+                                         AND id != ${user_id}
+                                       UNION ALL
+                                      SELECT 1
+                                        FROM pending_user_registrations
+                                       WHERE email = ${email}
+                                         AND expires_at > NOW()
+                                       UNION ALL
+                                      SELECT 1
+                                        FROM pending_email_modifications
+                                       WHERE new_email = ${email}
+                                         AND expires_at > NOW())) AS exists;
+            `;
 
-            if (existing.exists) {
+            if (conflicting_user.exists) {
                 throw badRequest();
             }
 
-            const [result]: [{ token: string }?] = await sql`
-            INSERT INTO pending_email_modifications(new_email, user_id)
-            VALUES (${email}, ${user_id})
-            RETURNING token
-        `;
+            const [result]: [{ token: string; username: string }?] = await sql`
+                -- Create a new email modification record failing if the email is already in use
+                   INSERT
+                     INTO pending_email_modifications(new_email, user_id)
+                   SELECT ${email}, ${user_id}
+                RETURNING token AS token, (SELECT username FROM users WHERE id = ${user_id}) AS username;
+            `;
 
             if (!result) {
                 throw badRequest();
             }
 
-            const [user]: [{ username: string }?] = await sql`
-            SELECT username
-            FROM users
-            WHERE id = ${user_id}
-        `;
-
-            if (!user) {
-                throw badRequest();
-            }
-
-            return { token: result.token, username: user.username };
+            return { token: result.token, username: result.username };
         });
 
         const confirmationLink = `http://${HOST}:${PORT}/confirm-email-modification/${token}`;
@@ -273,11 +298,9 @@ export const updatePasswordProcedure = procedure(
         const new_password = await validatePassword(params.password);
 
         const res = await sql`
-        SET password = crypt(${new_password}, gen_salt('bf', 8))
-            WHERE id = ${user_id}
-            AND password = crypt(${old_password}, password)
-            returning id
-    `;
+            -- Update the password of the authenticated user if the old password is correct
+            SET password = crypt(${new_password}, gen_salt('bf', 8)) WHERE id = ${user_id} AND PASSWORD = crypt(${old_password}, PASSWORD) RETURNING id
+        `;
 
         if (res.count === 0) {
             throw badRequest();
@@ -297,24 +320,28 @@ export const confirmEmailModificationProcedure = procedure(
 
         const user = await sql.begin(async (sql) => {
             const [user]: [{ username: string }?] = await sql`
-            UPDATE users
-            SET email = pending_email_modifications.new_email
-            FROM pending_email_modifications
-            WHERE pending_email_modifications.token = ${token}
-              AND pending_email_modifications.expires_at > NOW()
-              AND pending_email_modifications.user_id = users.id
-            returning users.username as username;
-        `;
+                -- Update the email of the user from the email modification record
+                   UPDATE users
+                      SET email = pending_email_modifications.new_email
+                     FROM pending_email_modifications
+                    WHERE pending_email_modifications.token = ${token}
+                      AND pending_email_modifications.expires_at > NOW()
+                      AND pending_email_modifications.user_id = users.id
+                RETURNING users.username AS username;
+            `;
 
             if (!user) {
                 throw badRequest();
             }
 
             await sql`
-            DELETE
-            FROM pending_email_modifications
-            WHERE token = ${token}
-        `;
+                -- Delete the email modification record after updating the user's email
+                -- and delete any expired email modification records
+                DELETE
+                  FROM pending_email_modifications
+                 WHERE token = ${token}
+                    OR expires_at < NOW();
+            `;
 
             return user;
         });
@@ -334,13 +361,13 @@ export const getOnlineStatusByIdProcedure = procedure(
         const user_id = await validateUserId(params.user_id);
 
         const [session]: [{ online: boolean; last_seen: string }] = await sql`
-        SELECT updated_at > NOW() - INTERVAL '5 minutes' as online, updated_at as last_seen
-        FROM sessions
-        WHERE user_id = ${user_id}
-          AND expires_at > NOW()
-        ORDER BY updated_at DESC
-        LIMIT 1
-    `;
+            -- Check if the user is online and get the last seen time
+            SELECT updated_at > NOW() - INTERVAL '5 minutes' AS online, updated_at AS last_seen
+              FROM sessions
+             WHERE user_id = ${user_id}
+               AND expires_at > NOW()
+             ORDER BY updated_at DESC
+        `;
 
         if (!session) {
             return { online: false, last_seen: 'more than 3 days ago' };

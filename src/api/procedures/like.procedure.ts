@@ -14,10 +14,12 @@ export const createLikeProcedure = procedure(
 
         const liked_id = await validateUserId(params.liked_id);
 
-        return await sql`
+        await sql`
             INSERT INTO likes (liker_user_id, liked_user_id)
             VALUES (${liker_id}, ${liked_id})
         `;
+
+        return { message: 'ok' };
     },
 );
 
@@ -31,11 +33,14 @@ export const deleteLikeProcedure = procedure(
 
         const liked_id = await validateUserId(params.liked_id);
 
-        return await sql`
-            DELETE FROM likes
-            WHERE liker_user_id = ${liker_id}
-            AND liked_user_id = ${liked_id}
+        await sql`
+            DELETE
+              FROM likes
+             WHERE liker_user_id = ${liker_id}
+               AND liked_user_id = ${liked_id}
         `;
+
+        return { message: 'ok' };
     },
 );
 
@@ -52,12 +57,14 @@ export const getLikesProcedure = procedure(
         const offset = await validateOffset(params.offset);
         const limit = await validateLimit(params.limit);
 
-        return await sql`
+        const likes = await sql<{ liker_user_id: string }[]>`
             SELECT liker_user_id
-            FROM likes
-            WHERE liked_user_id = ${principal_user_id}
-            ORDER BY created_at DESC
+              FROM likes
+             WHERE liked_user_id = ${principal_user_id}
+             ORDER BY created_at DESC
             OFFSET ${offset} LIMIT ${limit}
         `;
+
+        return { likes };
     },
 );

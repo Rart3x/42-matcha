@@ -146,7 +146,7 @@ async function seed() {
             FROM random_users u1
             JOIN random_users u2 ON u1.id <> u2.id  -- Ensure no self-likes
         )
-        INSERT INTO likes (user_id, liked_user_id)
+        INSERT INTO likes (liker_user_id, liked_user_id)
         SELECT user_id, liked_user_id
         FROM likes_candidates
         WHERE rn <= 10  -- Ensure each user likes at most 10 other users
@@ -169,7 +169,7 @@ async function seed() {
             FROM random_users u1
             JOIN random_users u2 ON u1.id <> u2.id  -- Ensure no self-visits
         )
-        INSERT INTO visits (user_id, visited_user_id)
+        INSERT INTO visits (visiter_user_id, visited_user_id)
         SELECT user_id, visited_user_id
         FROM visits_candidates
         WHERE rn <= 10  -- Ensure each user visits at most 10 other users

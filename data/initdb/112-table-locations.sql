@@ -4,7 +4,7 @@ CREATE TABLE locations
 (
     id           INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 
-    user_id      INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    user_id      INTEGER UNIQUE NOT NULL REFERENCES users (id) ON DELETE CASCADE,
 
     longitude    FLOAT   NOT NULL,
     latitude     FLOAT   NOT NULL,

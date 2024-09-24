@@ -5,17 +5,17 @@ import { validateLimit, validateOffset } from '@api/validators/page.validators';
 import { badRequest } from '@api/errors/bad-request.error';
 
 export const getPrincipalUserStatsProcedure = procedure('getPrincipalUserStats', async () => {
-    const user_id = await usePrincipalUser();
+    const principal_user_id = await usePrincipalUser();
 
     const [stats]: [{ likes: number; visits: number; fame_rating: number }?] = await sql`
         SELECT fame_rating,
-               COUNT(DISTINCT likes.user_id)  as likes,
-               COUNT(DISTINCT visits.user_id) as visits
+               COUNT(DISTINCT likes.liked_user_id)    as likes,
+               COUNT(DISTINCT visits.visited_user_id) as visits
         FROM users
                  LEFT JOIN likes ON likes.liked_user_id = users.id
                  LEFT JOIN visits ON visits.visited_user_id = users.id
                  LEFT JOIN blocks ON blocks.blocked_user_id = users.id
-        WHERE users.id = ${user_id}
+        WHERE users.id = ${principal_user_id}
         GROUP BY fame_rating
     `;
 
@@ -33,7 +33,7 @@ export const getPrincipalUserLikesProcedure = procedure(
         limit: number;
     },
     async (params) => {
-        const user_id = await usePrincipalUser();
+        const principal_user_id = await usePrincipalUser();
 
         const offset = await validateOffset(params.offset);
         const limit = await validateLimit(params.limit);
@@ -48,13 +48,13 @@ export const getPrincipalUserLikesProcedure = procedure(
                 biography: string;
             }[]
         >`
-            SELECT id, username, first_name, last_name, age, biography
-            FROM likes
-                     INNER JOIN users ON users.id = likes.user_id
-            WHERE likes.liked_user_id = ${user_id}
-            ORDER BY likes.created_at DESC
-            OFFSET ${offset} LIMIT ${limit}
-        `;
+        SELECT id, username, first_name, last_name, age, biography
+        FROM likes
+                 INNER JOIN users ON users.id = likes.liked_user_id
+        WHERE likes.liked_user_id = ${principal_user_id}
+        ORDER BY likes.created_at DESC
+        OFFSET ${offset} LIMIT ${limit}
+    `;
 
         return {
             users,
@@ -69,7 +69,7 @@ export const getPrincipalUserVisitsProcedure = procedure(
         limit: number;
     },
     async (params) => {
-        const user_id = await usePrincipalUser();
+        const principal_user_id = await usePrincipalUser();
 
         const offset = await validateOffset(params.offset);
         const limit = await validateLimit(params.limit);
@@ -84,13 +84,13 @@ export const getPrincipalUserVisitsProcedure = procedure(
                 biography: string;
             }[]
         >`
-            SELECT id, username, first_name, last_name, age, biography
-            FROM visits
-                     INNER JOIN users ON users.id = visits.user_id
-            WHERE visits.visited_user_id = ${user_id}
-            ORDER BY visits.visited_at DESC
-            OFFSET ${offset} LIMIT ${limit}
-        `;
+        SELECT id, username, first_name, last_name, age, biography
+        FROM visits
+                 INNER JOIN users ON users.id = visits.visited_user_id
+        WHERE visits.visited_user_id = ${principal_user_id}
+        ORDER BY visits.created_at DESC
+        OFFSET ${offset} LIMIT ${limit}
+    `;
 
         return {
             users,

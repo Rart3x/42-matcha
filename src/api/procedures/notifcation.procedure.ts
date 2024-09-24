@@ -25,9 +25,9 @@ export const getNotificationsProcedure = procedure(
                     created_at: Date;
                 }[]
             >`
-                SELECT id, user_id, message, viewed, created_at
+                SELECT id, notified_user_id, content, is_viewed, created_at
                 FROM notifications
-                WHERE user_id = ${principal_user_id}
+                WHERE notifications.notified_user_id = ${principal_user_id}
                 ORDER BY created_at DESC
                 OFFSET ${offset} LIMIT ${limit}
             `;
@@ -49,8 +49,8 @@ export const getNumberOfUnreadNotificationsProcedure = procedure(
         >`
             SELECT COUNT(*) as count
             FROM notifications
-            WHERE user_id = ${principal_user_id}
-            AND viewed = FALSE
+            WHERE notified_user_id = ${principal_user_id}
+            AND is_viewed = FALSE
         `;
     },
 );
@@ -77,10 +77,10 @@ export const getUnreadNotificationsProcedure = procedure(
                     created_at: Date;
                 }[]
             >`
-                SELECT id, user_id, message, viewed, created_at
+                SELECT id,notified_user_id, content, is_viewed, created_at
                 FROM notifications
-                WHERE user_id = ${principal_user_id}
-                AND viewed = FALSE
+                WHERE notified_user_id = ${principal_user_id}
+                AND is_viewed = FALSE
                 ORDER BY created_at DESC
                 OFFSET ${offset} LIMIT ${limit}
             `;

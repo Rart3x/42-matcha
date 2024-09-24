@@ -35,12 +35,12 @@ export const getProfileByIdProcedure = procedure(
         const [profile]: [Profile?] = await sql`
             WITH liked_by_principal AS (SELECT 1
                                         FROM likes
-                                        WHERE user_id = ${user_id}
-                                          AND liked_user_id = ${principal_id}),
+                                        WHERE liked_user_id = ${user_id}
+                                          AND liker_user_id = ${principal_id}),
                  likes_principal AS (SELECT 1
                                      FROM likes
-                                     WHERE user_id = ${principal_id}
-                                       AND liked_user_id = ${user_id})
+                                     WHERE liked_user_id = ${principal_id}
+                                       AND liker_user_id = ${user_id})
 
             SELECT username,
                    first_name,

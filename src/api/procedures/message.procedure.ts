@@ -33,7 +33,7 @@ export const getMessagesByUserIdProcedure = procedure(
                                                             sender_id,
                                                             receiver_id,
                                                             message,
-                                                            seen,
+                                                            is_seen,
                                                             created_at
                 FROM messages
                 WHERE (sender_id = ${principal_user_id} AND receiver_id = ${user_id})
@@ -76,12 +76,12 @@ export const getReadMessagesByUserIdProcedure = procedure(
                                                             sender_id,
                                                             receiver_id,
                                                             message,
-                                                            seen,
+                                                            is_seen,
                                                             created_at
                 FROM messages
                 WHERE (sender_id = ${principal_user_id}
                     AND receiver_id = ${user_id})
-                  AND seen = TRUE
+                  AND is_seen = TRUE
                 ORDER BY created_at DESC
                 OFFSET ${offset} LIMIT ${limit}
             `;
@@ -119,12 +119,12 @@ export const getUnreadMessagesByUserIdProcedure = procedure(
                                                             sender_id,
                                                             receiver_id,
                                                             message,
-                                                            seen,
+                                                            is_seen,
                                                             created_at
                 FROM messages
                 WHERE (sender_id = ${principal_user_id}
                     AND receiver_id = ${user_id})
-                  AND seen = FALSE
+                  AND is_seen = FALSE
                 ORDER BY created_at DESC
                 OFFSET ${offset} LIMIT ${limit}
             `;
@@ -153,7 +153,7 @@ export const getNumberOfUnreadMessagesByUserIdProcedure = procedure(
                 FROM messages
                 WHERE (sender_id = ${principal_user_id}
                     AND receiver_id = ${user_id})
-                  AND seen = FALSE
+                  AND is_seen = FALSE
             `;
             return { messages };
         });
@@ -185,10 +185,10 @@ export const getChattableUsersProcedure = procedure(
             >`
                 WITH mutual_likes AS (
                     -- Find mutual likes
-                    SELECT l1.user_id as user_1, l1.liked_user_id as user_2
+                    SELECT l1.liker_user_id as user_1, l1.liked_user_id as user_2
                     FROM likes l1
-                             JOIN likes l2 ON l1.user_id = l2.liked_user_id
-                        AND l1.liked_user_id = l2.user_id),
+                             JOIN likes l2 ON l1.liker_user_id = l2.liked_user_id
+                        AND l1.liked_user_id = l2.liker_user_id),
                 candidates AS (
                          -- Find users who share mutual likes with the principal user
                          SELECT DISTINCT on (other_user.id) *

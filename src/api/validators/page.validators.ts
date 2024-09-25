@@ -1,7 +1,7 @@
 import { badRequest } from '@api/errors/bad-request.error';
 
 export async function validateOffset(offset?: number) {
-    if (offset === undefined) {
+    if (typeof offset !== 'number') {
         throw badRequest();
     }
     if (offset < 0 && offset > 50) {
@@ -11,7 +11,7 @@ export async function validateOffset(offset?: number) {
 }
 
 export async function validateLimit(limit?: number) {
-    if (limit === undefined) {
+    if (typeof limit !== 'number') {
         throw badRequest();
     }
     if (limit < 0 && limit > 50) {

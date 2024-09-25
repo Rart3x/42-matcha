@@ -1,6 +1,9 @@
 import { badRequest } from '@api/errors/bad-request.error';
 
 export async function validateUserId(user_id?: number) {
+    if (typeof user_id !== 'number') {
+        throw badRequest();
+    }
     if (!user_id) {
         throw badRequest();
     }
@@ -14,6 +17,9 @@ export async function validateUserId(user_id?: number) {
 }
 
 export async function validateAge(age?: number) {
+    if (typeof age !== 'number') {
+        throw badRequest();
+    }
     if (!age) {
         throw badRequest();
     }
@@ -31,6 +37,9 @@ export async function validateAge(age?: number) {
 }
 
 export async function validateSexualPref(sexual_pref?: string) {
+    if (typeof sexual_pref !== 'string') {
+        throw badRequest();
+    }
     if (!sexual_pref) {
         throw badRequest();
     }
@@ -41,6 +50,9 @@ export async function validateSexualPref(sexual_pref?: string) {
 }
 
 export async function validateBiography(biography?: string) {
+    if (typeof biography !== 'string') {
+        throw badRequest();
+    }
     if (!biography) {
         throw badRequest();
     }
@@ -51,6 +63,9 @@ export async function validateBiography(biography?: string) {
 }
 
 export async function validateGender(gender?: string) {
+    if (typeof gender !== 'string') {
+        throw badRequest();
+    }
     if (!gender) {
         throw badRequest();
     }

@@ -1,6 +1,9 @@
 import { badRequest } from '@api/errors/bad-request.error';
 
 export async function validateTag(tag?: string) {
+    if (typeof tag !== 'string') {
+        throw badRequest();
+    }
     if (!tag) {
         throw badRequest();
     }
@@ -14,6 +17,9 @@ export async function validateTag(tag?: string) {
 }
 
 export async function validateTags(tags?: string[]) {
+    if (typeof tags !== 'object' || !Array.isArray(tags)) {
+        throw badRequest();
+    }
     if (!tags) {
         throw badRequest();
     }
@@ -24,6 +30,9 @@ export async function validateTags(tags?: string[]) {
 }
 
 export async function validateMinimumCommonTags(minimum_common_tags?: number) {
+    if (typeof minimum_common_tags !== 'number') {
+        throw badRequest();
+    }
     if (minimum_common_tags == null || minimum_common_tags < 0) {
         throw badRequest();
     }

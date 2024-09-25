@@ -29,18 +29,22 @@ export const getMessagesByUserIdProcedure = procedure(
                     created_at: Date;
                 }[]
             >`
-                SELECT DISTINCT ON (sender_id, receiver_id) id,
-                                                            sender_id,
-                                                            receiver_id,
-                                                            message,
-                                                            is_seen,
-                                                            created_at
-                FROM messages
-                WHERE (sender_id = ${principal_user_id} AND receiver_id = ${user_id})
-                   OR (sender_id = ${user_id} AND receiver_id = ${principal_user_id})
-                ORDER BY created_at DESC
-                OFFSET ${offset} LIMIT ${limit}
-            `;
+            SELECT DISTINCT ON (sender_id, receiver_id)
+                id,
+                sender_id,
+                receiver_id,
+                message,
+                is_seen,
+                created_at
+            FROM
+                messages
+            WHERE
+                 (sender_id = ${principal_user_id} AND receiver_id = ${user_id})
+              OR (sender_id = ${user_id} AND receiver_id = ${principal_user_id})
+            ORDER BY
+                created_at DESC
+            OFFSET ${offset} LIMIT ${limit}
+        `;
             return { messages };
         });
     },
@@ -72,19 +76,22 @@ export const getReadMessagesByUserIdProcedure = procedure(
                     created_at: Date;
                 }[]
             >`
-                SELECT DISTINCT ON (sender_id, receiver_id) id,
-                                                            sender_id,
-                                                            receiver_id,
-                                                            message,
-                                                            is_seen,
-                                                            created_at
-                FROM messages
-                WHERE (sender_id = ${principal_user_id}
-                    AND receiver_id = ${user_id})
-                  AND is_seen = TRUE
-                ORDER BY created_at DESC
-                OFFSET ${offset} LIMIT ${limit}
-            `;
+            SELECT DISTINCT ON (sender_id, receiver_id)
+                id,
+                sender_id,
+                receiver_id,
+                message,
+                is_seen,
+                created_at
+            FROM
+                messages
+            WHERE
+                  (sender_id = ${principal_user_id} AND receiver_id = ${user_id})
+              AND is_seen = TRUE
+            ORDER BY
+                created_at DESC
+            OFFSET ${offset} LIMIT ${limit}
+        `;
             return { messages };
         });
     },
@@ -115,19 +122,22 @@ export const getUnreadMessagesByUserIdProcedure = procedure(
                     created_at: Date;
                 }[]
             >`
-                SELECT DISTINCT ON (sender_id, receiver_id) id,
-                                                            sender_id,
-                                                            receiver_id,
-                                                            message,
-                                                            is_seen,
-                                                            created_at
-                FROM messages
-                WHERE (sender_id = ${principal_user_id}
-                    AND receiver_id = ${user_id})
-                  AND is_seen = FALSE
-                ORDER BY created_at DESC
-                OFFSET ${offset} LIMIT ${limit}
-            `;
+            SELECT DISTINCT ON (sender_id, receiver_id)
+                id,
+                sender_id,
+                receiver_id,
+                message,
+                is_seen,
+                created_at
+            FROM
+                messages
+            WHERE
+                  (sender_id = ${principal_user_id} AND receiver_id = ${user_id})
+              AND is_seen = FALSE
+            ORDER BY
+                created_at DESC
+            OFFSET ${offset} LIMIT ${limit}
+        `;
             return { messages };
         });
     },
@@ -149,19 +159,21 @@ export const getNumberOfUnreadMessagesByUserIdProcedure = procedure(
                     count: number;
                 }[]
             >`
-                SELECT COUNT(*)
-                FROM messages
-                WHERE (sender_id = ${principal_user_id}
-                    AND receiver_id = ${user_id})
-                  AND is_seen = FALSE
-            `;
+            SELECT
+                COUNT(*)
+            FROM
+                messages
+            WHERE
+                  (sender_id = ${principal_user_id} AND receiver_id = ${user_id})
+              AND is_seen = FALSE
+        `;
             return { messages };
         });
     },
 );
 
-export const getChattableUsersProcedure = procedure(
-    'getChattableUsers',
+export const getConversationsProcedure = procedure(
+    'getConversations',
     {} as {
         offset: number;
         limit: number;
@@ -175,32 +187,25 @@ export const getChattableUsersProcedure = procedure(
         const { users } = await sql.begin(async (sql) => {
             const users = await sql<
                 {
-                    id: number;
-                    username: string;
+                    other_user_id: string;
+                    other_username: string;
                     last_message_content: string;
-                    last_message_seen: boolean;
-                    last_message_author_id: number;
-                    last_message_created_at: Date;
+                    last_message_sender: string;
+                    last_message_date: Date;
                 }[]
             >`
-                WITH mutual_likes AS (
-                    -- Find mutual likes
-                    SELECT l1.liker_user_id as user_1, l1.liked_user_id as user_2
-                    FROM likes l1
-                             JOIN likes l2 ON l1.liker_user_id = l2.liked_user_id
-                        AND l1.liked_user_id = l2.liker_user_id),
-                candidates AS (
-                         -- Find users who share mutual likes with the principal user
-                         SELECT DISTINCT on (other_user.id) *
-                         FROM users other_user
-                                  JOIN mutual_likes ml ON other_user.id IN (ml.user_1, ml.user_2)
-                         WHERE other_user.id != ${principal_user_id})
-                
-                   
-
-
-
-            `;
+            SELECT
+                other_user_id,
+                other_username,
+                last_message_content,
+                last_message_sender,
+                last_message_date
+            FROM
+                conversations
+            WHERE
+                principal_user_id = ${principal_user_id}
+            OFFSET ${offset} LIMIT ${limit}
+            ;`;
 
             return { users };
         });

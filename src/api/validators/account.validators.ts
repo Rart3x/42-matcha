@@ -29,6 +29,17 @@ export async function validateUsername(username?: string) {
     return username;
 }
 
+// TODO: write test
+export async function validateUsernameFilter(usernameFilter?: string) {
+    if (typeof usernameFilter !== 'string') {
+        throw badRequest();
+    }
+    if (!/^[a-zA-Z0-9_]*$/.test(usernameFilter)) {
+        throw badRequest();
+    }
+    return usernameFilter;
+}
+
 export async function validateName(name?: string) {
     if (typeof name !== 'string') {
         throw badRequest();

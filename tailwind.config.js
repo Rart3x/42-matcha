@@ -8,6 +8,7 @@ module.exports = {
                 '4xl': '2rem',
             },
             colors: {
+                primary: 'var(--sys-primary)',
                 surface: 'var(--sys-surface)',
                 error: 'var(--sys-error)',
                 outline: 'var(--sys-outline)',

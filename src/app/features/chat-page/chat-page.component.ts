@@ -1,32 +1,73 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { injectInfiniteQuery } from '@tanstack/angular-query-experimental';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { injectMutation, injectQueryClient } from '@tanstack/angular-query-experimental';
 import { injectRpcClient } from '@app/core/http/rpc-client';
+import { MatIcon } from '@angular/material/icon';
+import { MatToolbar, MatToolbarRow } from '@angular/material/toolbar';
+import { MatIconButton } from '@angular/material/button';
+import { MatTooltip } from '@angular/material/tooltip';
+import { SnackBarService } from '@app/core/services/snack-bar.service';
+import { Router } from '@angular/router';
+import { ConversationListComponent } from '@app/features/chat-page/conversation-list/conversation-list.component';
 
 @Component({
     selector: 'app-chat-page',
     standalone: true,
-    imports: [],
-    template: ` <p>chat-page works!</p> `,
+    imports: [
+        MatIcon,
+        MatToolbarRow,
+        MatToolbar,
+        MatIconButton,
+        MatTooltip,
+        ConversationListComponent,
+    ],
+    host: { class: 'flex min-h-full relative flex-col gap-1' },
+    template: `
+        <mat-toolbar class="!bg-transparent">
+            <mat-toolbar-row class="!pt-2">
+                <h1 class="mat-display-small !mb-0">Chat</h1>
+                <span class="grow"></span>
+                <button mat-icon-button matTooltip="notifications">
+                    <mat-icon>notifications</mat-icon>
+                </button>
+
+                <button mat-icon-button matTooltip="logout" (click)="logout.mutate()">
+                    <mat-icon>logout</mat-icon>
+                </button>
+            </mat-toolbar-row>
+        </mat-toolbar>
+
+        <div
+            class="relative flex grow gap-8 overflow-hidden rounded-tl-2xl pb-2 pr-3 expanded:pr-6"
+        >
+            <app-conversation-list class="w-full medium:w-[20rem] large:w-[26rem]" />
+
+            <div class="grid grow place-content-center max-medium:hidden">
+                <!-- placeholder inviting open a conversation -->
+
+                <div class="flex flex-col items-center justify-center gap-4">
+                    <mat-icon>chat</mat-icon>
+                    <p class="text-center">Select a conversation to start chatting</p>
+                </div>
+            </div>
+        </div>
+    `,
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChatPageComponent {
-    #PAGE_SIZE = 10;
-
+    #router = inject(Router);
+    #queryClient = injectQueryClient();
+    #snackBar = inject(SnackBarService);
     #rpcClient = injectRpcClient();
 
-    chatsQuery = injectInfiniteQuery(() => ({
-        queryKey: ['chats'],
-        queryFn: ({ pageParam }) =>
-            this.#rpcClient.getChattableUsers({
-                limit: this.#PAGE_SIZE,
-                offset: pageParam * this.#PAGE_SIZE,
-            }),
-        initialPageParam: 0,
-        getNextPageParam: (lastPage, allPages, lastPageParam) => {
-            if (lastPage.users.length === 0) {
-                return undefined;
-            }
-            return lastPageParam + 1;
+    logout = injectMutation(() => ({
+        mutationFn: this.#rpcClient.logout,
+        onSuccess: async () => {
+            this.#snackBar.enqueueSnackBar('You have been logged out');
+            await this.#queryClient.invalidateQueries({ queryKey: ['verifySession'] });
+            await this.#router.navigate(['/login']);
+        },
+        onError: () => {
+            this.#snackBar.enqueueSnackBar('Failed to logout');
         },
     }));
 }

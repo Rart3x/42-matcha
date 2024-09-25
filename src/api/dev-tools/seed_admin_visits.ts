@@ -10,7 +10,7 @@ async function seed() {
                        FROM users
                        WHERE username = 'admin')
         INSERT
-        INTO visits (user_id, visited_user_id)
+        INTO visits (visiter_user_id, visited_user_id)
         SELECT u1.id, u2.id
         FROM random_users u1
                  JOIN admin u2 ON u1.id <> u2.id

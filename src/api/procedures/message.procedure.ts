@@ -3,6 +3,7 @@ import { sql } from '@api/connections/database.connection';
 import { usePrincipalUser } from '@api/hooks/auth.hooks';
 import { validateUserId } from '@api/validators/profile.validators';
 import { validateLimit, validateOffset } from '@api/validators/page.validators';
+import { validateUsernameFilter } from '@api/validators/account.validators';
 
 export const getMessagesByUserIdProcedure = procedure(
     'getMessagesByUserId',
@@ -177,12 +178,14 @@ export const getConversationsProcedure = procedure(
     {} as {
         offset: number;
         limit: number;
+        usernameFilter?: string;
     },
     async (params) => {
         const principal_user_id = await usePrincipalUser();
 
         const offset = await validateOffset(params.offset);
         const limit = await validateLimit(params.limit);
+        const usernameFilter = await validateUsernameFilter(params.usernameFilter ?? '');
 
         const { users } = await sql.begin(async (sql) => {
             const users = await sql<
@@ -204,6 +207,7 @@ export const getConversationsProcedure = procedure(
                 conversations
             WHERE
                 principal_user_id = ${principal_user_id}
+                AND other_username ILIKE ${usernameFilter} || '%'
             OFFSET ${offset} LIMIT ${limit}
             ;`;
 

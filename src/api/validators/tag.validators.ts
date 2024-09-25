@@ -4,9 +4,6 @@ export async function validateTag(tag?: string) {
     if (typeof tag !== 'string') {
         throw badRequest();
     }
-    if (!tag) {
-        throw badRequest();
-    }
     if (20 < tag.length) {
         throw badRequest();
     }
@@ -20,9 +17,6 @@ export async function validateTags(tags?: string[]) {
     if (typeof tags !== 'object' || !Array.isArray(tags)) {
         throw badRequest();
     }
-    if (!tags) {
-        throw badRequest();
-    }
     if (tags.length < 3 || 10 < tags.length) {
         throw badRequest();
     }
@@ -30,10 +24,10 @@ export async function validateTags(tags?: string[]) {
 }
 
 export async function validateMinimumCommonTags(minimum_common_tags?: number) {
-    if (typeof minimum_common_tags !== 'number') {
+    if (typeof minimum_common_tags !== 'number' || isNaN(minimum_common_tags)) {
         throw badRequest();
     }
-    if (minimum_common_tags == null || minimum_common_tags < 0) {
+    if (minimum_common_tags < 0) {
         throw badRequest();
     }
     return minimum_common_tags;

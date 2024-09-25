@@ -7,9 +7,6 @@ export async function validateEmail(email?: string) {
     if (typeof email !== 'string') {
         throw badRequest();
     }
-    if (!email) {
-        throw badRequest();
-    }
     if (!ANGULAR_EMAIL_REGEX.test(email)) {
         throw badRequest();
     }
@@ -18,9 +15,6 @@ export async function validateEmail(email?: string) {
 
 export async function validateUsername(username?: string) {
     if (typeof username !== 'string') {
-        throw badRequest();
-    }
-    if (!username) {
         throw badRequest();
     }
     if (username.length < 3) {
@@ -37,9 +31,6 @@ export async function validateUsername(username?: string) {
 
 export async function validateName(name?: string) {
     if (typeof name !== 'string') {
-        throw badRequest();
-    }
-    if (!name) {
         throw badRequest();
     }
     if (name.length < 1) {
@@ -59,9 +50,6 @@ export async function validateName(name?: string) {
 
 export async function validatePassword(password?: string) {
     if (typeof password !== 'string') {
-        throw badRequest();
-    }
-    if (!password) {
         throw badRequest();
     }
     if (password.length < 8) {

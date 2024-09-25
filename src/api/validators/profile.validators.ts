@@ -18,7 +18,7 @@ export async function validateAge(age?: number) {
         throw badRequest();
     }
     if (isNaN(age)) {
-        return 0;
+        throw badRequest();
     }
     // test if integer
     if (age % 1 !== 0) {

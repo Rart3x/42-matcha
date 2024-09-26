@@ -23,6 +23,7 @@ import { MatButton, MatIconButton } from '@angular/material/button';
 import { FormsModule } from '@angular/forms';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { RouterLink } from '@angular/router';
 
 @Component({
     selector: 'app-conversation-list',
@@ -45,6 +46,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
         MatButton,
         FormsModule,
         MatIconButton,
+        RouterLink,
     ],
     host: { class: 'grid place-content-stretch' },
     template: `
@@ -75,7 +77,12 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
             <cdk-virtual-scroll-viewport itemSize="80">
                 <mat-nav-list class="flex flex-col">
                     <div class="h-[80px]" *cdkVirtualFor="let conversation of conversations()">
-                        <a mat-list-item class="!rounded-xl !bg-surface" tabindex="0">
+                        <a
+                            mat-list-item
+                            class="!rounded-xl !bg-surface"
+                            tabindex="0"
+                            [routerLink]="['.', conversation.other_user_id]"
+                        >
                             <img
                                 matListItemAvatar
                                 [src]="'/api/pictures/by_id/' + conversation.other_user_id + '/0'"

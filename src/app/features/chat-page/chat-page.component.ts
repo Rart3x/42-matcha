@@ -6,7 +6,7 @@ import { MatToolbar, MatToolbarRow } from '@angular/material/toolbar';
 import { MatIconButton } from '@angular/material/button';
 import { MatTooltip } from '@angular/material/tooltip';
 import { SnackBarService } from '@app/core/services/snack-bar.service';
-import { Router } from '@angular/router';
+import { Router, RouterOutlet } from '@angular/router';
 import { ConversationListComponent } from '@app/features/chat-page/conversation-list/conversation-list.component';
 
 @Component({
@@ -19,6 +19,7 @@ import { ConversationListComponent } from '@app/features/chat-page/conversation-
         MatIconButton,
         MatTooltip,
         ConversationListComponent,
+        RouterOutlet,
     ],
     host: { class: 'flex min-h-full relative flex-col gap-1' },
     template: `
@@ -41,13 +42,17 @@ import { ConversationListComponent } from '@app/features/chat-page/conversation-
         >
             <app-conversation-list class="w-full medium:w-[20rem] large:w-[26rem]" />
 
-            <div class="grid grow place-content-center max-medium:hidden">
-                <!-- placeholder inviting open a conversation -->
-
-                <div class="flex flex-col items-center justify-center gap-4">
-                    <mat-icon>chat</mat-icon>
-                    <p class="text-center">Select a conversation to start chatting</p>
+            @if (!outlet.isActivated) {
+                <div class="grid grow place-content-center max-medium:hidden">
+                    <div class="flex flex-col items-center justify-center gap-4">
+                        <mat-icon>chat</mat-icon>
+                        <p class="text-center">Select a conversation to start chatting</p>
+                    </div>
                 </div>
+            }
+            <div>
+                <!-- either flex-grow or position absolute depending on the screen size, shown only if the outlet is activated -->
+                <router-outlet #outlet="outlet" />
             </div>
         </div>
     `,

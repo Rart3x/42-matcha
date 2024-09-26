@@ -59,6 +59,15 @@ export const routes: Routes = [
                     import('@app/features/chat-page/chat-page.component').then(
                         (m) => m.ChatPageComponent,
                     ),
+                children: [
+                    {
+                        path: ':other_user_id',
+                        loadComponent: () =>
+                            import(
+                                '@app/features/conversation-page/conversation-page.component'
+                            ).then((m) => m.ConversationPageComponent),
+                    },
+                ],
                 data: { animation: 'chat' },
             },
             {

@@ -2,45 +2,45 @@ import { expect, test } from 'vitest';
 import { validateOffset, validateLimit } from '@api/validators/page.validators';
 
 // -- OFFSET LIMIT NAN TESTS -- //
-test('Nan is an invalid offset', async () => {
+test('[INVALID] [OFFSET] [ISNAN] : NaN', async () => {
     await expect(validateOffset(NaN)).rejects.toThrow();
 });
 
-test('Nan is an invalid limit', async () => {
+test('[INVALID] [LIMIT] [ISNAN] : NaN', async () => {
     await expect(validateLimit(NaN)).rejects.toThrow();
 });
 
 // -- OFFSET LIMIT VALUE TESTS -- //
-test('0 is a valid offset', async () => {
+test('[VALID] [OFFSET] : 0', async () => {
     expect(await validateOffset(0)).toEqual(0);
 });
 
-test('0 is a valid limit', async () => {
+test('[VALID] [LIMIT] : 0', async () => {
     expect(await validateLimit(0)).toEqual(0);
 });
 
-test('50 is a valid offset', async () => {
+test('[VALID] [OFFSET]  : 50', async () => {
     expect(await validateOffset(50)).toEqual(50);
 });
 
-test('50 is a valid limit', async () => {
+test('[VALID] [LIMIT] : 50', async () => {
     expect(await validateLimit(50)).toEqual(50);
 });
 
 // -- OFFSET LIMIT OUT OF BOUNDS TESTS -- //
-test('51 is an invalid offset', async () => {
+test('[INVALID] [OFFSET] : 51', async () => {
     await expect(validateOffset(51)).rejects.toThrow();
 });
 
-test('51 is an invalid limit', async () => {
+test('[INVALID] [LIMIT] : 51', async () => {
     await expect(validateLimit(51)).rejects.toThrow();
 });
 
 // -- OFFSET LIMIT NEGATIVE TESTS -- //
-test('-1 is an invalid offset', async () => {
+test('[INVALID] [OFFSET] : -1', async () => {
     await expect(validateOffset(-1)).rejects.toThrow();
 });
 
-test('-1 is an invalid limit', async () => {
+test('[INVALID] [LIMIT] : -1', async () => {
     await expect(validateLimit(-1)).rejects.toThrow();
 });

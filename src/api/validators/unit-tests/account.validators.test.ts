@@ -8,111 +8,111 @@ import {
 } from '@api/validators/account.validators';
 
 // -- EMAIL TESTS -- //
-test('Empty email is invalid', async () => {
+test('[INVALID] [EMAIL] : ""', async () => {
     await expect(validateEmail('')).rejects.toThrow();
 });
 
-test('Invalid email is invalid', async () => {
+test('[INVALID] [EMAIL] : "invalid"', async () => {
     await expect(validateEmail('invalid')).rejects.toThrow();
 });
 
-test('Email without @ is invalid', async () => {
+test('[INVALID] [EMAIL] : "invalid.com"', async () => {
     await expect(validateEmail('invalid.com')).rejects.toThrow();
 });
 
-test('Valid email is valid', async () => {
+test('[VALID] [EMAIL] : "keny@test.com"', async () => {
     const email = 'keny@test.com';
     expect(await validateEmail(email)).toBe(email);
 });
 
 // -- USERNAME TESTS -- //
-test('Empty username is invalid', async () => {
+test('[INVALID] [USERNAME] : ""', async () => {
     await expect(validateUsername('')).rejects.toThrow();
 });
 
-test('Username less than 3 characters is invalid', async () => {
+test('[INVALID] [USERNAME] [LENGTH] : "12"', async () => {
     await expect(validateUsername('12')).rejects.toThrow();
 });
 
-test('Username more than 20 characters is invalid', async () => {
+test('[INVALID] [USERNAME] [LENGTH] : "123456789012345678901"', async () => {
     await expect(validateUsername('123456789012345678901')).rejects.toThrow();
 });
 
-test('Username with invalid characters is invalid', async () => {
+test('[INVALID] [USERNAME] [CARACTER] : "invalid-username"', async () => {
     await expect(validateUsername('invalid-username')).rejects.toThrow();
 });
 
-test('Valid username is valid', async () => {
+test('[VALID] [USERNAME] : "valid_username"', async () => {
     const username = 'valid_username';
     expect(await validateUsername(username)).toBe(username);
 });
 
 // -- NAME TESTS -- //
-test('Empty name is invalid', async () => {
+test('[INVALID] [NAME] : ""', async () => {
     await expect(validateName('')).rejects.toThrow();
 });
 
-test('Name less than 1 character is invalid', async () => {
+test('[INVALID] [NAME] [LENGTH] : ""', async () => {
     await expect(validateName('')).rejects.toThrow();
 });
 
-test('Name more than 30 characters is invalid', async () => {
+test('[INVALID] [NAME] [LENGTH] : "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"', async () => {
     await expect(validateName('a'.repeat(31))).rejects.toThrow();
 });
 
-test('Name with invalid format is invalid', async () => {
+test('[INVALID] [NAME] [CARACTER] : "invalid$name"', async () => {
     await expect(validateName('invalid$name')).rejects.toThrow();
 });
 
-test('Valid name is valid', async () => {
+test('[VALID] [NAME] : "Valid Name"', async () => {
     const name = 'Valid Name';
     expect(await validateName(name)).toBe(name);
 });
 
 // -- PASSWORD TESTS -- //
-test('Empty password is invalid', async () => {
+test('[INVALID] [PASSWORD] [LENGTH] : ""', async () => {
     await expect(validatePassword('')).rejects.toThrow();
 });
 
-test('Password less than 8 characters is invalid', async () => {
+test('[INVALID] [PASSWORD] [LENGTH] : "1234567"', async () => {
     await expect(validatePassword('1234567')).rejects.toThrow();
 });
 
-test('Password more than 30 characters is invalid', async () => {
+test('[INVALID] [PASSWORD] [LENGTH] : "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"', async () => {
     await expect(validatePassword('a'.repeat(31))).rejects.toThrow();
 });
 
-test('Password without lowercase character is invalid', async () => {
+test('[INVALID] [PASSWORD] [LOWERCASELESS] : "PASSWORD123"', async () => {
     await expect(validatePassword('PASSWORD123')).rejects.toThrow();
 });
 
-test('Password without uppercase character is invalid', async () => {
+test('[INVALID] [PASSWORD] [UPPERCASELESS] : "password123"', async () => {
     await expect(validatePassword('password123')).rejects.toThrow();
 });
 
-test('Password without number is invalid', async () => {
+test('[INVALID] [PASSWORD] [NUMBERLESS] :', async () => {
     await expect(validatePassword('Password')).rejects.toThrow();
 });
 
-test('Password without special character is invalid', async () => {
-    await expect(validatePassword('Password123')).rejects.toThrow();
-});
-
-test('Valid password is valid', async () => {
+test('[VALID] [PASSWORD] [CONTAINS SPECIAL CHARACTERS] : "Password123!"', async () => {
     const password = 'Password123!';
     expect(await validatePassword(password)).toBe(password);
 });
 
+test('[INVALID] [PASSWORD] [NO SPECIAL CHARACTERS] : "Password123"', async () => {
+    await expect(validatePassword('Password123')).rejects.toThrow();
+});
+
 // -- TOKEN TESTS -- //
-test('Empty token is invalid', async () => {
+test('[VALID] [TOKEN] [UUID FORMAT] : "00000000-0000-0000-0000-000000000000"', async () => {
+    const token = '00000000-0000-0000-0000-000000000000';
+    expect(await validateToken(token)).toBe(token);
+});
+
+test('[INVALID] [TOKEN] [EMPTY] : ""', async () => {
     await expect(validateToken('')).rejects.toThrow();
 });
 
-test('Invalid token is invalid', async () => {
+test('[INVALID] [TOKEN] [INVALID FORMAT] : "invalid"', async () => {
     await expect(validateToken('invalid')).rejects.toThrow();
-});
-
-test('Valid token is valid', async () => {
-    const token = '00000000-0000-0000-0000-000000000000';
-    expect(await validateToken(token)).toBe(token);
 });

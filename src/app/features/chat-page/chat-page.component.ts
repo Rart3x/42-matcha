@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { injectMutation, injectQueryClient } from '@tanstack/angular-query-experimental';
 import { injectRpcClient } from '@app/core/http/rpc-client';
 import { MatIcon } from '@angular/material/icon';
@@ -23,7 +23,7 @@ import { NgClass } from '@angular/common';
         RouterOutlet,
         NgClass,
     ],
-    host: { class: 'flex min-h-full relative flex-col gap-1' },
+    host: { class: 'flex min-h-full relative flex-col' },
     template: `
         <mat-toolbar class="!bg-transparent">
             <mat-toolbar-row class="!pt-2">
@@ -40,26 +40,34 @@ import { NgClass } from '@angular/common';
         </mat-toolbar>
 
         <div
-            class="relative flex grow gap-8 overflow-hidden rounded-tl-2xl pb-2 pr-3 expanded:pr-6"
+            class="relative mb-2 flex grow gap-8 overflow-hidden medium:mr-3 expanded:mr-6 expanded:rounded-tl-2xl"
         >
-            <app-conversation-list class="w-full expanded:w-[26rem]" />
+            <!-- Conversation list -->
+            <app-conversation-list class="w-full expanded:w-[20rem] large:w-[26rem]" />
 
-            @if (!outlet.isActivated) {
-                <div class="grid grow place-content-center max-medium:hidden">
+            <!-- Placeholder for when no conversation is selected -->
+            @if (!outletActivated()) {
+                <div class="grid grow place-content-center max-expanded:hidden">
                     <div class="flex flex-col items-center justify-center gap-4">
                         <mat-icon>chat</mat-icon>
                         <p class="text-center">Select a conversation to start chatting</p>
                     </div>
                 </div>
             }
+
+            <!-- Conversation page outlet -->
             <div
                 [ngClass]="[
                     'absolute inset-0',
-                    'bg-surface-container expanded:static expanded:flex-grow',
-                    outlet.isActivated ? '' : 'hidden',
+                    'bg-surface-container max-medium:px-2 max-expanded:pt-2',
+                    'expanded:static expanded:flex-grow',
+                    outletActivated() ? '' : 'hidden',
                 ]"
             >
-                <router-outlet #outlet="outlet" />
+                <router-outlet
+                    (activate)="outletActivated.set(true)"
+                    (deactivate)="outletActivated.set(false)"
+                />
             </div>
         </div>
     `,
@@ -70,6 +78,9 @@ export class ChatPageComponent {
     #queryClient = injectQueryClient();
     #snackBar = inject(SnackBarService);
     #rpcClient = injectRpcClient();
+
+    // hack to make isActivated outlet property reactive
+    outletActivated = signal(false);
 
     logout = injectMutation(() => ({
         mutationFn: this.#rpcClient.logout,

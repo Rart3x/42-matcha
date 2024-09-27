@@ -50,9 +50,9 @@ import { RouterLink } from '@angular/router';
     ],
     host: { class: 'grid place-content-stretch' },
     template: `
-        <div cdkVirtualScrollingElement class="pr-2 max-medium:!pl-2">
+        <div cdkVirtualScrollingElement class="pr-2 pt-2 max-medium:!pl-2">
             <label
-                class="focus-within:border-primary group mb-2 flex items-center rounded-full border border-outline bg-transparent px-4 focus-within:bg-[color:rgba(11,87,208,0.08)] focus-within:text-on-surface-variant [&:not(:has(:placeholder-shown))]:bg-[color:rgba(11,87,208,0.08)]"
+                class="group mb-2 flex items-center rounded-full border border-outline bg-transparent px-4 focus-within:border-primary focus-within:bg-[color:rgba(11,87,208,0.08)] focus-within:text-on-surface-variant [&:not(:has(:placeholder-shown))]:bg-[color:rgba(11,87,208,0.08)]"
             >
                 <mat-icon
                     class="mr-2 w-12 transition-[width] group-focus-within:w-0 group-[:not(:has(:placeholder-shown))]:w-0"

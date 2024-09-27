@@ -8,6 +8,7 @@ import { MatTooltip } from '@angular/material/tooltip';
 import { SnackBarService } from '@app/core/services/snack-bar.service';
 import { Router, RouterOutlet } from '@angular/router';
 import { ConversationListComponent } from '@app/features/chat-page/conversation-list/conversation-list.component';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'app-chat-page',
@@ -20,6 +21,7 @@ import { ConversationListComponent } from '@app/features/chat-page/conversation-
         MatTooltip,
         ConversationListComponent,
         RouterOutlet,
+        NgClass,
     ],
     host: { class: 'flex min-h-full relative flex-col gap-1' },
     template: `
@@ -40,7 +42,7 @@ import { ConversationListComponent } from '@app/features/chat-page/conversation-
         <div
             class="relative flex grow gap-8 overflow-hidden rounded-tl-2xl pb-2 pr-3 expanded:pr-6"
         >
-            <app-conversation-list class="w-full medium:w-[20rem] large:w-[26rem]" />
+            <app-conversation-list class="w-full expanded:w-[26rem]" />
 
             @if (!outlet.isActivated) {
                 <div class="grid grow place-content-center max-medium:hidden">
@@ -50,8 +52,13 @@ import { ConversationListComponent } from '@app/features/chat-page/conversation-
                     </div>
                 </div>
             }
-            <div>
-                <!-- either flex-grow or position absolute depending on the screen size, shown only if the outlet is activated -->
+            <div
+                [ngClass]="[
+                    'absolute inset-0',
+                    'bg-surface-container expanded:static expanded:flex-grow',
+                    outlet.isActivated ? '' : 'hidden',
+                ]"
+            >
                 <router-outlet #outlet="outlet" />
             </div>
         </div>

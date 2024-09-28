@@ -55,6 +55,7 @@ import { FormsModule } from '@angular/forms';
                             placeholder="Type a message"
                             [(ngModel)]="message"
                             [disabled]="postMessage.isPending()"
+                            autocomplete="off"
                         />
                         <button
                             type="submit"

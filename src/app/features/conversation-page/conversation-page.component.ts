@@ -5,11 +5,10 @@ import { MatInput } from '@angular/material/input';
 import { MatIconAnchor, MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
-import { BackButtonDirective } from '@app/shared/directives/back-button.directive';
 import { RouterLink } from '@angular/router';
 import { injectMutation, injectQueryClient } from '@tanstack/angular-query-experimental';
 import { injectRpcClient } from '@app/core/http/rpc-client';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'app-conversation-page',
@@ -26,10 +25,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
         MatSuffix,
         MatIcon,
         MatTooltip,
-        BackButtonDirective,
         MatIconAnchor,
         RouterLink,
-        ReactiveFormsModule,
         FormsModule,
     ],
     host: { class: 'flex min-h-full relative flex-col gap-1' },

@@ -35,6 +35,7 @@ import {
     getNumberOfUnreadMessagesByUserIdProcedure,
     getReadMessagesByUserIdProcedure,
     getUnreadMessagesByUserIdProcedure,
+    postMessageProcedure,
 } from '@api/procedures/message.procedure';
 import {
     getNotificationsProcedure,
@@ -110,6 +111,7 @@ const rpcRouter = createProcedureRouter([
     getOnlineStatusByIdProcedure,
     getPrincipalUserLocationProcedure,
     getConversationsProcedure,
+    postMessageProcedure,
 ]);
 
 export type RpcRouter = typeof rpcRouter;

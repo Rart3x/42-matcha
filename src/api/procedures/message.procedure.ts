@@ -4,6 +4,7 @@ import { usePrincipalUser } from '@api/hooks/auth.hooks';
 import { validateUserId } from '@api/validators/profile.validators';
 import { validateLimit, validateOffset } from '@api/validators/page.validators';
 import { validateUsernameFilter } from '@api/validators/account.validators';
+import { validateMessage } from '@api/validators/message.validators';
 
 export const getMessagesByUserIdProcedure = procedure(
     'getMessagesByUserId',
@@ -206,8 +207,8 @@ export const getConversationsProcedure = procedure(
             FROM
                 conversations
             WHERE
-                principal_user_id = ${principal_user_id}
-                AND other_username ILIKE ${usernameFilter} || '%'
+                  principal_user_id = ${principal_user_id}
+              AND other_username ILIKE ${usernameFilter} || '%'
             OFFSET ${offset} LIMIT ${limit}
             ;`;
 
@@ -215,5 +216,28 @@ export const getConversationsProcedure = procedure(
         });
 
         return { users };
+    },
+);
+
+export const postMessageProcedure = procedure(
+    'postMessage',
+    {} as {
+        receiver_id: number;
+        message: string;
+    },
+    async (params) => {
+        const principal_user_id = await usePrincipalUser();
+
+        const receiver_id = await validateUserId(params.receiver_id);
+        const message = await validateMessage(params.message);
+
+        await sql`
+        INSERT INTO
+            messages (sender_id, receiver_id, message)
+        VALUES
+            (${principal_user_id}, ${receiver_id}, ${message})
+        ;`;
+
+        return { message: 'Message sent' };
     },
 );

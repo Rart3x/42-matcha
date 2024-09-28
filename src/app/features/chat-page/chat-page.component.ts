@@ -23,7 +23,7 @@ import { NgClass } from '@angular/common';
         RouterOutlet,
         NgClass,
     ],
-    host: { class: 'flex min-h-full relative flex-col' },
+    host: { class: 'grid grid-rows-[auto_1fr] overflow-hidden absolute inset-0' },
     template: `
         <mat-toolbar class="!bg-transparent">
             <mat-toolbar-row class="!pt-2">
@@ -40,7 +40,7 @@ import { NgClass } from '@angular/common';
         </mat-toolbar>
 
         <div
-            class="relative mb-2 flex grow gap-8 overflow-hidden medium:mr-3 expanded:mr-6 expanded:rounded-tl-2xl"
+            class="relative mb-2 flex gap-8 overflow-hidden medium:mr-3 expanded:mr-6 expanded:rounded-tl-2xl"
         >
             <!-- Conversation list -->
             <app-conversation-list class="w-full expanded:w-[20rem] large:w-[26rem]" />

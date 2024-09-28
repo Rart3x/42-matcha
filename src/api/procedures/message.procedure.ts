@@ -9,141 +9,144 @@ import { validateMessage } from '@api/validators/message.validators';
 export const getMessagesByUserIdProcedure = procedure(
     'getMessagesByUserId',
     {} as {
-        user_id: number;
+        other_user_id: number;
         offset: number;
         limit: number;
     },
     async (params) => {
         const principal_user_id = await usePrincipalUser();
 
-        const user_id = await validateUserId(params.user_id);
+        const user_id = await validateUserId(params.other_user_id);
         const offset = await validateOffset(params.offset);
         const limit = await validateLimit(params.limit);
 
-        return await sql.begin(async (sql) => {
-            const messages = sql<
-                {
-                    id: number;
-                    sender_id: number;
-                    receiver_id: number;
-                    message: string;
-                    seen: boolean;
-                    created_at: Date;
-                }[]
-            >`
-            SELECT DISTINCT ON (sender_id, receiver_id)
-                id,
-                sender_id,
-                receiver_id,
-                message,
-                is_seen,
-                created_at
-            FROM
-                messages
-            WHERE
-                 (sender_id = ${principal_user_id} AND receiver_id = ${user_id})
-              OR (sender_id = ${user_id} AND receiver_id = ${principal_user_id})
-            ORDER BY
-                created_at DESC
-            OFFSET ${offset} LIMIT ${limit}
-        `;
-            return { messages };
-        });
+        console.log('principal_user_id', principal_user_id);
+
+        const messages = await sql<
+            {
+                id: number;
+                sender_id: number;
+                receiver_id: number;
+                message: string;
+                seen: boolean;
+                created_at: Date;
+                total_count: number;
+            }[]
+        >`
+        SELECT
+            id,
+            sender_id,
+            receiver_id,
+            message,
+            is_seen,
+            created_at,
+            COUNT(*) OVER () AS total_count
+        FROM
+            messages
+        WHERE
+             (sender_id = ${principal_user_id} AND receiver_id = ${user_id})
+          OR (sender_id = ${user_id} AND receiver_id = ${principal_user_id})
+        ORDER BY
+            created_at DESC
+        OFFSET ${offset} LIMIT ${limit}
+        ;`;
+
+        return { messages, total_count: messages?.[0].total_count ?? 0, page: offset / limit + 1 };
     },
 );
 
-export const getReadMessagesByUserIdProcedure = procedure(
-    'getMessagesReadByUserId',
-    {} as {
-        user_id: number;
-
-        offset: number;
-        limit: number;
-    },
-    async (params) => {
-        const principal_user_id = await usePrincipalUser();
-
-        const user_id = await validateUserId(params.user_id);
-        const offset = await validateOffset(params.offset);
-        const limit = await validateLimit(params.limit);
-
-        return await sql.begin(async (sql) => {
-            const messages = sql<
-                {
-                    id: number;
-                    sender_id: number;
-                    receiver_id: number;
-                    message: string;
-                    seen: boolean;
-                    created_at: Date;
-                }[]
-            >`
-            SELECT DISTINCT ON (sender_id, receiver_id)
-                id,
-                sender_id,
-                receiver_id,
-                message,
-                is_seen,
-                created_at
-            FROM
-                messages
-            WHERE
-                  (sender_id = ${principal_user_id} AND receiver_id = ${user_id})
-              AND is_seen = TRUE
-            ORDER BY
-                created_at DESC
-            OFFSET ${offset} LIMIT ${limit}
-        `;
-            return { messages };
-        });
-    },
-);
-
-export const getUnreadMessagesByUserIdProcedure = procedure(
-    'getMessagesUnreadByUserId',
-    {} as {
-        user_id: number;
-        offset: number;
-        limit: number;
-    },
-    async (params) => {
-        const principal_user_id = await usePrincipalUser();
-
-        const user_id = await validateUserId(params.user_id);
-        const offset = await validateOffset(params.offset);
-        const limit = await validateLimit(params.limit);
-
-        return await sql.begin(async (sql) => {
-            const messages = sql<
-                {
-                    id: number;
-                    sender_id: number;
-                    receiver_id: number;
-                    message: string;
-                    seen: boolean;
-                    created_at: Date;
-                }[]
-            >`
-            SELECT DISTINCT ON (sender_id, receiver_id)
-                id,
-                sender_id,
-                receiver_id,
-                message,
-                is_seen,
-                created_at
-            FROM
-                messages
-            WHERE
-                  (sender_id = ${principal_user_id} AND receiver_id = ${user_id})
-              AND is_seen = FALSE
-            ORDER BY
-                created_at DESC
-            OFFSET ${offset} LIMIT ${limit}
-        `;
-            return { messages };
-        });
-    },
-);
+// export const getReadMessagesByUserIdProcedure = procedure(
+//     'getMessagesReadByUserId',
+//     {} as {
+//         other_user_id: number;
+//
+//         offset: number;
+//         limit: number;
+//     },
+//     async (params) => {
+//         const principal_user_id = await usePrincipalUser();
+//
+//         const user_id = await validateUserId(params.other_user_id);
+//         const offset = await validateOffset(params.offset);
+//         const limit = await validateLimit(params.limit);
+//
+//         return await sql.begin(async (sql) => {
+//             const messages = sql<
+//                 {
+//                     id: number;
+//                     sender_id: number;
+//                     receiver_id: number;
+//                     message: string;
+//                     seen: boolean;
+//                     created_at: Date;
+//                 }[]
+//             >`
+//             SELECT DISTINCT ON (sender_id, receiver_id)
+//                 id,
+//                 sender_id,
+//                 receiver_id,
+//                 message,
+//                 is_seen,
+//                 created_at
+//             FROM
+//                 messages
+//             WHERE
+//                   (sender_id = ${principal_user_id} AND receiver_id = ${user_id})
+//               AND is_seen = TRUE
+//             ORDER BY
+//                 created_at DESC
+//             OFFSET ${offset} LIMIT ${limit}
+//         `;
+//             return { messages };
+//         });
+//     },
+// );
+//
+// export const getUnreadMessagesByUserIdProcedure = procedure(
+//     'getMessagesUnreadByUserId',
+//     {} as {
+//         user_id: number;
+//         offset: number;
+//         limit: number;
+//     },
+//     async (params) => {
+//         const principal_user_id = await usePrincipalUser();
+//
+//         const user_id = await validateUserId(params.user_id);
+//         const offset = await validateOffset(params.offset);
+//         const limit = await validateLimit(params.limit);
+//
+//         return await sql.begin(async (sql) => {
+//             const messages = sql<
+//                 {
+//                     id: number;
+//                     sender_id: number;
+//                     receiver_id: number;
+//                     message: string;
+//                     seen: boolean;
+//                     created_at: Date;
+//                 }[]
+//             >`
+//             SELECT DISTINCT ON (sender_id, receiver_id)
+//                 id,
+//                 sender_id,
+//                 receiver_id,
+//                 message,
+//                 is_seen,
+//                 created_at
+//             FROM
+//                 messages
+//             WHERE
+//                   (sender_id = ${principal_user_id} AND receiver_id = ${user_id})
+//               AND is_seen = FALSE
+//             ORDER BY
+//                 created_at DESC
+//             OFFSET ${offset} LIMIT ${limit}
+//         `;
+//             return { messages };
+//         });
+//     },
+// );
 
 export const getNumberOfUnreadMessagesByUserIdProcedure = procedure(
     'getNumberOfUnreadMessagesByUserId',

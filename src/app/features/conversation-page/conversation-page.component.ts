@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    computed,
+    ElementRef,
+    input,
+    signal,
+    viewChild,
+} from '@angular/core';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { MatError, MatFormField, MatHint, MatLabel, MatSuffix } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
@@ -6,9 +14,15 @@ import { MatIconAnchor, MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
-import { injectMutation, injectQueryClient } from '@tanstack/angular-query-experimental';
+import {
+    injectInfiniteQuery,
+    injectMutation,
+    injectQueryClient,
+} from '@tanstack/angular-query-experimental';
 import { injectRpcClient } from '@app/core/http/rpc-client';
 import { FormsModule } from '@angular/forms';
+import { CdkScrollable, CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
+import { DatePipe } from '@angular/common';
 
 @Component({
     selector: 'app-conversation-page',
@@ -28,8 +42,11 @@ import { FormsModule } from '@angular/forms';
         MatIconAnchor,
         RouterLink,
         FormsModule,
+        CdkVirtualScrollViewport,
+        DatePipe,
+        CdkScrollable,
     ],
-    host: { class: 'flex min-h-full relative flex-col gap-1' },
+    host: { class: 'flex h-full relative flex-col gap-1 overflow-hidden' },
     template: `
         <mat-card appearance="outlined">
             <mat-card-content>
@@ -42,7 +59,35 @@ import { FormsModule } from '@angular/forms';
             </mat-card-content>
         </mat-card>
 
-        <div class="grow"></div>
+        <div class="flex grow flex-col-reverse overflow-y-auto" cdkScrollable>
+            @for (message of messages(); track message.id) {
+                <div class="flex flex-col gap-1 p-2">
+                    @if (message.receiver_id === other_user_id_number()) {
+                        <div class="flex justify-end gap-2">
+                            <div class="flex flex-col items-end">
+                                <p class="text-on-primary-variant rounded-lg bg-primary p-2">
+                                    {{ message.message }}
+                                </p>
+                                <small class="text-right text-xs">
+                                    {{ message.created_at | date: 'short' }}
+                                </small>
+                            </div>
+                        </div>
+                    } @else {
+                        <div class="flex gap-2">
+                            <div class="flex flex-col items-start">
+                                <p class="bg-secondary text-on-secondary-variant rounded-lg p-2">
+                                    {{ message.message }}
+                                </p>
+                                <small class="text-xs">
+                                    {{ message.created_at | date: 'short' }}
+                                </small>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
 
         <mat-card appearance="outlined">
             <mat-card-content>
@@ -54,8 +99,9 @@ import { FormsModule } from '@angular/forms';
                             matInput
                             placeholder="Type a message"
                             [(ngModel)]="message"
-                            [disabled]="postMessage.isPending()"
+                            [readonly]="postMessage.isPending()"
                             autocomplete="off"
+                            #messageInput
                         />
                         <button
                             type="submit"
@@ -79,24 +125,53 @@ export class ConversationPageComponent {
     #rpcClient = injectRpcClient();
     #queryClient = injectQueryClient();
 
+    #PAGE_SIZE = 10;
+
     other_user_id = input.required<string>();
-    receiver_id = computed(() => Number.parseInt(this.other_user_id(), 10));
+    other_user_id_number = computed(() => Number.parseInt(this.other_user_id(), 10));
 
     message = signal('');
+
+    messageInput = viewChild<ElementRef<HTMLInputElement>>('messageInput');
 
     postMessage = injectMutation(() => ({
         mutationKey: ['postMessage'],
         mutationFn: this.#rpcClient.postMessage,
         onSuccess: async () => {
             await this.#queryClient.invalidateQueries({ queryKey: ['conversations'] });
+            await this.#queryClient.invalidateQueries({
+                queryKey: ['messages', this.other_user_id_number()],
+            });
             this.message.set('');
+            this.messageInput()?.nativeElement.focus();
         },
     }));
+
+    messagesQuery = injectInfiniteQuery(() => ({
+        queryKey: ['messages', this.other_user_id_number()] as const,
+        queryFn: ({ pageParam, queryKey }) =>
+            this.#rpcClient.getMessagesByUserId({
+                other_user_id: queryKey[1],
+                offset: pageParam * this.#PAGE_SIZE,
+                limit: this.#PAGE_SIZE,
+            }),
+        initialPageParam: 0,
+        getNextPageParam: (lastPage, allPages, lastPageParam) => {
+            if (lastPage.messages.length === 0) {
+                return undefined;
+            }
+            return lastPageParam + 1;
+        },
+    }));
+
+    messages = computed(
+        () => this.messagesQuery.data()?.pages.flatMap((page) => page.messages) ?? [],
+    );
 
     onMessageSubmit() {
         const message = this.message();
         if (message) {
-            this.postMessage.mutate({ receiver_id: this.receiver_id(), message });
+            this.postMessage.mutate({ receiver_id: this.other_user_id_number(), message });
         }
     }
 }

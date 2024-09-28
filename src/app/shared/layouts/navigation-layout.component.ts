@@ -2,8 +2,8 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { NavigationRailLinkComponent } from '@app/shared/components/navigation-rail-link/navigation-rail-link.component';
 import { MatSidenavContainer } from '@angular/material/sidenav';
-import { CdkPortalOutlet } from '@angular/cdk/portal';
 import { SidesheetLayoutComponent } from '@app/shared/layouts/sidesheet-layout/sidesheet-layout.component';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'app-navigation-layout',
@@ -12,19 +12,29 @@ import { SidesheetLayoutComponent } from '@app/shared/layouts/sidesheet-layout/s
         RouterOutlet,
         NavigationRailLinkComponent,
         MatSidenavContainer,
-        CdkPortalOutlet,
         SidesheetLayoutComponent,
         RouterLink,
         RouterLinkActive,
+        NgClass,
     ],
     template: `
         <app-sidesheet-layout>
             <div
-                class="min-w-screen flex min-h-screen bg-surface-container max-medium:h-screen max-medium:flex-col-reverse"
+                [ngClass]="[
+                    'overflow-hidden',
+                    'h-screen w-full',
+                    'bg-surface-container',
+                    'grid medium:grid-cols-[auto_1fr] max-medium:grid-rows-[1fr_auto]',
+                ]"
             >
                 <!-- navigation rail -->
                 <div
-                    class="flex justify-center medium:h-screen medium:w-20 medium:flex-col max-medium:min-h-20"
+                    [ngClass]="[
+                        'flex items-center justify-center',
+                        'flex-row medium:flex-col',
+                        'medium:w-20 max-medium:h-20',
+                        'max-medium:row-start-2',
+                    ]"
                 >
                     <nav class="flex gap-3 medium:flex-col">
                         <app-navigation-rail-link
@@ -46,18 +56,15 @@ import { SidesheetLayoutComponent } from '@app/shared/layouts/sidesheet-layout/s
                             routerLinkActive="active"
                         />
                     </nav>
-                    <!-- navigation rail content -->
                 </div>
 
-                <div
-                    class="max-medium:min-w-screen relative grow overflow-auto medium:min-h-screen"
-                >
-                    <router-outlet></router-outlet>
+                <!-- page content -->
+                <div class="relative">
+                    <router-outlet />
                 </div>
             </div>
         </app-sidesheet-layout>
     `,
-    host: {},
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NavigationLayoutComponent {}

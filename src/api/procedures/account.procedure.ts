@@ -360,26 +360,32 @@ export const getOnlineStatusByIdProcedure = procedure(
 
         const user_id = await validateUserId(params.user_id);
 
-        const [session]: [{ online: boolean; last_seen: string }] = await sql`
+        const [session]: [{ online: boolean; last_seen: string; username: string }] = await sql`
             -- Check if the user is online and get the last seen time
-            SELECT updated_at > NOW() - INTERVAL '5 minutes' AS online, updated_at AS last_seen
-              FROM sessions
-             WHERE user_id = ${user_id}
-               AND expires_at > NOW()
-             ORDER BY updated_at DESC
+            SELECT 
+                CASE 
+                    WHEN sessions IS NULL 
+                        THEN FALSE 
+                        ELSE sessions.updated_at > NOW() - INTERVAL '5 minutes' 
+                    END AS online, 
+                sessions.updated_at AS last_seen, 
+                users.username
+              FROM users
+              LEFT JOIN sessions ON users.id = sessions.user_id
+               AND sessions.expires_at > NOW()
+             WHERE users.id = ${user_id}
+             ORDER BY sessions.updated_at DESC
         `;
 
-        if (!session) {
-            return { online: false, last_seen: 'more than 3 days ago' };
-        }
+        const last_seen = session.last_seen
+            ? new Date(session.last_seen).toLocaleString('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  day: '2-digit',
+                  month: 'short',
+              })
+            : 'more than 3 days ago';
 
-        const last_seen = new Date(session.last_seen).toLocaleString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit',
-            day: '2-digit',
-            month: 'short',
-        });
-
-        return { online: session.online, last_seen };
+        return { online: session.online, last_seen, username: session.username };
     },
 );

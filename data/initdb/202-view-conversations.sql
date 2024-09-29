@@ -4,14 +4,12 @@ CREATE OR REPLACE VIEW conversations AS
 WITH
     reciprocal_likes AS (
         SELECT
-            LEAST(l1.liker_user_id, l1.liked_user_id)    AS principal_user_id,
-            GREATEST(l1.liker_user_id, l1.liked_user_id) AS other_user_id
+            l1.liker_user_id AS principal_user_id,
+            l1.liked_user_id AS other_user_id
         FROM
             likes l1
                 JOIN likes l2
                     ON l1.liker_user_id = l2.liked_user_id AND l1.liked_user_id = l2.liker_user_id
-        WHERE
-            l1.liker_user_id <> l1.liked_user_id -- Ensure each pair is unique
     ),
     latest_messages  AS (
         SELECT

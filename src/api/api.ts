@@ -19,7 +19,6 @@ import {
 } from '@api/procedures/account.procedure';
 import { getProfileByIdProcedure } from '@api/procedures/profile.procedure';
 import {
-    getPrincipalUserLikesProcedure,
     getPrincipalUserStatsProcedure,
     getPrincipalUserVisitsProcedure,
 } from '@api/procedures/relation.procedure';
@@ -39,7 +38,7 @@ import { createBlockProcedure, deleteBlockProcedure } from '@api/procedures/bloc
 import {
     createLikeProcedure,
     deleteLikeProcedure,
-    getLikesProcedure,
+    getPrincipalUserLikesProcedure,
 } from '@api/procedures/like.procedure';
 import {
     createVisitProcedure,
@@ -81,7 +80,6 @@ const rpcRouter = createProcedureRouter([
     deleteVisitProcedure,
     emailAvailableProcedure,
     getExistingTagsProcedure,
-    getLikesProcedure,
     getVisitsProcedure,
     getMessagesByUserIdProcedure,
     getNotificationsProcedure,

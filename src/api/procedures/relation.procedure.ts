@@ -26,42 +26,6 @@ export const getPrincipalUserStatsProcedure = procedure('getPrincipalUserStats',
     return stats;
 });
 
-export const getPrincipalUserLikesProcedure = procedure(
-    'getPrincipalUserLikes',
-    {} as {
-        offset: number;
-        limit: number;
-    },
-    async (params) => {
-        const principal_user_id = await usePrincipalUser();
-
-        const offset = await validateOffset(params.offset);
-        const limit = await validateLimit(params.limit);
-
-        const users = await sql<
-            {
-                id: number;
-                username: string;
-                first_name: string;
-                last_name: string;
-                age: number;
-                biography: string;
-            }[]
-        >`
-        SELECT id, username, first_name, last_name, age, biography
-        FROM likes
-                 INNER JOIN users ON users.id = likes.liked_user_id
-        WHERE likes.liked_user_id = ${principal_user_id}
-        ORDER BY likes.created_at DESC
-        OFFSET ${offset} LIMIT ${limit}
-    `;
-
-        return {
-            users,
-        };
-    },
-);
-
 export const getPrincipalUserVisitsProcedure = procedure(
     'getPrincipalUserVisits',
     {} as {

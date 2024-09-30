@@ -98,7 +98,7 @@ export class LikesHistorySheetComponent {
     #rpcClient = injectRpcClient();
 
     query = injectInfiniteQuery(() => ({
-        queryKey: ['views'],
+        queryKey: ['likes'],
         queryFn: ({ pageParam }) =>
             this.#rpcClient.getPrincipalUserLikes({
                 offset: pageParam * this.#PAGE_SIZE,

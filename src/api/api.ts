@@ -18,7 +18,7 @@ import {
     usernameAvailableProcedure,
 } from '@api/procedures/account.procedure';
 import { getProfileByIdProcedure } from '@api/procedures/profile.procedure';
-import { getPrincipalUserStatsProcedure } from '@api/procedures/relation.procedure';
+import { getPrincipalUserStatsProcedure } from '@api/procedures/stats.procedures';
 import { browseUsersProcedure } from '@api/procedures/browse.procedure';
 import {
     getConversationsProcedure,

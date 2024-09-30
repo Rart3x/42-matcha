@@ -263,8 +263,6 @@ export class ProfileSheetComponent {
     profilePictureUrl = computed(() => `/api/pictures/by_id/${this.id()}/0`);
 
     // TODO: fix browse view
-    // TODO: fix likes view
-    // TODO: fix views view
 
     // TODO: implement search view
     // TODO: implement notifications

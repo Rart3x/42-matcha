@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { SidesheetComponent } from '@app/shared/layouts/sidesheet-layout/sidesheet.component';
 import { injectRpcClient } from '@app/core/http/rpc-client';
 import {
@@ -11,10 +11,10 @@ import { MatDivider } from '@angular/material/divider';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatRipple } from '@angular/material/core';
-import { MatButton, MatFabButton, MatIconButton } from '@angular/material/button';
-import { CdkScrollable } from '@angular/cdk/scrolling'; // TODO: online status (badge on profile picture with tooltip for last online)
-
-// TODO: online status (badge on profile picture with tooltip for last online)
+import { MatAnchor, MatButton, MatFabButton, MatIconButton } from '@angular/material/button';
+import { CdkScrollable } from '@angular/cdk/scrolling';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { SnackBarService } from '@app/core/services/snack-bar.service';
 
 @Component({
     selector: 'app-profile-sheet',
@@ -31,10 +31,34 @@ import { CdkScrollable } from '@angular/cdk/scrolling'; // TODO: online status (
         MatFabButton,
         MatIconButton,
         CdkScrollable,
+        MatAnchor,
+        RouterLink,
     ],
     template: `
-        <app-sidesheet [heading]="heading()">
+        <app-sidesheet
+            [heading]="heading()"
+            [loading]="profileQuery.isPending()"
+            [error]="profileQuery.isError()"
+        >
+            <ng-container error>
+                <div class="text-center">
+                    <h1 class="mat-title-large">Error loading profile</h1>
+                    <p class="mat-body">
+                        There was an error loading the profile. Please try again later.
+                    </p>
+                    <button
+                        type="button"
+                        mat-button
+                        class="btn-primary"
+                        (click)="profileQuery.refetch()"
+                    >
+                        Retry
+                    </button>
+                </div>
+            </ng-container>
+
             <div class="grid grid-cols-[auto_auto] py-4">
+                <!-- profile picture -->
                 <div class="relative flex w-32 flex-col justify-center">
                     <img
                         [src]="profilePictureUrl()"
@@ -50,6 +74,7 @@ import { CdkScrollable } from '@angular/cdk/scrolling'; // TODO: online status (
                 </div>
 
                 <div class="min-h-32">
+                    <!-- username, age and sexual preference -->
                     <div class="mb-4 box-border flex grow flex-col px-4">
                         <div class="mat-headline-small !mb-0">
                             {{ fullName() }}
@@ -64,6 +89,7 @@ import { CdkScrollable } from '@angular/cdk/scrolling'; // TODO: online status (
                     </div>
 
                     <div class="mat-body-medium flex gap-2 px-4">
+                        <!-- connection status -->
                         @if (connection_status() === 'none') {
                             <div
                                 matRipple
@@ -91,6 +117,8 @@ import { CdkScrollable } from '@angular/cdk/scrolling'; // TODO: online status (
                                 <mat-icon class="material-symbols-filled">favorite</mat-icon>
                             </div>
                         }
+
+                        <!-- fame rating -->
                         <div
                             matTooltip="Fame rating"
                             matRipple
@@ -135,13 +163,15 @@ import { CdkScrollable } from '@angular/cdk/scrolling'; // TODO: online status (
                             [src]="getImageUrl(i)"
                             class="size-28 rounded-lg"
                             (error)="onImageError($event)"
+                            alt="User picture"
                         />
                     }
                 </div>
             </div>
 
             <ng-container bottom-actions>
-                @if (data()?.likes_principal) {
+                <!-- like button -->
+                @if (data()?.liked_by_principal) {
                     <button
                         type="button"
                         mat-flat-button
@@ -164,21 +194,22 @@ import { CdkScrollable } from '@angular/cdk/scrolling'; // TODO: online status (
                         Like
                     </button>
                 }
-                <div
-                    [matTooltip]="
-                        connection_status() === 'connected' ? 'open chat' : 'connect first'
-                    "
-                >
-                    <button
+
+                <!-- chat button -->
+                @let connected = connection_status() === 'connected';
+                <div [matTooltip]="connected ? 'open chat' : 'connect first'">
+                    <a
                         type="button"
                         mat-flat-button
                         class="btn-secondary"
-                        [disabled]="connection_status() !== 'connected'"
+                        [routerLink]="connected ? chatUrlTree() : null"
+                        [disabled]="!connected"
                     >
                         <mat-icon>chat</mat-icon>
                         Chat
-                    </button>
+                    </a>
                 </div>
+
                 <button
                     type="button"
                     mat-icon-button
@@ -212,32 +243,37 @@ import { CdkScrollable } from '@angular/cdk/scrolling'; // TODO: online status (
 export class ProfileSheetComponent {
     #rpcClient = injectRpcClient();
     #queryClient = injectQueryClient();
+    #router = inject(Router);
+    #activatedRoute = inject(ActivatedRoute);
+    #snackBar = inject(SnackBarService);
 
-    id = input.required<string>();
-
-    validatedId = computed(() => {
-        const id = this.id();
-
-        if (!id) {
-            throw new Error('id is required');
-        }
-
-        if (!/^\d+$/.test(id)) {
-            throw new Error('id must be a number');
-        }
-
-        if (isNaN(+id)) {
-            throw new Error('id must be a number');
-        }
-
-        return +id;
+    // user id of the profile to display (from the URL, validated in the guard)
+    id = input<number, string>(0, {
+        transform: (id: string) => parseInt(id, 10),
     });
 
-    profilePictureUrl = computed(() => `/api/pictures/by_id/${this.validatedId()}/0`);
+    // url for opening the chat with this user
+    chatUrlTree = computed(() =>
+        this.#router.createUrlTree(
+            [{ outlets: { sidesheet: null, primary: ['chat', this.id()] } }],
+            { relativeTo: this.#activatedRoute.parent },
+        ),
+    );
 
+    profilePictureUrl = computed(() => `/api/pictures/by_id/${this.id()}/0`);
+
+    // TODO: fix browse view
+    // TODO: fix likes view
+    // TODO: fix views view
+
+    // TODO: implement search view
+    // TODO: implement notifications
+    // TODO: implement number of unread messages
+
+    // TODO: move profile picture with online status to a separate component, and use in chat list
     onlineStatusQuery = injectQuery(() => ({
         queryKey: ['online-status', { id: this.id() }],
-        queryFn: () => this.#rpcClient.getOnlineStatusById({ user_id: this.validatedId() }),
+        queryFn: () => this.#rpcClient.getOnlineStatusById({ user_id: this.id() }),
         refetchInterval: /* 1 minute */ 60_000,
     }));
 
@@ -246,7 +282,7 @@ export class ProfileSheetComponent {
 
     profileQuery = injectQuery(() => ({
         queryKey: ['profile-by-id', { id: this.id() }],
-        queryFn: () => this.#rpcClient.getProfileById({ user_id: this.validatedId() }),
+        queryFn: () => this.#rpcClient.getProfileById({ user_id: this.id() }),
     }));
 
     data = computed(() => this.profileQuery.data());
@@ -256,15 +292,15 @@ export class ProfileSheetComponent {
     tags = computed(() => this.data()?.tags ?? ([] as string[]));
 
     connection_status = computed(() =>
-        this.data()?.liked_by_principal
-            ? 'liked'
-            : this.data()?.likes_principal
-              ? 'connected'
-              : 'none',
+        this.data()?.likes_principal
+            ? this.data()?.liked_by_principal
+                ? 'connected'
+                : 'liked'
+            : 'none',
     );
 
     getImageUrl(i: number) {
-        return `/api/pictures/by_id/${this.validatedId()}/${i}`;
+        return `/api/pictures/by_id/${this.id()}/${i}`;
     }
 
     onImageError(event: Event) {
@@ -272,28 +308,59 @@ export class ProfileSheetComponent {
         target.style.display = 'none';
     }
 
+    // likes
+
     likeUserMutation = injectMutation(() => ({
-        mutationKey: ['like-user', { id: this.validatedId() }],
-        mutationFn: () => this.#rpcClient.createLike({ liked_id: this.validatedId() }),
+        mutationKey: ['like-user', { id: this.id() }],
+        mutationFn: () => this.#rpcClient.createLike({ liked_id: this.id() }),
         onSuccess: () =>
             this.#queryClient.invalidateQueries({ queryKey: ['profile-by-id', { id: this.id() }] }),
     }));
 
     unlikeUserMutation = injectMutation(() => ({
-        mutationKey: ['unlike-user', { id: this.validatedId() }],
-        mutationFn: () => this.#rpcClient.deleteLike({ liked_id: this.validatedId() }),
+        mutationKey: ['unlike-user', { id: this.id() }],
+        mutationFn: () => this.#rpcClient.deleteLike({ liked_id: this.id() }),
         onSuccess: () =>
             this.#queryClient.invalidateQueries({ queryKey: ['profile-by-id', { id: this.id() }] }),
     }));
 
-    // TODO: consider closing the sheet after blocking/reporting
+    // blocks
+
     blockUserMutation = injectMutation(() => ({
-        mutationKey: ['block-user', { id: this.validatedId() }],
-        mutationFn: () => this.#rpcClient.createBlock({ blocked_id: this.validatedId() }),
+        mutationKey: ['block-user', { id: this.id() }],
+        mutationFn: () => this.#rpcClient.createBlock({ blocked_id: this.id() }),
+        onSuccess: async () => {
+            await this.#router.navigate([
+                {
+                    outlets: {
+                        sidesheet: null,
+                    },
+                },
+            ]);
+            this.#snackBar.enqueueSnackBar('User blocked');
+            await this.#queryClient.invalidateQueries({
+                queryKey: ['profile-by-id', { id: this.id() }],
+            });
+        },
     }));
 
+    // reports
+
     reportUserMutation = injectMutation(() => ({
-        mutationKey: ['report-user', { id: this.validatedId() }],
-        mutationFn: () => this.#rpcClient.createFakeUserReport({ reported_id: this.validatedId() }),
+        mutationKey: ['report-user', { id: this.id() }],
+        mutationFn: () => this.#rpcClient.createFakeUserReport({ reported_id: this.id() }),
+        onSuccess: async () => {
+            await this.#router.navigate([
+                {
+                    outlets: {
+                        sidesheet: null,
+                    },
+                },
+            ]);
+            this.#snackBar.enqueueSnackBar('User reported');
+            await this.#queryClient.invalidateQueries({
+                queryKey: ['profile-by-id', { id: this.id() }],
+            });
+        },
     }));
 }

@@ -17,12 +17,7 @@ import {
     updatePasswordProcedure,
     usernameAvailableProcedure,
 } from '@api/procedures/account.procedure';
-import {
-    getExistingTagsProcedure,
-    getPrincipalProfileProcedure,
-    getProfileByIdProcedure,
-    patchPrincipalProfileProcedure,
-} from '@api/procedures/profile.procedure';
+import { getProfileByIdProcedure } from '@api/procedures/profile.procedure';
 import {
     getPrincipalUserLikesProcedure,
     getPrincipalUserStatsProcedure,
@@ -61,6 +56,11 @@ import {
     getPrincipalUserLocationProcedure,
     upsertLocationProcedure,
 } from '@api/procedures/locations.procedure';
+import { getExistingTagsProcedure } from '@api/procedures/tags.procedures';
+import {
+    getPrincipalProfileProcedure,
+    patchPrincipalProfileProcedure,
+} from '@api/procedures/principal-profile.procedures';
 
 export const apiRouter = Router();
 
@@ -84,12 +84,10 @@ const rpcRouter = createProcedureRouter([
     getLikesProcedure,
     getVisitsProcedure,
     getMessagesByUserIdProcedure,
-    // getReadMessagesByUserIdProcedure,
     getNotificationsProcedure,
     getUnreadNotificationsProcedure,
     getNumberOfUnreadNotificationsProcedure,
     getNumberOfUnreadMessagesByUserIdProcedure,
-    // getUnreadMessagesByUserIdProcedure,
     getPrincipalProfileProcedure,
     getPrincipalUserLikesProcedure,
     getProfileByIdProcedure,

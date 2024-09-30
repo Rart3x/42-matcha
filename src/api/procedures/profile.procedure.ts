@@ -2,16 +2,7 @@ import { procedure } from '@api/lib/procedure';
 import { usePrincipalUser } from '@api/hooks/auth.hooks';
 import { sql } from '@api/connections/database.connection';
 import { badRequest } from '@api/errors/bad-request.error';
-import { validateName, validateUsername } from '@api/validators/account.validators';
-import {
-    validateAge,
-    validateBiography,
-    validateGender,
-    validateSexualPref,
-    validateUserId,
-} from '@api/validators/profile.validators';
-import { validateTag, validateTags } from '@api/validators/tag.validators';
-import { validateLimit, validateOffset } from '@api/validators/page.validators';
+import { validateUserId } from '@api/validators/profile.validators';
 
 export type Profile = {
     username: string;
@@ -24,6 +15,10 @@ export type Profile = {
     tags: string[];
 };
 
+/**
+ * Get a user's profile by their user ID.
+ * @note The profile returned is intended to be viewed by other users.
+ */
 export const getProfileByIdProcedure = procedure(
     'getProfileById',
     {} as { user_id: number },
@@ -32,151 +27,94 @@ export const getProfileByIdProcedure = procedure(
 
         const user_id = await validateUserId(params.user_id);
 
-        const [profile]: [Profile?] = await sql`
-            WITH liked_by_principal AS (SELECT 1
-                                        FROM likes
-                                        WHERE liked_user_id = ${user_id}
-                                          AND liker_user_id = ${principal_id}),
-                 likes_principal AS (SELECT 1
-                                     FROM likes
-                                     WHERE liked_user_id = ${principal_id}
-                                       AND liker_user_id = ${user_id})
+        const [profile]: [
+            {
+                username: string;
+                first_name: string;
+                last_name: string;
+                age: number;
+                sexual_pref: 'male' | 'female' | 'any';
+                biography: string;
+                gender: 'male' | 'female' | 'other';
+                fame_rating: number;
+                likes_principal: boolean;
+                liked_by_principal: boolean;
+                blocked_by_principal: boolean;
+                tags: string[];
+            }?,
+        ] = await sql`
+        SELECT
+            users.id,
+            users.username,
+            users.first_name,
+            users.last_name,
+            users.age,
+            users.sexual_pref,
+            users.biography,
+            users.gender,
+            users.fame_rating,
+            likes_principal.liker_user_id IS NOT NULL    AS likes_principal,
+            liked_by_principal.liker_user_id IS NOT NULL AS liked_by_principal,
+            ARRAY_REMOVE(ARRAY_AGG(tags.name), NULL)     AS tags
 
-            SELECT username,
-                   first_name,
-                   last_name,
-                   age,
-                   sexual_pref,
-                   biography,
-                   gender,
-                   fame_rating,
-                   array_remove(ARRAY_AGG(tags.name), NULL) as tags,
-                     EXISTS(SELECT 1 FROM liked_by_principal) as liked_by_principal,
-                        EXISTS(SELECT 1 FROM likes_principal) as likes_principal
-            FROM users
-                     LEFT JOIN users_tags ON users_tags.user_id = users.id
-                     LEFT JOIN tags ON tags.id = users_tags.tag_id
-            WHERE users.id = ${user_id}
-            GROUP BY username, first_name, last_name, age, sexual_pref, biography, gender, fame_rating
-        `;
+        FROM users
+            -- Get the user's tags
+            LEFT JOIN users_tags
+                ON users_tags.user_id = users.id
+            LEFT JOIN tags
+                ON tags.id = users_tags.tag_id
+
+            -- Whether liked by principal
+            LEFT JOIN likes AS liked_by_principal
+                ON liked_by_principal.liked_user_id = users.id AND liked_by_principal.liker_user_id = ${principal_id}
+            -- Whether likes principal
+            LEFT JOIN likes AS likes_principal
+                ON likes_principal.liked_user_id = ${principal_id} AND likes_principal.liker_user_id = users.id
+
+            -- Whether blocked by principal
+            LEFT JOIN blocks AS blocked_by_principal
+                ON blocked_by_principal.blocked_user_id = users.id AND
+                   blocked_by_principal.blocker_user_id = ${principal_id}
+            -- Whether principal is blocked by user
+            LEFT JOIN blocks AS blocks_principal
+                ON blocks_principal.blocked_user_id = ${principal_id} AND blocks_principal.blocker_user_id = users.id
+
+            -- Whether principal is reported by user
+            LEFT JOIN fake_user_reports AS reported_by_principal
+                ON reported_by_principal.reported_user_id = ${principal_id} AND
+                   reported_by_principal.reporter_user_id = users.id
+            -- Whether user is reported by principal
+            LEFT JOIN fake_user_reports AS reported_principal
+                ON reported_principal.reported_user_id = users.id AND
+                   reported_principal.reporter_user_id = ${principal_id}
+
+        WHERE
+              users.id = ${user_id}
+              -- do not show blocked users nor users who blocked the principal
+          AND blocks_principal.blocked_user_id IS NULL
+          AND blocked_by_principal.blocked_user_id IS NULL
+              -- do not show reported users nor users who reported the principal
+          AND reported_principal.reported_user_id IS NULL
+          AND reported_by_principal.reported_user_id IS NULL
+
+        GROUP BY
+            users.id,
+            users.username,
+            users.first_name,
+            users.last_name,
+            users.age,
+            users.sexual_pref,
+            users.biography,
+            users.gender,
+            users.fame_rating,
+            likes_principal,
+            liked_by_principal
+        ;`;
 
         if (!profile) {
             throw badRequest();
         }
 
-        return profile as Profile & {
-            fame_rating: number;
-            liked_by_principal: boolean;
-            likes_principal: boolean;
-        };
-    },
-);
-
-export const getPrincipalProfileProcedure = procedure('getPrincipalProfile', async () => {
-    const user_id = await usePrincipalUser();
-
-    const [profile]: [Profile?] = await sql`
-        SELECT username, first_name, last_name, age, sexual_pref, biography, gender, 
-               array_remove(ARRAY_AGG(tags.name), NULL) as tags
-        FROM users
-            LEFT JOIN users_tags ON users_tags.user_id = users.id
-            LEFT JOIN tags ON tags.id = users_tags.tag_id
-        WHERE users.id = ${user_id}
-        GROUP BY username, first_name, last_name, age, sexual_pref, biography, gender 
-    `;
-
-    if (!profile) {
-        throw badRequest();
-    }
-
-    return profile;
-});
-
-export const getExistingTagsProcedure = procedure(
-    'getExistingTags',
-    {} as {
-        tag: string;
-        offset: number;
-        limit: number;
-    },
-    async (params) => {
-        const tag = await validateTag(params.tag);
-        const offset = await validateOffset(params.offset);
-        const limit = await validateLimit(params.limit);
-
-        const existingTags = await sql<{ name: string; nbr: number }[]>`
-            SELECT name, COUNT(*) OVER () as nbr
-            FROM tags
-            WHERE name ILIKE ${tag + '%'}
-            GROUP BY name
-            ORDER BY name
-            OFFSET ${offset}
-            LIMIT ${limit}
-        `;
-
-        const count = existingTags?.[0]?.nbr ?? 0;
-
-        return { count, page: offset / limit + 1, tags: existingTags.map((tag) => tag.name) };
-    },
-);
-
-export const patchPrincipalProfileProcedure = procedure(
-    'patchPrincipalProfile',
-    {} as Profile,
-    async (params) => {
-        const user_id = await usePrincipalUser();
-
-        const username = await validateUsername(params.username);
-        const first_name = await validateName(params.first_name);
-        const last_name = await validateName(params.last_name);
-        const age = await validateAge(params.age);
-        const sexual_pref = await validateSexualPref(params.sexual_pref);
-        const biography = await validateBiography(params.biography);
-        const gender = await validateGender(params.gender);
-        const tags = await validateTags(params.tags);
-
-        const user = await sql.begin(async (sql) => {
-            await sql`
-                DELETE FROM users_tags
-                WHERE user_id = ${user_id}
-            `;
-
-            for (const tag of tags) {
-                await sql`
-                    INSERT INTO tags (name)
-                    VALUES (${tag})
-                    ON CONFLICT (name) DO NOTHING
-                    RETURNING id
-                `;
-                await sql`
-                    INSERT INTO users_tags (user_id, tag_id)
-                    SELECT ${user_id}, id
-                    FROM tags
-                    WHERE name = ${tag}
-                    ON CONFLICT DO NOTHING
-                `;
-            }
-
-            const [user]: [{ id: string }?] = await sql`
-                UPDATE users
-                SET username = ${username},
-                    first_name = ${first_name},
-                    last_name = ${last_name},
-                    age = ${age},
-                    sexual_pref = ${sexual_pref},
-                    biography = ${biography},
-                    gender = ${gender}
-                WHERE id = ${user_id}
-                RETURNING id
-            `;
-
-            return user;
-        });
-
-        if (!user) {
-            throw badRequest();
-        }
-
-        return { message: 'Profile updated successfully' };
+        return profile;
     },
 );

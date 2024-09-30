@@ -5,11 +5,12 @@ import { BackButtonDirective } from '@app/shared/directives/back-button.directiv
 import { Router } from '@angular/router';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatProgressBar } from '@angular/material/progress-bar';
+import { NgClass } from '@angular/common';
 
 @Component({
     selector: 'app-sidesheet',
     standalone: true,
-    imports: [MatIconButton, MatIcon, BackButtonDirective, MatTooltip, MatProgressBar],
+    imports: [MatIconButton, MatIcon, BackButtonDirective, MatTooltip, MatProgressBar, NgClass],
     template: `
         <div class="flex items-center gap-3 p-6">
             <!--            <button mat-icon-button aria-label="Navigate back" appBackButton>-->
@@ -32,12 +33,15 @@ import { MatProgressBar } from '@angular/material/progress-bar';
                 <mat-icon>close</mat-icon>
             </button>
         </div>
-        @if (loading()) {
+        @if (loading() && !error()) {
             <mat-progress-bar mode="indeterminate" />
         }
         <div class="relative grow overflow-y-auto px-6">
-            <div [hidden]="loading()">
+            <div [ngClass]="[loading() || error() ? 'hidden' : '']">
                 <ng-content />
+            </div>
+            <div [ngClass]="[!error() ? 'hidden' : 'grid h-full place-content-center']">
+                <ng-content select="[error]" />
             </div>
         </div>
         <div
@@ -55,6 +59,8 @@ export class SidesheetComponent {
     heading = input.required<string>();
 
     loading = input(false);
+
+    error = input(false);
 
     async closeSideSheet() {
         await this.#router.navigate([{ outlets: { sidesheet: null } }]);

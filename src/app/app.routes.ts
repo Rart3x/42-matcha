@@ -1,8 +1,9 @@
-import { Routes } from '@angular/router';
+import { CanMatchFn, RedirectCommand, Router, Routes } from '@angular/router';
 
 import { routes as auth } from '@app/core/auth/auth.routes';
 import { isLoggedOutGuard } from '@app/core/auth/guards/is-logged-out.guard';
 import { isLoggedInGuard } from '@app/core/auth/guards/is-logged-in.guard';
+import { inject } from '@angular/core';
 
 export const routes: Routes = [
     {
@@ -66,6 +67,15 @@ export const routes: Routes = [
                             import(
                                 '@app/features/conversation-page/conversation-page.component'
                             ).then((m) => m.ConversationPageComponent),
+                        canMatch: [
+                            ((_, segments) => {
+                                const id = segments[segments.length - 1].path;
+                                if (Number.isInteger(+id) && +id > 0) {
+                                    return true;
+                                }
+                                return new RedirectCommand(inject(Router).createUrlTree(['chat']));
+                            }) satisfies CanMatchFn,
+                        ],
                     },
                 ],
                 data: { animation: 'chat' },
@@ -133,6 +143,17 @@ export const routes: Routes = [
                     import('@app/features/profile-sheet/profile-sheet.component').then(
                         (m) => m.ProfileSheetComponent,
                     ),
+                canMatch: [
+                    ((_, segments) => {
+                        const id = segments[segments.length - 1].path;
+                        if (Number.isInteger(+id) && +id > 0) {
+                            return true;
+                        }
+                        return new RedirectCommand(
+                            inject(Router).createUrlTree([{ outlets: { sidesheet: null } }]),
+                        );
+                    }) satisfies CanMatchFn,
+                ],
             },
         ],
         canActivate: [isLoggedInGuard],

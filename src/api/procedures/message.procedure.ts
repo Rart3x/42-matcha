@@ -6,6 +6,9 @@ import { validateLimit, validateOffset } from '@api/validators/page.validators';
 import { validateUsernameFilter } from '@api/validators/account.validators';
 import { validateMessage } from '@api/validators/message.validators';
 
+/**
+ * Get messages exchanged between the principal user and another user identified by their user_id.
+ */
 export const getMessagesByUserIdProcedure = procedure(
     'getMessagesByUserId',
     {} as {
@@ -33,15 +36,15 @@ export const getMessagesByUserIdProcedure = procedure(
         >`
         SELECT
             messages.id,
-            sender.id as sender_id,
-            sender.username as sender_username,
-            receiver_id,
-            message,
-            is_seen,
+            sender.id       AS sender_id,
+            sender.username AS sender_username,
+            messages.receiver_id,
+            messages.message,
+            messages.is_seen,
             messages.created_at
-        FROM
-            messages
-        JOIN users as sender ON messages.sender_id = sender.id
+        FROM messages
+            JOIN users AS sender
+                ON messages.sender_id = sender.id
         WHERE
              (sender_id = ${principal_user_id} AND receiver_id = ${user_id})
           OR (sender_id = ${user_id} AND receiver_id = ${principal_user_id})
@@ -51,6 +54,32 @@ export const getMessagesByUserIdProcedure = procedure(
         ;`;
 
         return { messages };
+    },
+);
+
+/**
+ * Send a new message to another user identified by their user_id.
+ */
+export const postMessageProcedure = procedure(
+    'postMessage',
+    {} as {
+        receiver_id: number;
+        message: string;
+    },
+    async (params) => {
+        const principal_user_id = await usePrincipalUser();
+
+        const receiver_id = await validateUserId(params.receiver_id);
+        const message = await validateMessage(params.message);
+
+        await sql`
+        INSERT INTO
+            messages (sender_id, receiver_id, message)
+        VALUES
+            (${principal_user_id}, ${receiver_id}, ${message})
+        ;`;
+
+        return { message: 'Message sent' };
     },
 );
 
@@ -72,8 +101,7 @@ export const getNumberOfUnreadMessagesByUserIdProcedure = procedure(
             >`
             SELECT
                 COUNT(*)
-            FROM
-                messages
+            FROM messages
             WHERE
                   (sender_id = ${principal_user_id} AND receiver_id = ${user_id})
               AND is_seen = FALSE
@@ -97,56 +125,53 @@ export const getConversationsProcedure = procedure(
         const limit = await validateLimit(params.limit);
         const usernameFilter = await validateUsernameFilter(params.usernameFilter ?? '');
 
-        const { users } = await sql.begin(async (sql) => {
-            const users = await sql<
-                {
-                    other_user_id: string;
-                    other_username: string;
-                    last_message_content: string;
-                    last_message_sender: string;
-                    last_message_date: Date;
-                }[]
-            >`
-            SELECT
-                other_user_id,
-                other_username,
-                last_message_content,
-                last_message_sender,
-                last_message_date
-            FROM
-                conversations
-            WHERE
-                  principal_user_id = ${principal_user_id}
-              AND other_username ILIKE ${usernameFilter} || '%'
-            OFFSET ${offset} LIMIT ${limit}
-            ;`;
-
-            return { users };
-        });
-
-        return { users };
-    },
-);
-
-export const postMessageProcedure = procedure(
-    'postMessage',
-    {} as {
-        receiver_id: number;
-        message: string;
-    },
-    async (params) => {
-        const principal_user_id = await usePrincipalUser();
-
-        const receiver_id = await validateUserId(params.receiver_id);
-        const message = await validateMessage(params.message);
-
-        await sql`
-        INSERT INTO
-            messages (sender_id, receiver_id, message)
-        VALUES
-            (${principal_user_id}, ${receiver_id}, ${message})
+        const users = await sql<
+            {
+                other_user_id: string;
+                other_username: string;
+                last_message_content: string;
+                last_message_sender: string;
+                last_message_date: Date;
+            }[]
+        >`
+        WITH
+            latest_messages AS (
+                SELECT
+                    sender_id,
+                    receiver_id,
+                    message,
+                    created_at,
+                    ROW_NUMBER()
+                    OVER ( PARTITION BY LEAST(sender_id, receiver_id), GREATEST(sender_id, receiver_id) ORDER BY created_at DESC ) AS rn
+                FROM messages
+            )
+        SELECT DISTINCT
+            other_user.id                                                                         AS other_user_id,
+            other_user.username                                                                   AS other_username,
+            CASE WHEN lm.sender_id = ${principal_user_id} THEN 'you'
+                 ELSE other_user.username END                                                     AS last_message_sender,
+            lm.message                                                                            AS last_message_content,
+            lm.created_at                                                                         AS last_message_date
+        FROM reachable_users(${principal_user_id}) AS other_user
+            INNER JOIN likes AS like_from_principal_user
+                ON like_from_principal_user.liker_user_id = ${principal_user_id}
+            INNER JOIN likes AS like_to_principal_user
+                ON like_to_principal_user.liked_user_id = ${principal_user_id}
+            LEFT JOIN latest_messages AS lm
+                ON LEAST(lm.sender_id, lm.receiver_id) = ${principal_user_id} AND
+                   GREATEST(lm.sender_id, lm.receiver_id) = other_user.id AND lm.rn = 1
+        WHERE
+              -- Filter by username
+              other_user.username ILIKE ${usernameFilter} || '%'
+              -- Keep only users that share a mutual like with the principal user
+          AND like_from_principal_user.liked_user_id = other_user.id
+          AND like_to_principal_user.liker_user_id = other_user.id
+        ORDER BY
+            last_message_date DESC NULLS LAST,
+            other_user.username
+        OFFSET ${offset} LIMIT ${limit}
         ;`;
 
-        return { message: 'Message sent' };
+        return { users };
     },
 );

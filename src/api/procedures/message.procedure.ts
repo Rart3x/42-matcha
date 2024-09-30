@@ -152,20 +152,13 @@ export const getConversationsProcedure = procedure(
                  ELSE other_user.username END                                                     AS last_message_sender,
             lm.message                                                                            AS last_message_content,
             lm.created_at                                                                         AS last_message_date
-        FROM reachable_users(${principal_user_id}) AS other_user
-            INNER JOIN likes AS like_from_principal_user
-                ON like_from_principal_user.liker_user_id = ${principal_user_id}
-            INNER JOIN likes AS like_to_principal_user
-                ON like_to_principal_user.liked_user_id = ${principal_user_id}
+        FROM connected_users(${principal_user_id}) AS other_user
             LEFT JOIN latest_messages AS lm
                 ON LEAST(lm.sender_id, lm.receiver_id) = ${principal_user_id} AND
                    GREATEST(lm.sender_id, lm.receiver_id) = other_user.id AND lm.rn = 1
         WHERE
-              -- Filter by username
-              other_user.username ILIKE ${usernameFilter} || '%'
-              -- Keep only users that share a mutual like with the principal user
-          AND like_from_principal_user.liked_user_id = other_user.id
-          AND like_to_principal_user.liker_user_id = other_user.id
+            -- Filter by username
+            other_user.username ILIKE ${usernameFilter} || '%'
         ORDER BY
             last_message_date DESC NULLS LAST,
             other_user.username

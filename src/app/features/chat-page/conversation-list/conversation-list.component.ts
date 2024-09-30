@@ -69,7 +69,7 @@ import { RouterLink } from '@angular/router';
                     class="flex h-12 w-12 items-center justify-center overflow-hidden transition-[width] group-[:has(:placeholder-shown)]:w-0"
                 >
                     <button mat-icon-button (click)="searchFilter.set('')">
-                        <mat-icon> close </mat-icon>
+                        <mat-icon> close</mat-icon>
                     </button>
                 </div>
             </label>
@@ -91,10 +91,11 @@ import { RouterLink } from '@angular/router';
                             <span matListItemTitle>{{ conversation.other_username }}</span>
                             <span matListItemLine class="max-w-60 text-ellipsis">
                                 @let message = conversation.last_message_content;
+                                @let sender = conversation.last_message_sender;
                                 @if (message) {
-                                    {{ message }}
+                                    {{ sender }}: {{ message }}
                                 } @else {
-                                    Start a conversation together!
+                                    -
                                 }
                             </span>
                             <span matListItemMeta>
@@ -121,15 +122,25 @@ import { RouterLink } from '@angular/router';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConversationListComponent {
-    #PAGE_SIZE = 10;
-    #rpcClient = injectRpcClient();
-
     searchFilter = signal('');
-
     debouncedSearchFilter = toSignal(
         toObservable(this.searchFilter).pipe(debounceTime(300), distinctUntilChanged()),
     );
+    conversations = computed<
+        {
+            other_user_id: string;
+            other_username: string;
+            last_message_content: string;
+            last_message_sender: string;
+            last_message_date: Date;
+        }[]
+    >(() => {
+        const pages = this.conversationsQuery.data()?.pages ?? [];
 
+        return pages.flatMap((page) => page.users);
+    });
+    #PAGE_SIZE = 10;
+    #rpcClient = injectRpcClient();
     conversationsQuery = injectInfiniteQuery(() => ({
         queryKey: ['conversations', this.debouncedSearchFilter()],
         queryFn: ({ pageParam, queryKey }) =>
@@ -146,18 +157,4 @@ export class ConversationListComponent {
             return lastPageParam + 1;
         },
     }));
-
-    conversations = computed<
-        {
-            other_user_id: string;
-            other_username: string;
-            last_message_content: string;
-            last_message_sender: string;
-            last_message_date: Date;
-        }[]
-    >(() => {
-        const pages = this.conversationsQuery.data()?.pages ?? [];
-
-        return pages.flatMap((page) => page.users);
-    });
 }

@@ -18,10 +18,7 @@ import {
     usernameAvailableProcedure,
 } from '@api/procedures/account.procedure';
 import { getProfileByIdProcedure } from '@api/procedures/profile.procedure';
-import {
-    getPrincipalUserStatsProcedure,
-    getPrincipalUserVisitsProcedure,
-} from '@api/procedures/relation.procedure';
+import { getPrincipalUserStatsProcedure } from '@api/procedures/relation.procedure';
 import { browseUsersProcedure } from '@api/procedures/browse.procedure';
 import {
     getConversationsProcedure,
@@ -40,11 +37,7 @@ import {
     deleteLikeProcedure,
     getPrincipalUserLikesProcedure,
 } from '@api/procedures/like.procedure';
-import {
-    createVisitProcedure,
-    deleteVisitProcedure,
-    getVisitsProcedure,
-} from '@api/procedures/visit.procedure';
+import { getPrincipalUserVisitsProcedure } from '@api/procedures/visit.procedure';
 import {
     createFakeUserReportProcedure,
     deleteFakeUserReportProcedure,
@@ -73,14 +66,11 @@ const rpcRouter = createProcedureRouter([
     createBlockProcedure,
     createFakeUserReportProcedure,
     createLikeProcedure,
-    createVisitProcedure,
     deleteBlockProcedure,
     deleteFakeUserReportProcedure,
     deleteLikeProcedure,
-    deleteVisitProcedure,
     emailAvailableProcedure,
     getExistingTagsProcedure,
-    getVisitsProcedure,
     getMessagesByUserIdProcedure,
     getNotificationsProcedure,
     getUnreadNotificationsProcedure,

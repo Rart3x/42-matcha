@@ -19,3 +19,16 @@ export async function validateLongitude(longitude?: number) {
     }
     return longitude;
 }
+
+export async function validateDistance(distance?: number) {
+    if (typeof distance !== 'number' || isNaN(distance)) {
+        throw badRequest();
+    }
+    if (distance < 0) {
+        throw badRequest();
+    }
+    if (!Number.isInteger(distance)) {
+        throw badRequest();
+    }
+    return distance;
+}

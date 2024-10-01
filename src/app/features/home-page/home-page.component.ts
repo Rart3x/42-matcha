@@ -37,7 +37,7 @@ import {
     CdkVirtualScrollViewport,
 } from '@angular/cdk/scrolling';
 import { FormsModule } from '@angular/forms';
-import { MatFormField, MatHint, MatLabel } from '@angular/material/form-field';
+import { MatFormField, MatHint, MatLabel, MatSuffix } from '@angular/material/form-field';
 import { RestrictedInputDirective } from '@app/shared/directives/restricted-input.directive';
 import { MatInput } from '@angular/material/input';
 import { MatSlider, MatSliderThumb } from '@angular/material/slider';
@@ -96,6 +96,7 @@ import { NgClass } from '@angular/common';
         MatListItemLine,
         MatListItemMeta,
         NgClass,
+        MatSuffix,
     ],
     host: { class: 'flex min-h-full relative flex-col gap-1' },
     template: `
@@ -220,6 +221,21 @@ import { NgClass } from '@angular/common';
                         />
                         <mat-hint>Leave empty to ignore</mat-hint>
                     </mat-form-field>
+
+                    <mat-form-field>
+                        <mat-label>Maximum Distance</mat-label>
+                        <input
+                            appRestrictedInput
+                            pattern="^[0-9]*$"
+                            [maxLength]="6"
+                            matInput
+                            type="number"
+                            placeholder="Maximum Distance"
+                            [(ngModel)]="maximumDistance"
+                        />
+                        <span matSuffix class="px-2">km</span>
+                        <mat-hint>Leave empty to ignore</mat-hint>
+                    </mat-form-field>
                     <div class="flex items-center gap-3">
                         <span class="mat-body-1">Minimum common tags:</span>
                         <mat-slider [min]="0" [max]="15" [discrete]="false" [disabled]="false">
@@ -243,7 +259,7 @@ import { NgClass } from '@angular/common';
                                 age
                                 <span class="max-expanded:hidden"> gap </span>
                             </mat-button-toggle>
-                            <!--                            <mat-button-toggle value="location">Location</mat-button-toggle>-->
+                            <mat-button-toggle value="distance">Distance</mat-button-toggle>
                             <mat-button-toggle value="fame_rating">
                                 <span class="max-expanded:hidden">fame </span>rating
                             </mat-button-toggle>
@@ -286,10 +302,11 @@ export class HomePageComponent {
 
     filtersDialog = viewChild<TemplateRef<any>>('filtersDialog');
 
-    sortBy = signal<'age' | 'fame_rating' | 'common_tags' | 'location'>('fame_rating');
+    sortBy = signal<'age' | 'fame_rating' | 'common_tags' | 'distance'>('fame_rating');
     age = signal<number | null>(null);
     minimumRating = signal<number | null>(null);
     minimumCommonTags = signal<number>(1);
+    maximumDistance = signal<number>(100);
 
     numColumns = computed(() => (this.isMediumScreen() ? 1 : 2));
 
@@ -301,6 +318,7 @@ export class HomePageComponent {
                 age: this.age() ?? undefined,
                 minimum_rating: this.minimumRating() ?? undefined,
                 minimum_common_tags: this.minimumCommonTags() ?? undefined,
+                maximum_distance: this.maximumDistance() ?? undefined,
             },
         ] as const,
         queryFn: ({ queryKey: [_, params], pageParam }) =>
@@ -311,7 +329,7 @@ export class HomePageComponent {
             }),
         initialPageParam: 0,
         getNextPageParam: (lastPage, allPages, lastPageParam) => {
-            if (lastPage.users.length === 0) {
+            if (lastPage.users.length < this.PAGE_SIZE) {
                 return undefined;
             }
             return lastPageParam + 1;

@@ -104,3 +104,7 @@ ORDER BY
     location_gap NULLS LAST;
 
 $$ LANGUAGE SQL;
+
+-- TODO: implement weighted search:
+-- 1. Calculate the weighted sum of the user's attributes in a separate CTE
+-- 2. Order by the weighted sum in a final SELECT statement

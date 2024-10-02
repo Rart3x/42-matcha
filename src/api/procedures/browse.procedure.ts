@@ -7,7 +7,6 @@ import { validateOrderBy, validateRating } from '@api/validators/browse.validato
 import { validateLimit, validateOffset } from '@api/validators/page.validators';
 import { validateDistance } from '@api/validators/location.validators';
 
-//TODO: implement location filter
 export const browseUsersProcedure = procedure(
     'browseUsers',
     {} as {

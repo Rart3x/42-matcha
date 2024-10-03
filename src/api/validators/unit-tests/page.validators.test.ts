@@ -28,8 +28,8 @@ test('[VALID] [LIMIT] : 50', async () => {
 });
 
 // -- OFFSET LIMIT OUT OF BOUNDS TESTS -- //
-test('[INVALID] [OFFSET] : 51', async () => {
-    await expect(validateOffset(51)).rejects.toThrow();
+test('[VALID] [OFFSET] : 51', async () => {
+    expect(await validateOffset(51)).toEqual(51);
 });
 
 test('[INVALID] [LIMIT] : 51', async () => {

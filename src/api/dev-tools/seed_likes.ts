@@ -1,6 +1,6 @@
 import { sql } from '@api/connections/database.connection';
 
-async function seedLikes() {
+export async function seedLikes() {
     await sql`
         WITH random_users AS (
             SELECT id 

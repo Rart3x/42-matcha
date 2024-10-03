@@ -1,6 +1,6 @@
 import { sql } from '@api/connections/database.connection';
 
-async function seedLocation() {
+export async function seedLocations() {
     await sql`
         WITH random_users AS (
             SELECT id 
@@ -15,7 +15,7 @@ async function seedLocation() {
 }
 
 async function seed() {
-    await seedLocation();
+    await seedLocations();
 
     process.exit(0);
 }

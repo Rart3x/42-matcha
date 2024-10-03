@@ -1,7 +1,7 @@
 import { sql } from '@api/connections/database.connection';
 import process from 'node:process';
 
-async function seedAdminUser() {
+export async function seedAdminUser() {
     const admin = {
         username: 'admin',
         email: 'admin@localhost.com',
@@ -20,7 +20,7 @@ async function seedAdminUser() {
     `;
 }
 
-async function seed() {
+export async function seed() {
     await seedAdminUser();
 
     process.exit(0);

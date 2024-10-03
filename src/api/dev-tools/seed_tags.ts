@@ -17,7 +17,7 @@ function createMockTag() {
     };
 }
 
-async function seedTags() {
+export async function seedTags() {
     const mockTags = Array.from({ length: 100 }, createMockTag);
 
     await sql`

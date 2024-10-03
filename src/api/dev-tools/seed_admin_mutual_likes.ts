@@ -1,6 +1,6 @@
 import { sql } from '@api/connections/database.connection';
 
-async function seed() {
+export async function seedAdminMutualLikes() {
     await sql`
         WITH random_users AS (SELECT id, username
                               FROM users
@@ -21,7 +21,10 @@ async function seed() {
                  JOIN admin_user u2 ON u2.id != u1.id
         ON CONFLICT DO NOTHING;
     `;
+}
 
+async function seed() {
+    await seedAdminMutualLikes();
     process.exit(0);
 }
 

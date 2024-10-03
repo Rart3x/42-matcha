@@ -1,6 +1,6 @@
 import { sql } from '@api/connections/database.connection';
 
-async function seed() {
+export async function seedAdminLikes() {
     await sql`
         WITH random_users AS (SELECT id, username
                               FROM users
@@ -17,6 +17,10 @@ async function seed() {
         ORDER BY RANDOM()
         LIMIT 200;
     `;
+}
+
+async function seed() {
+    await seedAdminLikes();
 
     process.exit(0);
 }

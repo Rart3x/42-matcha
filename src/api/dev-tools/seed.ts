@@ -1,8 +1,12 @@
+import * as process from 'node:process';
+import { seedAdminUser } from '@api/dev-tools/seed_admin';
+import { seedTags } from '@api/dev-tools/seed_tags';
+import { seedLikes } from '@api/dev-tools/seed_likes';
+import { seedLocations } from '@api/dev-tools/seed_locations';
+import { seedMessages } from '@api/dev-tools/seed_messages';
+import { seedVisits } from '@api/dev-tools/seed_visits';
 import { faker } from '@faker-js/faker/locale/en';
 import { sql } from '@api/connections/database.connection';
-import * as process from 'node:process';
-// @ts-ignore
-import tqdm from 'tqdm';
 
 /**
  * This script seeds the database with mock users for demonstration purposes.
@@ -10,7 +14,7 @@ import tqdm from 'tqdm';
  * @file seed.ts
  */
 
-function createMockUser() {
+function seedUsers() {
     const gender = faker.helpers.arrayElement(['male', 'female', 'other']);
     const sexual_pref = faker.helpers.arrayElement(['male', 'female', 'any']);
 
@@ -49,28 +53,12 @@ function createMockUser() {
     };
 }
 
-function createMockTag() {
-    const tag = faker.helpers
-        .arrayElement([
-            faker.food.dish(),
-            faker.food.dish(),
-            faker.animal.type(),
-            faker.commerce.productName(),
-        ])
-        .replace(/[^a-zA-Z0-9]/g, '')
-        .slice(0, 20);
-
-    return {
-        name: tag,
-    };
-}
-
-async function seedUsers() {}
-
 async function seed() {
-    console.log('seeding mock users...');
+    console.log('seeding admin user...');
+    await seedAdminUser();
 
-    const mockUsers = Array.from({ length: 2000 }, createMockUser);
+    console.log('seeding mock users...');
+    const mockUsers = Array.from({ length: 2000 }, seedUsers);
 
     await sql`
         INSERT INTO users ${sql(mockUsers)}
@@ -78,119 +66,20 @@ async function seed() {
     `;
 
     console.log('seeding mock tags...');
-
-    const mockTags = Array.from({ length: 100 }, createMockTag);
-
-    await sql`
-        INSERT INTO tags ${sql(mockTags)}
-        ON CONFLICT DO NOTHING;
-    `;
-
     console.log('seeding users/tags relationships...');
-
-    // create relationships between users and tags
-    await sql`
-        WITH random_tags AS (SELECT id
-                             FROM tags
-                             ORDER BY RANDOM()),
-             random_users AS (SELECT id
-                              FROM users
-                              ORDER BY RANDOM())
-        INSERT
-        INTO users_tags (user_id, tag_id)
-        SELECT random_users.id, random_tags.id
-        FROM random_tags,
-             random_users
-                 LEFT JOIN users_tags ON users_tags.user_id = random_users.id
-        WHERE (SELECT COUNT(*)
-               FROM users_tags
-               WHERE user_id = random_users.id) < 10
-        LIMIT 5000
-        ON CONFLICT DO NOTHING;
-    `;
+    await seedTags();
 
     console.log('seeding users/likes...');
-
-    await sql`
-        WITH random_users AS (
-            SELECT id 
-            FROM users
-            ORDER BY RANDOM()
-            LIMIT 500
-        ),
-        likes_candidates AS (
-            SELECT u1.id AS user_id, u2.id AS liked_user_id,
-                   ROW_NUMBER() OVER (PARTITION BY u1.id ORDER BY RANDOM()) AS rn
-            FROM random_users u1
-            JOIN random_users u2 ON u1.id <> u2.id  -- Ensure no self-likes
-        )
-        INSERT INTO likes (liker_user_id, liked_user_id)
-        SELECT user_id, liked_user_id
-        FROM likes_candidates
-        WHERE rn <= 10  -- Ensure each user likes at most 10 other users
-        ORDER BY RANDOM()
-        LIMIT 500;
-    `;
+    await seedLikes();
 
     console.log('seeding users/visits...');
-
-    await sql`
-        WITH random_users AS (
-            SELECT id 
-            FROM users
-            ORDER BY RANDOM()
-            LIMIT 500
-        ),
-        visits_candidates AS (
-            SELECT u1.id AS user_id, u2.id AS visited_user_id,
-                   ROW_NUMBER() OVER (PARTITION BY u1.id ORDER BY RANDOM()) AS rn
-            FROM random_users u1
-            JOIN random_users u2 ON u1.id <> u2.id  -- Ensure no self-visits
-        )
-        INSERT INTO visits (visiter_user_id, visited_user_id)
-        SELECT user_id, visited_user_id
-        FROM visits_candidates
-        WHERE rn <= 10  -- Ensure each user visits at most 10 other users
-        ORDER BY RANDOM()
-        LIMIT 500;
-    `;
+    await seedVisits();
 
     console.log('seeding users/messages...');
-
-    await sql`
-        WITH random_users AS (
-            SELECT id 
-            FROM users
-            ORDER BY RANDOM()
-            LIMIT 500
-        ),
-        messages_candidates AS (
-            SELECT u1.id AS sender_id, u2.id AS receiver_id,
-                   ROW_NUMBER() OVER (PARTITION BY u1.id ORDER BY RANDOM()) AS rn
-            FROM random_users u1
-            JOIN random_users u2 ON u1.id <> u2.id  -- Ensure no self-messages
-        )
-        INSERT INTO messages (sender_id, receiver_id, message)
-        SELECT sender_id, receiver_id, 'Hello, how are you?'
-        FROM messages_candidates
-        WHERE rn <= 10  -- Ensure each user sends at most 10 messages
-        ORDER BY RANDOM()
-        LIMIT 500;
-    `;
+    await seedMessages();
 
     console.log('seeding users/locations...');
-
-    await sql`
-        WITH random_users AS (
-            SELECT id 
-            FROM users
-            ORDER BY RANDOM()
-            LIMIT 500
-        )
-        INSERT INTO locations (user_id, latitude, longitude)
-        SELECT id, RANDOM() * 180 - 90, RANDOM() * 360 - 180
-        FROM random_users;
-    `;
+    await seedLocations();
 
     process.exit(0);
 }

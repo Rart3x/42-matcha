@@ -1,12 +1,8 @@
-import * as process from 'node:process';
-import { seedAdminUser } from '@api/dev-tools/seed_admin';
-import { seedTags } from '@api/dev-tools/seed_tags';
-import { seedLikes } from '@api/dev-tools/seed_likes';
-import { seedLocations } from '@api/dev-tools/seed_locations';
-import { seedMessages } from '@api/dev-tools/seed_messages';
-import { seedVisits } from '@api/dev-tools/seed_visits';
 import { faker } from '@faker-js/faker/locale/en';
 import { sql } from '@api/connections/database.connection';
+import * as process from 'node:process';
+// @ts-ignore
+import tqdm from 'tqdm';
 
 /**
  * This script seeds the database with mock users for demonstration purposes.
@@ -14,7 +10,26 @@ import { sql } from '@api/connections/database.connection';
  * @file seed.ts
  */
 
-function seedUsers() {
+async function seedAdminUser() {
+    const admin = {
+        username: 'admin',
+        email: 'admin@localhost.com',
+        password: '$2a$08$mBA8.BAl8P5FHwpjswvV5O5V/XBCbc.BDSOHEhJv6c/m1h.EYNqGy', // 'Password1234@';
+        first_name: 'Admin',
+        last_name: 'User',
+        age: 26,
+        biography: 'I am an admin user',
+        gender: 'male',
+        sexual_pref: 'female',
+    };
+
+    await sql`
+        INSERT INTO users ${sql(admin)}
+        ON CONFLICT DO NOTHING;
+    `;
+}
+
+function createMockUser() {
     const gender = faker.helpers.arrayElement(['male', 'female', 'other']);
     const sexual_pref = faker.helpers.arrayElement(['male', 'female', 'any']);
 
@@ -53,12 +68,31 @@ function seedUsers() {
     };
 }
 
+function createMockTag() {
+    const tag = faker.helpers
+        .arrayElement([
+            faker.food.dish(),
+            faker.food.dish(),
+            faker.animal.type(),
+            faker.commerce.productName(),
+        ])
+        .replace(/[^a-zA-Z0-9]/g, '')
+        .slice(0, 20);
+
+    return {
+        name: tag,
+    };
+}
+
+async function seedUsers() {}
+
 async function seed() {
     console.log('seeding admin user...');
     await seedAdminUser();
 
     console.log('seeding mock users...');
-    const mockUsers = Array.from({ length: 2000 }, seedUsers);
+
+    const mockUsers = Array.from({ length: 2000 }, createMockUser);
 
     await sql`
         INSERT INTO users ${sql(mockUsers)}
@@ -66,20 +100,120 @@ async function seed() {
     `;
 
     console.log('seeding mock tags...');
+
+    const mockTags = Array.from({ length: 100 }, createMockTag);
+
+    await sql`
+        INSERT INTO tags ${sql(mockTags)}
+        ON CONFLICT DO NOTHING;
+    `;
+
     console.log('seeding users/tags relationships...');
-    await seedTags();
+
+    // create relationships between users and tags
+    await sql`
+        WITH random_tags AS (SELECT id
+                             FROM tags
+                             ORDER BY RANDOM()),
+             random_users AS (SELECT id
+                              FROM users
+                              ORDER BY RANDOM())
+        INSERT
+        INTO users_tags (user_id, tag_id)
+        SELECT random_users.id, random_tags.id
+        FROM random_tags,
+             random_users
+                 LEFT JOIN users_tags ON users_tags.user_id = random_users.id
+        WHERE (SELECT COUNT(*)
+               FROM users_tags
+               WHERE user_id = random_users.id) < 10
+        LIMIT 5000
+        ON CONFLICT DO NOTHING;
+    `;
 
     console.log('seeding users/likes...');
-    await seedLikes();
+
+    await sql`
+        WITH random_users AS (
+            SELECT id 
+            FROM users
+            ORDER BY RANDOM()
+            LIMIT 500
+        ),
+        likes_candidates AS (
+            SELECT u1.id AS user_id, u2.id AS liked_user_id,
+                   ROW_NUMBER() OVER (PARTITION BY u1.id ORDER BY RANDOM()) AS rn
+            FROM random_users u1
+            JOIN random_users u2 ON u1.id <> u2.id  -- Ensure no self-likes
+        )
+        INSERT INTO likes (liker_user_id, liked_user_id)
+        SELECT user_id, liked_user_id
+        FROM likes_candidates
+        WHERE rn <= 10  -- Ensure each user likes at most 10 other users
+        ORDER BY RANDOM()
+        LIMIT 500;
+    `;
 
     console.log('seeding users/visits...');
-    await seedVisits();
+
+    await sql`
+        WITH random_users AS (
+            SELECT id 
+            FROM users
+            ORDER BY RANDOM()
+            LIMIT 500
+        ),
+        visits_candidates AS (
+            SELECT u1.id AS user_id, u2.id AS visited_user_id,
+                   ROW_NUMBER() OVER (PARTITION BY u1.id ORDER BY RANDOM()) AS rn
+            FROM random_users u1
+            JOIN random_users u2 ON u1.id <> u2.id  -- Ensure no self-visits
+        )
+        INSERT INTO visits (visiter_user_id, visited_user_id)
+        SELECT user_id, visited_user_id
+        FROM visits_candidates
+        WHERE rn <= 10  -- Ensure each user visits at most 10 other users
+        ORDER BY RANDOM()
+        LIMIT 500;
+    `;
 
     console.log('seeding users/messages...');
-    await seedMessages();
+
+    const messages = Array.from({ length: 500 }, () => faker.lorem.sentence());
+
+    await sql`
+        WITH random_users AS (
+            SELECT id 
+            FROM users
+            ORDER BY RANDOM()
+            LIMIT 500
+        ),
+        messages_candidates AS (
+            SELECT u1.id AS sender_id, u2.id AS receiver_id,
+                   ROW_NUMBER() OVER (PARTITION BY u1.id ORDER BY RANDOM()) AS rn
+            FROM random_users u1
+            JOIN random_users u2 ON u1.id <> u2.id
+        )
+        INSERT INTO messages (sender_id, receiver_id, message)
+        SELECT sender_id, receiver_id, unnest(${sql.array(messages)})
+        FROM messages_candidates
+        WHERE rn <= 10
+        LIMIT 500;
+    `;
 
     console.log('seeding users/locations...');
-    await seedLocations();
+
+    await sql`
+        WITH random_users AS (
+            SELECT id 
+            FROM users
+            ORDER BY RANDOM()
+            LIMIT 500
+        )
+        INSERT INTO locations (user_id, latitude, longitude)
+        SELECT id, RANDOM() * 180 - 90, RANDOM() * 360 - 180
+        FROM random_users;
+    `;
 
     process.exit(0);
 }

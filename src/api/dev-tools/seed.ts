@@ -10,25 +10,6 @@ import tqdm from 'tqdm';
  * @file seed.ts
  */
 
-async function seedAdminUser() {
-    const admin = {
-        username: 'admin',
-        email: 'admin@localhost.com',
-        password: '$2a$08$mBA8.BAl8P5FHwpjswvV5O5V/XBCbc.BDSOHEhJv6c/m1h.EYNqGy', // 'Password1234@';
-        first_name: 'Admin',
-        last_name: 'User',
-        age: 26,
-        biography: 'I am an admin user',
-        gender: 'male',
-        sexual_pref: 'female',
-    };
-
-    await sql`
-        INSERT INTO users ${sql(admin)}
-        ON CONFLICT DO NOTHING;
-    `;
-}
-
 function createMockUser() {
     const gender = faker.helpers.arrayElement(['male', 'female', 'other']);
     const sexual_pref = faker.helpers.arrayElement(['male', 'female', 'any']);
@@ -87,9 +68,6 @@ function createMockTag() {
 async function seedUsers() {}
 
 async function seed() {
-    console.log('seeding admin user...');
-    await seedAdminUser();
-
     console.log('seeding mock users...');
 
     const mockUsers = Array.from({ length: 2000 }, createMockUser);

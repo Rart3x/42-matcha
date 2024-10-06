@@ -6,7 +6,7 @@ export async function seedPictures() {
         SELECT id
         FROM users
         ORDER BY random()
-        LIMIT 500
+        LIMIT 2000
     )
     INSERT INTO pictures (user_id, position, url, mime_type)
     SELECT

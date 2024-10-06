@@ -1,14 +1,12 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { injectMutation, injectQueryClient } from '@tanstack/angular-query-experimental';
-import { injectRpcClient } from '@app/core/http/rpc-client';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { MatToolbar, MatToolbarRow } from '@angular/material/toolbar';
 import { MatIconButton } from '@angular/material/button';
 import { MatTooltip } from '@angular/material/tooltip';
-import { SnackBarService } from '@app/core/services/snack-bar.service';
-import { Router, RouterOutlet } from '@angular/router';
+import { RouterOutlet } from '@angular/router';
 import { ConversationListComponent } from '@app/features/chat-page/conversation-list/conversation-list.component';
 import { NgClass } from '@angular/common';
+import { injectLogoutMutation } from '@app/shared/queries/account.queries';
 
 @Component({
     selector: 'app-chat-page',
@@ -74,23 +72,8 @@ import { NgClass } from '@angular/common';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChatPageComponent {
-    #router = inject(Router);
-    #queryClient = injectQueryClient();
-    #snackBar = inject(SnackBarService);
-    #rpcClient = injectRpcClient();
-
     // hack to make isActivated outlet property reactive
     outletActivated = signal(false);
 
-    logout = injectMutation(() => ({
-        mutationFn: this.#rpcClient.logout,
-        onSuccess: async () => {
-            this.#snackBar.enqueueSnackBar('You have been logged out');
-            await this.#queryClient.invalidateQueries({ queryKey: ['verifySession'] });
-            await this.#router.navigate(['/login']);
-        },
-        onError: () => {
-            this.#snackBar.enqueueSnackBar('Failed to logout');
-        },
-    }));
+    logout = injectLogoutMutation();
 }

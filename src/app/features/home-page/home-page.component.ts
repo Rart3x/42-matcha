@@ -16,13 +16,8 @@ import { MatTooltip } from '@angular/material/tooltip';
 import { MatCard } from '@angular/material/card';
 import { MatButtonToggle, MatButtonToggleGroup } from '@angular/material/button-toggle';
 import { HomeHeadingComponent } from '@app/features/home-page/home-heading.component';
-import {
-    injectInfiniteQuery,
-    injectMutation,
-    injectQueryClient,
-} from '@tanstack/angular-query-experimental';
+import { injectInfiniteQuery } from '@tanstack/angular-query-experimental';
 import { injectRpcClient } from '@app/core/http/rpc-client';
-import { SnackBarService } from '@app/core/services/snack-bar.service';
 import {
     MatDialog,
     MatDialogActions,
@@ -54,6 +49,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { NgClass } from '@angular/common';
+import { injectLogoutMutation } from '@app/shared/queries/account.queries';
 
 @Component({
     selector: 'app-home-page',
@@ -281,8 +277,6 @@ export class HomePageComponent {
     PAGE_SIZE = 20;
 
     #rpcClient = injectRpcClient();
-    #queryClient = injectQueryClient();
-    #snackBar = inject(SnackBarService);
     #router = inject(Router);
     #dialog = inject(MatDialog);
 
@@ -354,17 +348,7 @@ export class HomePageComponent {
         }
     }
 
-    logout = injectMutation(() => ({
-        mutationFn: this.#rpcClient.logout,
-        onSuccess: async () => {
-            this.#snackBar.enqueueSnackBar('You have been logged out');
-            await this.#queryClient.invalidateQueries({ queryKey: ['verifySession'] });
-            await this.#router.navigate(['/login']);
-        },
-        onError: () => {
-            this.#snackBar.enqueueSnackBar('Failed to logout');
-        },
-    }));
+    logout = injectLogoutMutation();
 
     openProfileInSideSheet(user_id: string) {
         void this.#router.navigate([{ outlets: { sidesheet: ['profile', user_id] } }]);

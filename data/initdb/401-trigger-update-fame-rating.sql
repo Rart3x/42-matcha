@@ -67,7 +67,7 @@ CREATE OR REPLACE TRIGGER downgrade_fame_rating_trigger
 EXECUTE FUNCTION update_fame_rating_trigger('reported_user_id', '-100');
 
 --- Description: Downgrades the fame rating of a user when a fake user report is deleted.
-CREATE OR REPLACE TRIGGER downgrade_fame_rating_trigger
+CREATE OR REPLACE TRIGGER upgrade_fame_rating_trigger
     AFTER DELETE
     ON fake_user_reports
     FOR EACH ROW

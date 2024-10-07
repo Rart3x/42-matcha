@@ -1,11 +1,11 @@
 import { procedure } from '@api/lib/procedure';
 import { sql } from '@api/connections/database.connection';
 import { usePrincipalUser } from '@api/hooks/auth.hooks';
-import { validateAge } from '@api/validators/profile.validators';
 import { validateTags } from '@api/validators/tag.validators';
 import { validateOrderBy, validateRating } from '@api/validators/browse.validator';
 import { validateLimit, validateOffset } from '@api/validators/page.validators';
 import { validateDistance } from '@api/validators/location.validators';
+import { validateAgeGap } from '@api/validators/profile.validators';
 
 export const searchUsersProcedure = procedure(
     'searchUsers',
@@ -21,7 +21,7 @@ export const searchUsersProcedure = procedure(
     async (params) => {
         const principal_user_id = await usePrincipalUser();
 
-        const maximum_age_gap = await validateAge(params.maximum_age_gap).catch(() => null);
+        const maximum_age_gap = await validateAgeGap(params.maximum_age_gap).catch(() => null);
         const maximum_fame_rating_gap = await validateRating(params.maximum_fame_rating_gap).catch(
             () => null,
         );
@@ -40,7 +40,8 @@ export const searchUsersProcedure = procedure(
                 last_name: string;
                 age: number;
                 fame_rating: number;
-                total_count: number;
+                bio: string;
+                gender: string;
             }[]
         >`
         SELECT
@@ -49,14 +50,14 @@ export const searchUsersProcedure = procedure(
             users.first_name,
             users.last_name,
             users.age,
-            users.fame_rating
+            users.fame_rating,
+            users.biography as bio,
+            users.gender
         FROM search_users(${principal_user_id}, ${maximum_age_gap}, ${maximum_fame_rating_gap}, ${maximum_distance},
                           ${required_tags ?? []}, ${orderBy}) AS users
         OFFSET ${offset} LIMIT ${limit}
     `;
 
-        const total_count = users[0]?.total_count || 0;
-
-        return { users: users, total_count };
+        return { users };
     },
 );

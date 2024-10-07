@@ -65,7 +65,7 @@ import { AfterViewInitDirective } from '@app/shared/directives/after-view-init.d
         AfterViewInitDirective,
     ],
     template: `
-        <mat-form-field>
+        <mat-form-field [appearance]="appearance()">
             <mat-label>Likes</mat-label>
 
             <!-- Chips -->
@@ -133,6 +133,8 @@ export class TagsInputComponent {
     PAGE_SIZE = 5;
 
     #rpcClient = injectRpcClient();
+
+    appearance = input<'fill' | 'outline'>('fill');
 
     autocompleteTrigger = viewChild(MatAutocompleteTrigger);
 

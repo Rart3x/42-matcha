@@ -6,7 +6,9 @@ CREATE OR REPLACE FUNCTION search_users(
     maximum_distance FLOAT,
     required_tags TEXT[],
     order_by TEXT
-) RETURNS SETOF users AS
+) RETURNS
+    SETOF users
+AS
 $$
 WITH
     principal_user      AS (
@@ -102,8 +104,8 @@ WHERE
   AND CASE WHEN maximum_distance IS NULL THEN TRUE
            ELSE distances.distance <= maximum_distance END
   AND CASE WHEN required_tags IS NULL THEN TRUE
-           ELSE required_tags_count.count = ARRAY_LENGTH(required_tags, 1) END
-      --- Apply sexual preferences
+           ELSE required_tags_count.count = COALESCE(ARRAY_LENGTH(required_tags, 1), 0) END
+--     Apply sexual preferences
   AND CASE WHEN principal_user.sexual_pref = 'any' THEN TRUE
            ELSE principal_user.sexual_pref = other_users.gender END
   AND CASE WHEN other_users.sexual_pref = 'any' THEN TRUE

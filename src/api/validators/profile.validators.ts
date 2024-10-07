@@ -30,6 +30,23 @@ export async function validateAge(age?: number) {
     return age;
 }
 
+export async function validateAgeGap(age?: number) {
+    if (typeof age !== 'number') {
+        throw badRequest();
+    }
+    if (isNaN(age)) {
+        throw badRequest();
+    }
+    // test if integer
+    if (age % 1 !== 0) {
+        throw badRequest();
+    }
+    if (age < 0 || 120 < age) {
+        throw badRequest();
+    }
+    return age;
+}
+
 export async function validateSexualPref(sexual_pref?: string) {
     if (typeof sexual_pref !== 'string') {
         throw badRequest();

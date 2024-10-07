@@ -11,8 +11,8 @@ export async function seedPictures() {
     INSERT INTO pictures (user_id, position, url, mime_type)
     SELECT
         id,
-        2,
-        '/profile_pictures/avatar' || id % 50 || '.jpg',
+        0,
+        'public/profile_pictures/avatar' || id % 50 || '.jpg',
         'image/jpeg'
     FROM random_users
     `;

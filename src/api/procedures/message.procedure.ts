@@ -23,37 +23,49 @@ export const getMessagesByUserIdProcedure = procedure(
         const offset = await validateOffset(params.offset);
         const limit = await validateLimit(params.limit);
 
-        const messages = await sql<
-            {
-                id: number;
-                sender_id: number;
-                sender_username: string;
-                receiver_id: number;
-                message: string;
-                seen: boolean;
-                created_at: Date;
-            }[]
-        >`
-        SELECT
-            messages.id,
-            sender.id       AS sender_id,
-            sender.username AS sender_username,
-            messages.receiver_id,
-            messages.message,
-            messages.is_seen,
-            messages.created_at
-        FROM messages
-            JOIN users AS sender
-                ON messages.sender_id = sender.id
-        WHERE
-             (sender_id = ${principal_user_id} AND receiver_id = ${user_id})
-          OR (sender_id = ${user_id} AND receiver_id = ${principal_user_id})
-        ORDER BY
-            created_at DESC
-        OFFSET ${offset} LIMIT ${limit}
-        ;`;
+        const messages = await sql.begin(async (sql) => {
+            const messages = await sql<
+                {
+                    id: number;
+                    sender_id: number;
+                    sender_username: string;
+                    receiver_id: number;
+                    message: string;
+                    seen: boolean;
+                    created_at: Date;
+                }[]
+            >`
+            SELECT
+                messages.id,
+                sender.id       AS sender_id,
+                sender.username AS sender_username,
+                messages.receiver_id,
+                messages.message,
+                messages.is_seen,
+                messages.created_at
+            FROM messages
+                JOIN users AS sender
+                    ON messages.sender_id = sender.id
+            WHERE
+                 (sender_id = ${principal_user_id} AND receiver_id = ${user_id})
+              OR (sender_id = ${user_id} AND receiver_id = ${principal_user_id})
+            ORDER BY
+                created_at DESC
+            OFFSET ${offset} LIMIT ${limit}
+            ;`;
 
-        return { messages };
+            await sql`
+            UPDATE messages
+            SET
+                is_seen = TRUE
+            WHERE
+                (sender_id = ${user_id} AND receiver_id = ${principal_user_id})
+            ;`;
+
+            return { messages };
+        });
+
+        return messages;
     },
 );
 
@@ -91,15 +103,15 @@ export const getUnreadMessageCountProcedure = procedure('getUnreadMessageCount',
             count: number;
         }?,
     ] = await sql`
-            SELECT
-                COUNT(messages.*)
-            FROM messages
-                INNER JOIN reachable_users(${principal_user_id}) AS ru
-                    ON messages.sender_id = ru.id
-            WHERE
-                  (receiver_id = ${principal_user_id})
-              AND is_seen = FALSE
-        `;
+        SELECT
+            COUNT(messages.*)
+        FROM messages
+            INNER JOIN connected_users(${principal_user_id}) AS ru
+                ON messages.sender_id = ru.id
+        WHERE
+              (receiver_id = ${principal_user_id})
+          AND is_seen = FALSE
+    `;
 
     return { count: messages?.count ?? 0 };
 });
@@ -139,12 +151,12 @@ export const getConversationsProcedure = procedure(
                 FROM messages
             )
         SELECT DISTINCT
-            other_user.id                                                                         AS other_user_id,
-            other_user.username                                                                   AS other_username,
+            other_user.id                     AS other_user_id,
+            other_user.username               AS other_username,
             CASE WHEN lm.sender_id = ${principal_user_id} THEN 'you'
-                 ELSE other_user.username END                                                     AS last_message_sender,
-            lm.message                                                                            AS last_message_content,
-            lm.created_at                                                                         AS last_message_date
+                 ELSE other_user.username END AS last_message_sender,
+            lm.message                        AS last_message_content,
+            lm.created_at                     AS last_message_date
         FROM connected_users(${principal_user_id}) AS other_user
             LEFT JOIN latest_messages AS lm
                 ON LEAST(lm.sender_id, lm.receiver_id) = ${principal_user_id} AND

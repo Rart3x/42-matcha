@@ -36,22 +36,19 @@ export const getNotificationsProcedure = procedure(
     },
 );
 
-export const getNumberOfUnreadNotificationsProcedure = procedure(
-    'getNumberOfUnreadNotificationsByUserId',
-    {},
+export const getUnreadNotificationsCountProcedure = procedure(
+    'getUnreadNotificationsCount',
     async () => {
         const principal_user_id = await usePrincipalUser();
 
-        return sql<
-            {
-                count: number;
-            }[]
-        >`
+        const [result]: [{ count: number }?] = await sql`
             SELECT COUNT(*) as count
             FROM notifications
             WHERE notified_user_id = ${principal_user_id}
             AND is_viewed = FALSE
         `;
+
+        return { count: result?.count ?? 0 };
     },
 );
 

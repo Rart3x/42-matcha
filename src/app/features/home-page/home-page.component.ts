@@ -50,6 +50,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { NgClass } from '@angular/common';
 import { injectLogoutMutation } from '@app/shared/queries/account.queries';
+import { ToolbarComponent } from '@app/shared/components/toolbar/toolbar.component';
 
 @Component({
     selector: 'app-home-page',
@@ -93,21 +94,11 @@ import { injectLogoutMutation } from '@app/shared/queries/account.queries';
         MatListItemMeta,
         NgClass,
         MatSuffix,
+        ToolbarComponent,
     ],
     host: { class: 'flex min-h-full relative flex-col gap-1' },
     template: `
-        <mat-toolbar class="!bg-transparent">
-            <mat-toolbar-row class="!pt-2">
-                <span class="grow"></span>
-                <button mat-icon-button matTooltip="notifications">
-                    <mat-icon>notifications</mat-icon>
-                </button>
-
-                <button mat-icon-button matTooltip="logout" (click)="logout.mutate()">
-                    <mat-icon>logout</mat-icon>
-                </button>
-            </mat-toolbar-row>
-        </mat-toolbar>
+        <app-toolbar />
 
         <div
             class="relative flex grow flex-col gap-8 rounded-tl-2xl pr-3 expanded:pr-6"

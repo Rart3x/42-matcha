@@ -94,21 +94,14 @@ export const getProfileByIdProcedure = procedure(
                 throw badRequest();
             }
 
-            // Remove past visit if any
-            await sql`
-            DELETE
-            FROM visits
-            WHERE
-                  visiter_user_id = ${principal_id}
-              AND visited_user_id = ${user_id}
-            ;`;
-
             // Record the visit as a retrieval of the profile is considered a visit
             await sql`
             INSERT INTO
                 visits (visiter_user_id, visited_user_id)
             VALUES
                 (${principal_id}, ${user_id})
+            ON CONFLICT (visiter_user_id, visited_user_id) DO UPDATE SET
+                created_at = NOW()
             ;`;
 
             return profile;

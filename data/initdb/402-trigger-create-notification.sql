@@ -92,12 +92,10 @@ BEGIN
         id = OLD.liker_user_id
     INTO liker_user;
 
-    DELETE
-    FROM notifications
-    WHERE
-          notified_user_id = liked_user.id
-      AND type = 'like'
-      AND content = 'User ' || liker_user.username || ' liked your profile';
+    INSERT INTO
+        notifications (notified_user_id, type, content)
+    VALUES
+        (liked_user.id, 'like', 'User ' || liker_user.username || ' unliked your profile');
 
     RETURN OLD;
 END;

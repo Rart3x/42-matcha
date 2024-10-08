@@ -28,9 +28,9 @@ import {
 } from '@api/procedures/message.procedure';
 import {
     getNotificationsProcedure,
-    getNumberOfUnreadNotificationsProcedure,
+    getUnreadNotificationsCountProcedure,
     getUnreadNotificationsProcedure,
-} from '@api/procedures/notifcation.procedure';
+} from '@api/procedures/notification.procedure';
 import { createBlockProcedure, deleteBlockProcedure } from '@api/procedures/block.procedure';
 import {
     createLikeProcedure,
@@ -74,7 +74,7 @@ const rpcRouter = createProcedureRouter([
     getMessagesByUserIdProcedure,
     getNotificationsProcedure,
     getUnreadNotificationsProcedure,
-    getNumberOfUnreadNotificationsProcedure,
+    getUnreadNotificationsCountProcedure,
     getNumberOfUnreadMessagesByUserIdProcedure,
     getPrincipalProfileProcedure,
     getPrincipalUserLikesProcedure,

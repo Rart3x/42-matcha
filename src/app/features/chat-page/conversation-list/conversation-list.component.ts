@@ -79,7 +79,7 @@ import { RouterLink } from '@angular/router';
                     <div class="h-[80px]" *cdkVirtualFor="let conversation of conversations()">
                         <a
                             mat-list-item
-                            class="!rounded-xl !bg-surface"
+                            class="!max-w-[calc(100vw-2rem)] !rounded-xl !bg-surface"
                             tabindex="0"
                             [routerLink]="['.', conversation.other_user_id]"
                         >

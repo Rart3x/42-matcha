@@ -57,16 +57,18 @@ import { DatePipe, NgClass } from '@angular/common';
                     <a mat-icon-button matTooltip="back" routerLink="/chat">
                         <mat-icon>arrow_back</mat-icon>
                     </a>
-                    <h2 class="mat-display-small !mb-0">
-                        {{ onlineStatusQuery.data()?.username }}
-                    </h2>
-                    <small class="flex items-end">
-                        @if (onlineStatusQuery.data()?.online) {
-                            online
-                        } @else {
-                            last seen {{ onlineStatusQuery.data()?.last_seen }}
-                        }
-                    </small>
+                    <div class="flex gap-2 max-medium:flex-col">
+                        <h2 class="mat-title-large medium:mat-display-small !mb-0">
+                            {{ onlineStatusQuery.data()?.username }}
+                        </h2>
+                        <small class="flex items-end">
+                            @if (onlineStatusQuery.data()?.online) {
+                                online
+                            } @else {
+                                last seen {{ onlineStatusQuery.data()?.last_seen }}
+                            }
+                        </small>
+                    </div>
                 </div>
             </mat-card-content>
         </mat-card>

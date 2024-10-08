@@ -17,6 +17,7 @@ import {
     MatNavList,
 } from '@angular/material/list';
 import { MatButton } from '@angular/material/button';
+import { MatBadge } from '@angular/material/badge';
 
 @Component({
     selector: 'app-notifications-sheet',
@@ -35,6 +36,7 @@ import { MatButton } from '@angular/material/button';
         MatListItemLine,
         MatListItemMeta,
         MatButton,
+        MatBadge,
     ],
     template: `
         <app-sidesheet heading="Notifications">
@@ -53,23 +55,28 @@ import { MatButton } from '@angular/material/button';
                                     class="!h-[calc(100px-1rem)] !w-[380px] overflow-hidden !rounded-2xl border bg-surface"
                                 >
                                     <span matListItemTitle>
-                                        @switch (notification.type) {
-                                            @case ('visit') {
-                                                Visit
+                                        <span
+                                            class="pr-2"
+                                            [matBadge]="notification.is_viewed ? null : 'new'"
+                                        >
+                                            @switch (notification.type) {
+                                                @case ('visit') {
+                                                    Visit
+                                                }
+                                                @case ('like') {
+                                                    Like
+                                                }
+                                                @case ('unlike') {
+                                                    Unlike
+                                                }
+                                                @case ('match') {
+                                                    Match
+                                                }
+                                                @case ('message') {
+                                                    Message
+                                                }
                                             }
-                                            @case ('like') {
-                                                Like
-                                            }
-                                            @case ('unlike') {
-                                                Unlike
-                                            }
-                                            @case ('match') {
-                                                Match
-                                            }
-                                            @case ('message') {
-                                                Message
-                                            }
-                                        }
+                                        </span>
                                     </span>
                                     <span matListItemLine class="!overflow-auto !whitespace-normal">
                                         {{ notification.content }}

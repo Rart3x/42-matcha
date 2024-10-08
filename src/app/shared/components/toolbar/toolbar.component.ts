@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { MatToolbar, MatToolbarRow } from '@angular/material/toolbar';
 import { MatIcon } from '@angular/material/icon';
-import { MatIconButton } from '@angular/material/button';
+import { MatIconAnchor, MatIconButton } from '@angular/material/button';
 import { MatTooltip } from '@angular/material/tooltip';
 import { injectLogoutMutation } from '@app/shared/queries/account.queries';
 import { TitleCasePipe } from '@angular/common';
@@ -12,6 +12,7 @@ import { toObservable } from '@angular/core/rxjs-interop';
 import { filter, pairwise } from 'rxjs';
 import { SnackBarService } from '@app/core/services/snack-bar.service';
 import { MatBadge } from '@angular/material/badge';
+import { Router, RouterLink } from '@angular/router';
 
 @Component({
     selector: 'app-toolbar',
@@ -24,6 +25,8 @@ import { MatBadge } from '@angular/material/badge';
         MatTooltip,
         TitleCasePipe,
         MatBadge,
+        RouterLink,
+        MatIconAnchor,
     ],
     host: { class: 'grid place-content-stretch' },
     template: `
@@ -38,6 +41,7 @@ import { MatBadge } from '@angular/material/badge';
                 <button
                     mat-icon-button
                     matTooltip="notifications"
+                    (click)="openNotificationsSidesheet()"
                     [matBadge]="unreadNotificationsCount()"
                 >
                     <mat-icon>notifications</mat-icon>
@@ -55,6 +59,7 @@ export class ToolbarComponent {
     logout = injectLogoutMutation();
     #rpcClient = injectRpcClient();
     #snackbarService = inject(SnackBarService);
+    #router = inject(Router);
 
     unreadNotificationCountQuery = injectQuery(() => ({
         queryKey: ['notifications', 'count'],
@@ -81,4 +86,8 @@ export class ToolbarComponent {
     }
 
     title = input<string>();
+
+    async openNotificationsSidesheet() {
+        await this.#router.navigate([{ outlets: { sidesheet: ['notifications'] } }]);
+    }
 }

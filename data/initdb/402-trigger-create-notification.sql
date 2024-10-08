@@ -95,7 +95,7 @@ BEGIN
     INSERT INTO
         notifications (notified_user_id, type, content)
     VALUES
-        (liked_user.id, 'like', 'User ' || liker_user.username || ' unliked your profile');
+        (liked_user.id, 'unlike', 'User ' || liker_user.username || ' unliked your profile');
 
     RETURN OLD;
 END;

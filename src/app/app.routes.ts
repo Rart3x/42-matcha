@@ -98,6 +98,14 @@ export const routes: Routes = [
             },
             {
                 outlet: 'sidesheet',
+                path: 'notifications',
+                loadComponent: () =>
+                    import('@app/features/notifications-sheet/notifications-sheet.component').then(
+                        (m) => m.NotificationsSheetComponent,
+                    ),
+            },
+            {
+                outlet: 'sidesheet',
                 path: 'edit-profile',
                 loadComponent: () =>
                     import('@app/features/edit-profile-sheet/edit-profile-sheet.component').then(

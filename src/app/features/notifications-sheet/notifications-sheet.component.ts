@@ -6,7 +6,7 @@ import {
     CdkVirtualScrollableElement,
     CdkVirtualScrollViewport,
 } from '@angular/cdk/scrolling';
-import { injectInfiniteQuery } from '@tanstack/angular-query-experimental';
+import { injectInfiniteQuery, injectQueryClient } from '@tanstack/angular-query-experimental';
 import { injectRpcClient } from '@app/core/http/rpc-client';
 import {
     MatList,
@@ -96,6 +96,7 @@ import { MatButton } from '@angular/material/button';
 })
 export class NotificationsSheetComponent {
     #rpcClient = injectRpcClient();
+    #queryClient = injectQueryClient();
 
     PAGE_SIZE = 10;
 
@@ -112,6 +113,9 @@ export class NotificationsSheetComponent {
                 return undefined;
             }
             return lastPageParam + 1;
+        },
+        onSuccess: async () => {
+            await this.#queryClient.invalidateQueries({ queryKey: ['notifications', 'count'] });
         },
     }));
 

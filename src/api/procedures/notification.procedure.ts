@@ -15,31 +15,42 @@ export const getNotificationsProcedure = procedure(
         const offset = await validateOffset(params.offset);
         const limit = await validateLimit(params.limit);
 
-        const notifications = await sql<
-            {
-                id: number;
-                notified_user_id: number;
-                type: string;
-                content: string;
-                is_viewed: boolean;
-                created_at: Date;
-            }[]
-        >`
-        SELECT
-            id,
-            notified_user_id,
-            type,
-            content,
-            is_viewed,
-            created_at
-        FROM notifications
-        WHERE
-            notifications.notified_user_id = ${principal_user_id}
-        ORDER BY
-            created_at DESC,
-            id DESC
-        OFFSET ${offset} LIMIT ${limit}
-        ;`;
+        const notifications = await sql.begin(async (sql) => {
+            const notifications = await sql<
+                {
+                    id: number;
+                    notified_user_id: number;
+                    type: string;
+                    content: string;
+                    is_viewed: boolean;
+                    created_at: Date;
+                }[]
+            >`
+                SELECT
+                    id,
+                    notified_user_id,
+                    type,
+                    content,
+                    is_viewed,
+                    created_at
+                FROM notifications
+                WHERE
+                    notifications.notified_user_id = ${principal_user_id}
+                ORDER BY
+                    created_at DESC,
+                    id DESC
+                OFFSET ${offset} LIMIT ${limit}
+                ;`;
+
+            await sql`
+                UPDATE notifications
+                SET is_viewed = TRUE
+                WHERE
+                    notified_user_id = ${principal_user_id}
+                ;`;
+
+            return notifications;
+        });
 
         const newNotifications = notifications.map((notification) => {
             return {

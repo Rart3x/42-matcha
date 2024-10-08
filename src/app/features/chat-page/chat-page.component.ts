@@ -6,7 +6,7 @@ import { MatTooltip } from '@angular/material/tooltip';
 import { RouterOutlet } from '@angular/router';
 import { ConversationListComponent } from '@app/features/chat-page/conversation-list/conversation-list.component';
 import { NgClass } from '@angular/common';
-import { injectLogoutMutation } from '@app/shared/queries/account.queries';
+import { ToolbarComponent } from '@app/shared/components/toolbar/toolbar.component';
 
 @Component({
     selector: 'app-chat-page',
@@ -20,22 +20,11 @@ import { injectLogoutMutation } from '@app/shared/queries/account.queries';
         ConversationListComponent,
         RouterOutlet,
         NgClass,
+        ToolbarComponent,
     ],
     host: { class: 'grid grid-rows-[auto_1fr] overflow-hidden absolute inset-0' },
     template: `
-        <mat-toolbar class="!bg-transparent">
-            <mat-toolbar-row class="!pt-2">
-                <h1 class="mat-display-small !mb-0">Chat</h1>
-                <span class="grow"></span>
-                <button mat-icon-button matTooltip="notifications">
-                    <mat-icon>notifications</mat-icon>
-                </button>
-
-                <button mat-icon-button matTooltip="logout" (click)="logout.mutate()">
-                    <mat-icon>logout</mat-icon>
-                </button>
-            </mat-toolbar-row>
-        </mat-toolbar>
+        <app-toolbar title="Chat" />
 
         <div
             class="relative mb-2 flex gap-8 overflow-hidden medium:mr-3 expanded:mr-6 expanded:rounded-tl-2xl"
@@ -74,6 +63,4 @@ import { injectLogoutMutation } from '@app/shared/queries/account.queries';
 export class ChatPageComponent {
     // hack to make isActivated outlet property reactive
     outletActivated = signal(false);
-
-    logout = injectLogoutMutation();
 }

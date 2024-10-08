@@ -1,9 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
 import { MatButton, MatIconButton } from '@angular/material/button';
-import { MatToolbar, MatToolbarRow } from '@angular/material/toolbar';
 import { MatTooltip } from '@angular/material/tooltip';
-import { injectLogoutMutation } from '@app/shared/queries/account.queries';
 import {
     CdkFixedSizeVirtualScroll,
     CdkVirtualScrollableElement,
@@ -41,6 +39,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { TagsInputComponent } from '@app/shared/components/tags-input/tags-input.component';
 import { Router } from '@angular/router';
+import { ToolbarComponent } from '@app/shared/components/toolbar/toolbar.component';
 
 @Component({
     selector: 'app-browse-page',
@@ -48,7 +47,6 @@ import { Router } from '@angular/router';
     imports: [
         MatIcon,
         MatIconButton,
-        MatToolbar,
         MatTooltip,
         CdkVirtualScrollableElement,
         MatFormField,
@@ -57,7 +55,6 @@ import { Router } from '@angular/router';
         FormsModule,
         MatHint,
         MatLabel,
-        MatToolbarRow,
         MatExpansionPanel,
         MatExpansionPanelTitle,
         MatExpansionPanelHeader,
@@ -80,25 +77,14 @@ import { Router } from '@angular/router';
         MatButtonToggleGroup,
         TagsInputComponent,
         ReactiveFormsModule,
+        ToolbarComponent,
     ],
-    host: { class: 'flex min-h-full relative flex-col gap-1' },
+    host: { class: 'grid grid-rows-[auto_1fr] overflow-hidden absolute inset-0' },
     template: `
-        <mat-toolbar class="!bg-transparent">
-            <mat-toolbar-row class="!pt-2">
-                <h1 class="mat-display-small !mb-0">Search</h1>
-                <span class="grow"></span>
-                <button mat-icon-button matTooltip="notifications">
-                    <mat-icon>notifications</mat-icon>
-                </button>
-
-                <button mat-icon-button matTooltip="logout" (click)="logout.mutate()">
-                    <mat-icon>logout</mat-icon>
-                </button>
-            </mat-toolbar-row>
-        </mat-toolbar>
+        <app-toolbar title="Search" />
 
         <div
-            class="relative flex grow flex-col gap-8 rounded-tl-2xl pr-3 expanded:pr-6 max-medium:px-3"
+            class="relative flex flex-col gap-8 rounded-tl-2xl pr-3 expanded:pr-6 max-medium:px-3"
             cdkVirtualScrollingElement
         >
             <!-- filter -->
@@ -235,8 +221,6 @@ import { Router } from '@angular/router';
 })
 export class BrowsePageComponent {
     #router = inject(Router);
-
-    logout = injectLogoutMutation();
 
     maximum_age_gap = signal<number | undefined>(undefined);
     maximum_fame_rating_gap = signal<number | undefined>(undefined);

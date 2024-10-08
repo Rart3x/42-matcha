@@ -33,7 +33,9 @@ import { Router, RouterLink } from '@angular/router';
         <mat-toolbar class="!bg-transparent">
             <mat-toolbar-row class="gap-2 !pt-2">
                 @if (title()) {
-                    <h1 class="mat-display-small !mb-0">{{ title() | titlecase }}</h1>
+                    <h1 class="mat-title-large medium:mat-display-small !mb-0">
+                        {{ title() | titlecase }}
+                    </h1>
                 }
 
                 <span class="grow"></span>

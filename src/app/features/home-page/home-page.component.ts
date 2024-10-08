@@ -2,7 +2,9 @@ import {
     ChangeDetectionStrategy,
     Component,
     computed,
+    ElementRef,
     inject,
+    Injector,
     signal,
     TemplateRef,
     viewChild,
@@ -47,10 +49,11 @@ import {
 } from '@angular/material/list';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
+import { distinctUntilChanged, map, tap } from 'rxjs';
 import { NgClass } from '@angular/common';
 import { injectLogoutMutation } from '@app/shared/queries/account.queries';
 import { ToolbarComponent } from '@app/shared/components/toolbar/toolbar.component';
+import { injectIsIntersecting } from 'ngxtension/inject-is-intersecting';
 
 @Component({
     selector: 'app-home-page',
@@ -98,7 +101,7 @@ import { ToolbarComponent } from '@app/shared/components/toolbar/toolbar.compone
     ],
     host: { class: 'flex min-h-full relative flex-col gap-1' },
     template: `
-        <app-toolbar />
+        <app-toolbar [title]="showTitle() ? 'Recommendations' : undefined" />
 
         <div
             class="relative flex grow flex-col gap-8 rounded-tl-2xl pr-3 expanded:pr-6"
@@ -120,6 +123,7 @@ import { ToolbarComponent } from '@app/shared/components/toolbar/toolbar.compone
                                       : 'mat-display-small',
                             ]"
                             class="max-expanded:!mb-0 max-expanded:block"
+                            #title
                         >
                             Recommendations
                         </h2>
@@ -343,5 +347,32 @@ export class HomePageComponent {
 
     openProfileInSideSheet(user_id: string) {
         void this.#router.navigate([{ outlets: { sidesheet: ['profile', user_id] } }]);
+    }
+
+    title = viewChild<ElementRef<HTMLElement>>('title');
+    injector = inject(Injector);
+
+    showTitle = signal(false);
+
+    ngOnInit() {
+        const title = this.title();
+        if (title) {
+            injectIsIntersecting({
+                element: title.nativeElement,
+                injector: this.injector,
+            })
+                .pipe(
+                    map((x) => x.intersectionRatio > 0),
+                    distinctUntilChanged(),
+                    tap((inViewport) => {
+                        if (inViewport) {
+                            this.showTitle.set(false);
+                        } else {
+                            this.showTitle.set(true);
+                        }
+                    }),
+                )
+                .subscribe();
+        }
     }
 }

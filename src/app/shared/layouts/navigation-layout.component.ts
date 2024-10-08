@@ -1,9 +1,11 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { NavigationRailLinkComponent } from '@app/shared/components/navigation-rail-link/navigation-rail-link.component';
 import { MatSidenavContainer } from '@angular/material/sidenav';
 import { SidesheetLayoutComponent } from '@app/shared/layouts/sidesheet-layout/sidesheet-layout.component';
 import { NgClass } from '@angular/common';
+import { injectQuery } from '@tanstack/angular-query-experimental';
+import { injectRpcClient } from '@app/core/http/rpc-client';
 
 @Component({
     selector: 'app-navigation-layout',
@@ -54,6 +56,7 @@ import { NgClass } from '@angular/common';
                             label="Chat"
                             routerLink="/chat"
                             routerLinkActive="active"
+                            [badge]="unreadMessageCount()"
                         />
                     </nav>
                 </div>
@@ -67,4 +70,14 @@ import { NgClass } from '@angular/common';
     `,
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class NavigationLayoutComponent {}
+export class NavigationLayoutComponent {
+    #rpcClient = injectRpcClient();
+
+    unreadMessageCountQuery = injectQuery(() => ({
+        queryKey: ['messages', 'count'],
+        queryFn: () => this.#rpcClient.getUnreadMessageCount(),
+        refetchInterval: /* 5 seconds */ 5000,
+    }));
+
+    unreadMessageCount = computed(() => this.unreadMessageCountQuery.data()?.count ?? 0);
+}

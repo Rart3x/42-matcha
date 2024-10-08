@@ -83,33 +83,26 @@ export const postMessageProcedure = procedure(
     },
 );
 
-export const getNumberOfUnreadMessagesByUserIdProcedure = procedure(
-    'getNumberOfUnreadMessagesByUserId',
-    {} as {
-        user_id: number;
-    },
-    async (params) => {
-        const principal_user_id = await usePrincipalUser();
+export const getUnreadMessageCountProcedure = procedure('getUnreadMessageCount', async () => {
+    const principal_user_id = await usePrincipalUser();
 
-        const user_id = await validateUserId(params.user_id);
-
-        return await sql.begin(async (sql) => {
-            const messages = sql<
-                {
-                    count: number;
-                }[]
-            >`
+    const [messages]: [
+        {
+            count: number;
+        }?,
+    ] = await sql`
             SELECT
-                COUNT(*)
+                COUNT(messages.*)
             FROM messages
+                INNER JOIN reachable_users(${principal_user_id}) AS ru
+                    ON messages.sender_id = ru.id
             WHERE
-                  (sender_id = ${principal_user_id} AND receiver_id = ${user_id})
+                  (receiver_id = ${principal_user_id})
               AND is_seen = FALSE
         `;
-            return { messages };
-        });
-    },
-);
+
+    return { count: messages?.count ?? 0 };
+});
 
 export const getConversationsProcedure = procedure(
     'getConversations',

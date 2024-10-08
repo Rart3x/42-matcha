@@ -23,7 +23,7 @@ import { browseUsersProcedure } from '@api/procedures/browse.procedure';
 import {
     getConversationsProcedure,
     getMessagesByUserIdProcedure,
-    getNumberOfUnreadMessagesByUserIdProcedure,
+    getUnreadMessageCountProcedure,
     postMessageProcedure,
 } from '@api/procedures/message.procedure';
 import {
@@ -75,7 +75,7 @@ const rpcRouter = createProcedureRouter([
     getNotificationsProcedure,
     getUnreadNotificationsProcedure,
     getUnreadNotificationsCountProcedure,
-    getNumberOfUnreadMessagesByUserIdProcedure,
+    getUnreadMessageCountProcedure,
     getPrincipalProfileProcedure,
     getPrincipalUserLikesProcedure,
     getProfileByIdProcedure,

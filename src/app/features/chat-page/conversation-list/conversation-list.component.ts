@@ -16,7 +16,7 @@ import {
     CdkVirtualScrollableElement,
     CdkVirtualScrollViewport,
 } from '@angular/cdk/scrolling';
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgClass } from '@angular/common';
 import { MatIcon } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { MatButton, MatIconButton } from '@angular/material/button';
@@ -24,6 +24,7 @@ import { FormsModule } from '@angular/forms';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { RouterLink } from '@angular/router';
+import { MatBadge } from '@angular/material/badge';
 
 @Component({
     selector: 'app-conversation-list',
@@ -47,6 +48,8 @@ import { RouterLink } from '@angular/router';
         FormsModule,
         MatIconButton,
         RouterLink,
+        MatBadge,
+        NgClass,
     ],
     host: { class: 'grid place-content-stretch' },
     template: `
@@ -79,7 +82,12 @@ import { RouterLink } from '@angular/router';
                     <div class="h-[80px]" *cdkVirtualFor="let conversation of conversations()">
                         <a
                             mat-list-item
-                            class="!max-w-[calc(100vw-2rem)] !rounded-xl !bg-surface"
+                            [ngClass]="[
+                                '!max-w-[calc(100vw-2rem)] !overflow-hidden !rounded-xl !bg-surface expanded:!w-[19rem] large:!w-[25rem]',
+                                conversation.unread_count > 0
+                                    ? '!bg-secondary-container !text-on-secondary-container'
+                                    : '',
+                            ]"
                             tabindex="0"
                             [routerLink]="['.', conversation.other_user_id]"
                         >
@@ -88,7 +96,18 @@ import { RouterLink } from '@angular/router';
                                 [src]="'/api/pictures/by_id/' + conversation.other_user_id + '/0'"
                                 alt="Avatar"
                             />
-                            <span matListItemTitle>{{ conversation.other_username }}</span>
+                            <span matListItemTitle>
+                                <span
+                                    class="pr-2"
+                                    [matBadge]="
+                                        conversation.unread_count > 0
+                                            ? conversation.unread_count
+                                            : null
+                                    "
+                                >
+                                    {{ conversation.other_username }}
+                                </span>
+                            </span>
                             <span matListItemLine class="max-w-60 text-ellipsis">
                                 @let message = conversation.last_message_content;
                                 @let sender = conversation.last_message_sender;
@@ -156,5 +175,6 @@ export class ConversationListComponent {
             }
             return lastPageParam + 1;
         },
+        refetchInterval: /* 5sec */ 5_000,
     }));
 }

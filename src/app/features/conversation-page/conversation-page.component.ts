@@ -57,7 +57,7 @@ import { DatePipe, NgClass } from '@angular/common';
                     <a mat-icon-button matTooltip="back" routerLink="/chat">
                         <mat-icon>arrow_back</mat-icon>
                     </a>
-                    <div class="flex gap-2 max-medium:flex-col">
+                    <div class="flex gap-2 medium:items-start max-medium:flex-col">
                         <h2 class="mat-title-large medium:mat-display-small !mb-0">
                             {{ onlineStatusQuery.data()?.username }}
                         </h2>

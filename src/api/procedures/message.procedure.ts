@@ -137,6 +137,7 @@ export const getConversationsProcedure = procedure(
                 last_message_content: string;
                 last_message_sender: string;
                 last_message_date: Date;
+                unread_count: number;
             }[]
         >`
         WITH
@@ -149,6 +150,17 @@ export const getConversationsProcedure = procedure(
                     ROW_NUMBER()
                     OVER ( PARTITION BY LEAST(sender_id, receiver_id), GREATEST(sender_id, receiver_id) ORDER BY created_at DESC ) AS rn
                 FROM messages
+            ),
+            unread_messages AS (
+                SELECT
+                    sender_id,
+                    receiver_id,
+                    COUNT(*) AS unread_count
+                FROM messages
+                WHERE
+                    receiver_id = ${principal_user_id} AND is_seen = FALSE
+                GROUP BY
+                    sender_id, receiver_id
             )
         SELECT DISTINCT
             other_user.id                     AS other_user_id,
@@ -156,11 +168,14 @@ export const getConversationsProcedure = procedure(
             CASE WHEN lm.sender_id = ${principal_user_id} THEN 'you'
                  ELSE other_user.username END AS last_message_sender,
             lm.message                        AS last_message_content,
-            lm.created_at                     AS last_message_date
+            lm.created_at                     AS last_message_date,
+            COALESCE(um.unread_count, 0)      AS unread_count
         FROM connected_users(${principal_user_id}) AS other_user
             LEFT JOIN latest_messages AS lm
                 ON LEAST(lm.sender_id, lm.receiver_id) = ${principal_user_id} AND
                    GREATEST(lm.sender_id, lm.receiver_id) = other_user.id AND lm.rn = 1
+            LEFT JOIN unread_messages AS um
+                ON lm.sender_id = um.sender_id AND lm.receiver_id = um.receiver_id
         WHERE
             -- Filter by username
             other_user.username ILIKE ${usernameFilter} || '%'

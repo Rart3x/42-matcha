@@ -35,8 +35,9 @@ WITH
     ),
     age_gaps       AS (
         SELECT
-            other_users.id                            AS other_user_id,
-            ABS(principal_user.age - other_users.age) AS age_gap
+            other_users.id                                        AS other_user_id,
+            CASE WHEN browse_users.age IS NULL THEN ABS(principal_user.age - other_users.age)
+                 ELSE ABS(browse_users.age - other_users.age) END AS age_gap
         FROM users AS other_users
             CROSS JOIN principal_user
         WHERE
@@ -68,12 +69,17 @@ FROM reachable_users(principal_user_id) AS other_users
         ON age_gaps.other_user_id = other_users.id
     LEFT JOIN location_gaps
         ON location_gaps.other_user_id = other_users.id
+    JOIN LATERAL (
+        -- Weighted sum of the user's attributes (arbitrary choice of weights, tweak as needed)
+        -- note: Used for sorting the results (higher values first) like a search engine score
+        -- note: the age_gap is squared to give more importance to smaller age gaps
+        SELECT 4 * location_gap + 3 * other_users.fame_rating + 3 * common_tags_count + 2 * ((120 - age_gap) / 120) ^ 2 AS weighted_sum
+    ) as weighted_sum ON TRUE
 WHERE
       -- Exclude principal user
       other_users.id != principal_user.id
       -- Filter by age (within 5 years of the principal user's age or the specified age)
-  AND CASE WHEN browse_users.age IS NOT NULL THEN ABS(browse_users.age - other_users.age) < 5
-           ELSE age_gap < 5 END
+  AND age_gap < 5
       -- Filter by minimum fame rating (if specified)
   AND CASE WHEN minimum_rating IS NOT NULL THEN other_users.fame_rating >= minimum_rating
            ELSE TRUE END
@@ -97,14 +103,8 @@ ORDER BY
     CASE WHEN order_by = 'fame_rating' THEN other_users.fame_rating
          WHEN order_by = 'common_tags' THEN common_tags_count END DESC,
     -- Default order by
-    common_tags_count DESC,
-    fame_rating DESC,
-    age_gap,
+    weighted_sum DESC,
     username,
     location_gap NULLS LAST;
 
 $$ LANGUAGE SQL;
-
--- TODO: implement weighted search:
--- 1. Calculate the weighted sum of the user's attributes in a separate CTE
--- 2. Order by the weighted sum in a final SELECT statement

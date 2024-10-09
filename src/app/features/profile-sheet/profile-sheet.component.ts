@@ -262,12 +262,6 @@ export class ProfileSheetComponent {
 
     profilePictureUrl = computed(() => `/api/pictures/by_id/${this.id()}/0`);
 
-    // TODO: implement search view (in development)
-
-    // TODO: implement notifications
-    // TODO: implement number of unread messages
-
-    // TODO: move profile picture with online status to a separate component, and use in chat list
     onlineStatusQuery = injectQuery(() => ({
         queryKey: ['online-status', { id: this.id() }],
         queryFn: () => this.#rpcClient.getOnlineStatusById({ user_id: this.id() }),

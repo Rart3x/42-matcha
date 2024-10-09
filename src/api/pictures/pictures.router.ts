@@ -105,7 +105,6 @@ picturesRouter.post(
                     index,
                 ]);
 
-                // TODO: Potential ERROR with the INSERT INTO statement
                 await sql`
                     INSERT INTO pictures (user_id, url, mime_type, position)
                     VALUES ${sql(entries)};

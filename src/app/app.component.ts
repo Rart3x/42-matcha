@@ -21,7 +21,6 @@ const blinkAnimation = () => [
         query(':leave', [animate('0.1s', style({ opacity: 0 }))]),
         query(':enter', [animate('0.1s', style({ opacity: 1 }))]),
     ]),
-    query(':enter', [style({ backgroundColor: 'red' })]),
 ];
 
 @Component({

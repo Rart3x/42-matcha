@@ -26,6 +26,7 @@ RUN npm run build
 FROM base AS release
 
 COPY --from=build /app/dist ./dist
+COPY --from=build /app/public/profile_pictures ./public/profile_pictures
 
 RUN ls -lRa
 

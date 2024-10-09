@@ -177,49 +177,49 @@ async function seed() {
         LIMIT 500;
     `;
 
-    console.log('seeding users/messages...');
-
-    const messages = Array.from({ length: 500 }, () => faker.lorem.sentence());
-
-    console.log('seeding messages...');
-
-    await sql`
-        WITH random_users AS (
-            SELECT id 
-            FROM users
-            ORDER BY RANDOM()
-            LIMIT 500
-        ),
-        messages_candidates AS (
-            SELECT u1.id AS sender_id, u2.id AS receiver_id,
-                   ROW_NUMBER() OVER (PARTITION BY u1.id ORDER BY RANDOM()) AS rn
-            FROM random_users u1
-            CROSS JOIN random_users u2
-            WHERE u1.id < u2.id
-        )
-        INSERT INTO messages (sender_id, receiver_id, message)
-        SELECT sender_id, 
-               receiver_id, 
-               unnest(${sql.array(messages)})
-        FROM messages_candidates
-        WHERE rn <= 5
-        ORDER BY RANDOM()
-        LIMIT 500;
-    `;
-
-    console.log('seeding users/locations...');
-
-    await sql`
-        WITH random_users AS (
-            SELECT id 
-            FROM users
-            ORDER BY RANDOM()
-            LIMIT 500
-        )
-        INSERT INTO locations (user_id, latitude, longitude)
-        SELECT id, RANDOM() * 180 - 90, RANDOM() * 360 - 180
-        FROM random_users;
-    `;
+    // console.log('seeding users/messages...');
+    //
+    // const messages = Array.from({ length: 500 }, () => faker.lorem.sentence());
+    //
+    // console.log('seeding messages...');
+    //
+    // await sql`
+    //     WITH random_users AS (
+    //         SELECT id
+    //         FROM users
+    //         ORDER BY RANDOM()
+    //         LIMIT 500
+    //     ),
+    //     messages_candidates AS (
+    //         SELECT u1.id AS sender_id, u2.id AS receiver_id,
+    //                ROW_NUMBER() OVER (PARTITION BY u1.id ORDER BY RANDOM()) AS rn
+    //         FROM random_users u1
+    //         CROSS JOIN random_users u2
+    //         WHERE u1.id < u2.id
+    //     )
+    //     INSERT INTO messages (sender_id, receiver_id, message)
+    //     SELECT sender_id,
+    //            receiver_id,
+    //            unnest(${sql.array(messages)})
+    //     FROM messages_candidates
+    //     WHERE rn <= 5
+    //     ORDER BY RANDOM()
+    //     LIMIT 500;
+    // `;
+    //
+    // console.log('seeding users/locations...');
+    //
+    // await sql`
+    //     WITH random_users AS (
+    //         SELECT id
+    //         FROM users
+    //         ORDER BY RANDOM()
+    //         LIMIT 500
+    //     )
+    //     INSERT INTO locations (user_id, latitude, longitude)
+    //     SELECT id, RANDOM() * 180 - 90, RANDOM() * 360 - 180
+    //     FROM random_users;
+    // `;
 
     process.exit(0);
 }

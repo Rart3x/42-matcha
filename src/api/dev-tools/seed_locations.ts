@@ -10,7 +10,7 @@ export async function seedLocations() {
         SELECT id
         FROM users
         ORDER BY RANDOM()
-        LIMIT 1800;
+        LIMIT 4500;
     `;
 
     const locations = users.map((user) => {

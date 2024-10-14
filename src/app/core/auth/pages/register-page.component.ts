@@ -434,7 +434,7 @@ export class RegisterPageComponent {
 
     trigger = viewChild.required<CdkOverlayOrigin>('trigger');
     passwordInput = viewChild.required<HTMLElement>('passwordInput');
-    overlay = viewChild.required<CdkConnectedOverlay>('overlay');
+    overlay = viewChild<CdkConnectedOverlay>('overlay');
 
     #resizeOverlayEffect = rxEffect(
         this.#viewportRuler.change().pipe(
@@ -450,12 +450,12 @@ export class RegisterPageComponent {
     }
 
     onBlur(ev: FocusEvent) {
-        const overlayElement = this.overlay().overlayRef.overlayElement;
+        const overlayElement = this.overlay()?.overlayRef?.overlayElement;
         const target = ev.relatedTarget;
 
         if (
             !(target instanceof HTMLElement) ||
-            (target !== overlayElement && !overlayElement.contains(target))
+            (overlayElement && target !== overlayElement && !overlayElement.contains(target))
         ) {
             this.isOpen.set(false);
         }

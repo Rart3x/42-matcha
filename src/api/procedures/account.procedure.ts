@@ -255,8 +255,7 @@ export const updateEmailProcedure = procedure(
 
             const [result]: [{ token: string; username: string }?] = await sql`
                 -- Create a new email modification record failing if the email is already in use
-                   INSERT
-                     INTO pending_email_modifications(new_email, user_id)
+                   INSERT INTO pending_email_modifications(new_email, user_id)
                    SELECT ${email}, ${user_id}
                 RETURNING token AS token, (SELECT username FROM users WHERE id = ${user_id}) AS username;
             `;
@@ -299,7 +298,11 @@ export const updatePasswordProcedure = procedure(
 
         const res = await sql`
             -- Update the password of the authenticated user if the old password is correct
-            SET password = crypt(${new_password}, gen_salt('bf', 8)) WHERE id = ${user_id} AND PASSWORD = crypt(${old_password}, PASSWORD) RETURNING id
+               UPDATE users
+                  SET password = crypt(${new_password}, gen_salt('bf', 8))
+                WHERE id = ${user_id}
+                  AND password = crypt(${old_password}, password)
+            RETURNING id
         `;
 
         if (res.count === 0) {
@@ -362,17 +365,12 @@ export const getOnlineStatusByIdProcedure = procedure(
 
         const [session]: [{ online: boolean; last_seen: string; username: string }] = await sql`
             -- Check if the user is online and get the last seen time
-            SELECT 
-                CASE 
-                    WHEN sessions IS NULL 
-                        THEN FALSE 
-                        ELSE sessions.updated_at > NOW() - INTERVAL '5 minutes' 
-                    END AS online, 
-                sessions.updated_at AS last_seen, 
-                users.username
+            SELECT CASE WHEN sessions IS NULL THEN FALSE
+                        ELSE sessions.updated_at > NOW() - INTERVAL '5 minutes' END AS online,
+                   sessions.updated_at AS last_seen, users.username
               FROM users
-              LEFT JOIN sessions ON users.id = sessions.user_id
-               AND sessions.expires_at > NOW()
+                       LEFT JOIN sessions
+                       ON users.id = sessions.user_id AND sessions.expires_at > NOW()
              WHERE users.id = ${user_id}
              ORDER BY sessions.updated_at DESC
         `;

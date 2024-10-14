@@ -21,6 +21,7 @@ import { getProfileByIdProcedure } from '@api/procedures/profile.procedure';
 import { getPrincipalUserStatsProcedure } from '@api/procedures/stats.procedures';
 import { browseUsersProcedure } from '@api/procedures/browse.procedure';
 import {
+    canChatWithUserProcedure,
     getConversationsProcedure,
     getMessagesByUserIdProcedure,
     getUnreadMessageCountProcedure,
@@ -96,6 +97,7 @@ const rpcRouter = createProcedureRouter([
     getPrincipalUserLocationProcedure,
     getConversationsProcedure,
     postMessageProcedure,
+    canChatWithUserProcedure,
 ]);
 
 export type RpcRouter = typeof rpcRouter;

@@ -4,6 +4,10 @@ import { routes as auth } from '@app/core/auth/auth.routes';
 import { isLoggedOutGuard } from '@app/core/auth/guards/is-logged-out.guard';
 import { isLoggedInGuard } from '@app/core/auth/guards/is-logged-in.guard';
 import { inject } from '@angular/core';
+import { injectRpcClient } from '@app/core/http/rpc-client';
+import { injectQueryClient } from '@tanstack/angular-query-experimental';
+import { fromPromise } from 'rxjs/internal/observable/innerFrom';
+import { catchError, map, of } from 'rxjs';
 
 export const routes: Routes = [
     {
@@ -69,11 +73,30 @@ export const routes: Routes = [
                             ).then((m) => m.ConversationPageComponent),
                         canMatch: [
                             ((_, segments) => {
+                                const router = inject(Router);
+                                const rpcClient = injectRpcClient();
+                                const queryClient = injectQueryClient();
+
                                 const id = segments[segments.length - 1].path;
-                                if (Number.isInteger(+id) && +id > 0) {
-                                    return true;
+
+                                if (!Number.isInteger(+id) || +id < 0) {
+                                    return new RedirectCommand(router.createUrlTree(['chat']));
                                 }
-                                return new RedirectCommand(inject(Router).createUrlTree(['chat']));
+                                return fromPromise(
+                                    rpcClient.canChatWithUser({ other_user_id: +id }),
+                                ).pipe(
+                                    map((result) => {
+                                        if (!result.canChat) {
+                                            return new RedirectCommand(
+                                                inject(Router).createUrlTree(['chat']),
+                                            );
+                                        }
+                                        return true;
+                                    }),
+                                    catchError(() =>
+                                        of(new RedirectCommand(router.createUrlTree(['chat']))),
+                                    ),
+                                );
                             }) satisfies CanMatchFn,
                         ],
                     },

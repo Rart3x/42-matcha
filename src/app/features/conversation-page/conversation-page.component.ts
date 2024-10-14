@@ -2,7 +2,9 @@ import {
     ChangeDetectionStrategy,
     Component,
     computed,
+    effect,
     ElementRef,
+    inject,
     input,
     signal,
     viewChild,
@@ -13,7 +15,7 @@ import { MatInput } from '@angular/material/input';
 import { MatButton, MatIconAnchor, MatIconButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import {
     injectInfiniteQuery,
     injectMutation,
@@ -169,6 +171,7 @@ import { DatePipe, NgClass } from '@angular/common';
 export class ConversationPageComponent {
     #PAGE_SIZE = 10;
 
+    #router = inject(Router);
     #rpcClient = injectRpcClient();
     #queryClient = injectQueryClient();
 
@@ -196,6 +199,18 @@ export class ConversationPageComponent {
         // poll new messages every second
         refetchInterval: 1000,
     }));
+
+    constructor() {
+        effect(async () => {
+            if (this.messagesQuery.data()?.pages?.[0].connected === false) {
+                await this.#queryClient.invalidateQueries({ queryKey: ['conversations'] });
+                await this.#queryClient.invalidateQueries({
+                    queryKey: ['messages', this.other_user_id_number()],
+                });
+                await this.#router.navigate(['chat']);
+            }
+        });
+    }
 
     messages = computed(
         () => this.messagesQuery.data()?.pages.flatMap((page) => page.messages) ?? [],

@@ -13,7 +13,7 @@ async function seed() {
         const rows = faker.helpers.multiple(
             (_, idx) => ({
                 user_id: user.id,
-                url: `public/profile_pictures/avatar${faker.number.int({ min: 0, max: 50 })}.jpg`,
+                url: `public/profile_pictures/avatar${faker.number.int({ min: 0, max: 49 })}.jpg`,
                 position: idx,
                 mime_type: 'image/jpeg',
             }),

@@ -7,7 +7,7 @@ import { MatSuffix } from '@angular/material/form-field';
 import { MatIcon } from '@angular/material/icon';
 import { catchError, lastValueFrom, map, of, tap } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { injectQuery } from '@tanstack/angular-query-experimental';
+import { injectQuery, injectQueryClient } from '@tanstack/angular-query-experimental';
 import { MatRipple } from '@angular/material/core';
 import { injectRpcClient } from '@app/core/http/rpc-client';
 
@@ -150,6 +150,7 @@ export class HomeHeadingComponent implements OnDestroy {
     #router = inject(Router);
     #httpClient = inject(HttpClient);
     #rpcClient = injectRpcClient();
+    #queryClient = injectQueryClient();
 
     #urlsToRevoke = new Set<string>();
 
@@ -192,10 +193,11 @@ export class HomeHeadingComponent implements OnDestroy {
         return `Welcome back, ${firstName} ${lastName}!`;
     });
 
-    ngOnDestroy() {
+    async ngOnDestroy() {
         for (const url of this.#urlsToRevoke) {
             URL.revokeObjectURL(url);
         }
+        await this.#queryClient.invalidateQueries({ queryKey: ['pictures', 'profile'] });
     }
 
     async openViewsHistorySheet() {

@@ -1,64 +1,34 @@
 import { sql } from '@api/connections/database.connection';
-
-export async function seedPicturesSlot0() {
-    await sql`
-    WITH random_users AS (
-        SELECT id
-        FROM users
-        ORDER BY random()
-        LIMIT 2000
-    )
-    INSERT INTO pictures (user_id, position, url, mime_type)
-    SELECT
-        id,
-        2,
-        'public/profile_pictures/avatar' || id % 37 || '.jpg',
-        'image/jpeg'
-    FROM random_users
-    `;
-}
-
-export async function seedPicturesSlot1() {
-    await sql`
-    WITH random_users AS (
-        SELECT id
-        FROM users
-        ORDER BY random()
-        LIMIT 2000
-    )
-    INSERT INTO pictures (user_id, position, url, mime_type)
-    SELECT
-        id,
-        3,
-        'public/profile_pictures/avatar' || id % 3 || '.jpg',
-        'image/jpeg'
-    FROM random_users
-    `;
-}
-
-export async function seedPicturesSlot2() {
-    await sql`
-    WITH random_users AS (
-        SELECT id
-        FROM users
-        ORDER BY random()
-        LIMIT 2000
-    )
-    INSERT INTO pictures (user_id, position, url, mime_type)
-    SELECT
-        id,
-        0,
-        'public/profile_pictures/avatar' || id % 50 || '.jpg',
-        'image/jpeg'
-    FROM random_users
-    `;
-}
+import { faker } from '@faker-js/faker/locale/en';
 
 async function seed() {
-    await seedPicturesSlot0();
-    await seedPicturesSlot1();
-    await seedPicturesSlot2();
+    const users = await sql<{ id: number }[]>`
+        SELECT id
+        FROM users
+        ORDER BY RANDOM()
+        LIMIT 2000;
+    `;
 
+    for (const user of users) {
+        const rows = faker.helpers.multiple(
+            (_, idx) => ({
+                user_id: user.id,
+                url: `public/profile_pictures/avatar${faker.number.int({ min: 0, max: 50 })}.jpg`,
+                position: idx,
+                mime_type: 'image/jpeg',
+            }),
+            {
+                count: faker.number.int({ min: 1, max: 5 }),
+            },
+        );
+
+        await sql`
+            INSERT INTO pictures ${sql(rows)}
+            ON CONFLICT DO NOTHING;
+        `;
+    }
+
+    for (let user_id = 0; user_id < 2000; user_id++) {}
     process.exit(0);
 }
 

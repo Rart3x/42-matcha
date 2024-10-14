@@ -23,6 +23,16 @@ export async function validateTags(tags?: string[]) {
     return Promise.all(tags.map(validateTag));
 }
 
+export async function validateTagsFilter(tags?: string[]) {
+    if (typeof tags !== 'object' || !Array.isArray(tags)) {
+        throw badRequest();
+    }
+    if (tags.length < 0 || 10 < tags.length) {
+        throw badRequest();
+    }
+    return Promise.all(tags.map(validateTag));
+}
+
 export async function validateMinimumCommonTags(minimum_common_tags?: number) {
     if (typeof minimum_common_tags !== 'number' || isNaN(minimum_common_tags)) {
         throw badRequest();

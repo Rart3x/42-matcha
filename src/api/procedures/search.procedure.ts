@@ -1,7 +1,7 @@
 import { procedure } from '@api/lib/procedure';
 import { sql } from '@api/connections/database.connection';
 import { usePrincipalUser } from '@api/hooks/auth.hooks';
-import { validateTags } from '@api/validators/tag.validators';
+import { validateTagsFilter } from '@api/validators/tag.validators';
 import { validateOrderBy, validateRating } from '@api/validators/browse.validator';
 import { validateLimit, validateOffset } from '@api/validators/page.validators';
 import { validateDistance } from '@api/validators/location.validators';
@@ -26,7 +26,7 @@ export const searchUsersProcedure = procedure(
             () => null,
         );
         const maximum_distance = await validateDistance(params.maximum_distance).catch(() => null);
-        const required_tags = await validateTags(params.required_tags).catch(() => null);
+        const required_tags = await validateTagsFilter(params.required_tags).catch(() => null);
         const orderBy = await validateOrderBy(params.orderBy);
 
         const offset = await validateOffset(params.offset);

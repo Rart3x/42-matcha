@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
 import { SidesheetComponent } from '@app/shared/layouts/sidesheet-layout/sidesheet.component';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatError, MatFormField, MatHint, MatLabel } from '@angular/material/form-field';
+import { MatError, MatFormField, MatHint, MatLabel, MatSuffix } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { CdkConnectedOverlay, CdkOverlayOrigin, ViewportRuler } from '@angular/cdk/overlay';
 import { MatTooltipEllipsisDirective } from '@app/shared/directives/mat-tooltip-ellipsis.directive';
@@ -41,6 +41,7 @@ import { AlertComponent } from '@app/shared/components/alert/alert.component';
         MatIcon,
         MatButton,
         AlertComponent,
+        MatSuffix,
     ],
     template: `
         <app-sidesheet heading="Edit Password" [loading]="update.isPending()">
@@ -60,11 +61,12 @@ import { AlertComponent } from '@app/shared/components/alert/alert.component';
                         matInput
                         id="old_password"
                         type="password"
+                        #oldPasswordInput
                         [formControl]="form.controls.old_password"
                     />
                     <mat-password-toggle-button
                         matSuffix
-                        [inputElement]="passwordInput"
+                        [inputElement]="oldPasswordInput"
                         [disabled]="update.isPending()"
                     />
                     <mat-hint>

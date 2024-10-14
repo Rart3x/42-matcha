@@ -10,6 +10,8 @@ services:
             - APP_PORT=4000
             - DB_HOST=database
             - SMTP_HOST=mailhog
+        volumes:
+            -   uploads:/app/uploads
 
     database:
         image: postgres:16-alpine
@@ -31,3 +33,4 @@ services:
 
 volumes:
     database:
+    uploads:

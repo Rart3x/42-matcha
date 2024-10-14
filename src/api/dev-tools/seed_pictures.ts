@@ -28,7 +28,6 @@ async function seed() {
         `;
     }
 
-    for (let user_id = 0; user_id < 2000; user_id++) {}
     process.exit(0);
 }
 

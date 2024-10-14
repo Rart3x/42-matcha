@@ -20,11 +20,15 @@ export async function getLatLngFromIp(ip: string) {
 
     const ipToUse = IS_ASSESSMENT ? MOCKED_IP : ip;
 
-    return fetch(`https://api.hackertarget.com/geoip/?q=${ip}&output=json"`)
+    return fetch(`http://ip-api.com/json/${ipToUse}`)
         .then((response) => response.json())
         .then(async (data) => ({
-            lat: await validateLatitude(data.latitude),
-            lng: await validateLongitude(data.longitude),
+            lat: await validateLatitude(data.lat),
+            lng: await validateLongitude(data.lon),
         }))
-        .catch(() => null);
+        .catch((e) => {
+            console.log(`Error fetching location from ip: ${ipToUse}`, e);
+
+            return null;
+        });
 }

@@ -8,8 +8,10 @@ services:
             - '4000:4000'
         environment:
             - APP_PORT=4000
+            - APP_HOST=1D4.42angouleme.fr
             - DB_HOST=database
             - SMTP_HOST=mailhog
+            - APP_IS_ASSESSMENT=true
         volumes:
             -   uploads:/app/uploads
 

@@ -345,8 +345,13 @@ export class EditProfileSheetComponent {
     );
 
     onSubmit() {
+        const data = this.form.getRawValue() as Required<Profile>;
+
         if (this.form.valid) {
-            this.update.mutate(this.form.getRawValue() as Required<Profile>);
+            this.update.mutate({
+                ...data,
+                age: Number.parseInt(data.age as any),
+            });
         }
     }
 

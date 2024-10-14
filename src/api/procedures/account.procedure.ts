@@ -92,17 +92,11 @@ export const confirmEmailProcedure = procedure(
         const token = await validateToken(params.token);
         const ip = useGetIp();
 
-        console.log(1);
-
         const location = ip ? await getLatLngFromIp(ip) : null;
-
-        console.log(2);
 
         if (!location) {
             throw badRequest();
         }
-
-        console.log(3);
 
         const user = await sql.begin(async (sql) => {
             const [user]: [{ username: string; id: string }?] = await sql`
@@ -115,13 +109,9 @@ export const confirmEmailProcedure = procedure(
                 RETURNING username, id;
             `;
 
-            console.log(4);
-
             if (!user) {
                 throw badRequest();
             }
-
-            console.log(5);
 
             await sql`
                 -- Delete the registration record after creating the user
@@ -132,20 +122,14 @@ export const confirmEmailProcedure = procedure(
                     OR expires_at < NOW();
             `;
 
-            console.log(6);
-
             await sql`
                 -- Create a new location record for the user
                 INSERT INTO locations (user_id, latitude, longitude, is_consented)
                 VALUES (${user.id}, ${location.lat}, ${location.lng}, FALSE);
             `;
 
-            console.log(7);
-
             return user;
         });
-
-        console.log(8);
 
         return { username: user.username };
     },

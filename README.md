@@ -72,8 +72,23 @@ the application.
 
 c.f. https://m3.material.io/
 
+## Development environment
+
+We set up a development environment that will allow you to develop the project with ease. The development environment
+features a hot reload for both the frontend and the backend. It can be operated with IntelliJ IDEA run configurations.
+It also features a dedicated docker compose file that ships a postgres database and a mailhog server (no need to ship 
+the app in a container as development serve run on host machine).
+
+
 ## Contributors
 
 - kramjatt (api and database design, query implementation, backend development, testing)
 - tdubois (frontend development, ui/ux design, database/query design, architectural choices, deployment)
+
+
+## Keywords
+
+Node.js, Express.js, TypeScript, Angular, Angular Material, PostgreSQL, Docker, SMTP, Mailhog, GeoIP, M3, vitest, TailwindCSS,
+@tanstack/angular-query, remote procedure call, custom router, type safety, end to end type safety, declarative state,
+pagination, filtering, sorting, searching.
 

@@ -8,7 +8,7 @@ services:
             - '4000:4000'
         environment:
             - APP_PORT=4000
-            - APP_HOST=1A3.42angouleme.fr
+            - APP_HOST=localhost
             - DB_HOST=database
             - SMTP_HOST=mailhog
             - APP_IS_ASSESSMENT=true

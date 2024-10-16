@@ -12,6 +12,12 @@ The project features a compose file that will allow you to deploy the project on
 docker compose up
 ```
 
+Once deployed, access the frontend at http://localhost:4000 and the Mailhog interface at http://localhost:8025 
+to view emails sent by the application.
+
+You may want to set the APP_HOST environment variable to the address of your machine if you want to access the application
+from another device.
+
 ### SMTP server
 
 For assessment purposes, we shipped the project with a fake SMTP server, Mailhog, that will allow you to see the emails
@@ -45,14 +51,20 @@ shouldn't be aware that we are tracking their location).
 Per subject requirements, we used Node.js with Express.js as the backend framework. As we could use any frontend framework
 we wanted, we chose to use Angular, and its Angular Material library for we were already familiar with it.
 
+### Backend
+
 We wrote the entire project in TypeScript, and implemented a custom router on top of express which enabled end to end
 type safety throughout the project. Hence, we could define functional procedures on the backend and call them on the
 frontend hiding http requests and responses. This allowed us to write less code and to have a more maintainable codebase,
 as we could refactor the backend without having to change the frontend, or at least with type checked errors.
 
+### Frontend
+
 On the frontend we leveraged the @tanstack/angular-query library to handle almost all the state of the application. This
 library allowed us to write less code and to have a more maintainable codebase, as it permitted us to define declaratively
 the state of the application and to react to changes in the state.
+
+### Database
 
 Regarding data querying, we handle all the pagination, filtering, sorting, and searching on the backend following the
 best practices of API design. This allowed us to perform complex queries with a single request, and to have a more
@@ -60,6 +72,8 @@ performant application. In details, we used a postgres database with custom func
 and more conventional queries for the rest. We used the postgres npm package to interact with the database. It shipped
 a template tag function that allowed us to write queries in a more secure way as it automatically replaced the variables
 in the tag with SQL parameters.
+
+### Testing
 
 To add up on maintainability, we implemented a unit testing suite for the api validators we used on the backend. We used
 vitest to run those tests.

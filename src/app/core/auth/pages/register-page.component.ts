@@ -339,6 +339,7 @@ export class RegisterPageComponent {
     register = injectMutation(() => ({
         mutationKey: ['register'],
         mutationFn: this.#rpcClient.registerAccountProcedure,
+        retry: 0,
         onSuccess: async () => {
             this.#snackBar.enqueueSnackBar('Registration successful');
             await this.#router.navigate(['/registration-successful']);

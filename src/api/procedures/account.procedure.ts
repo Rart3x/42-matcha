@@ -153,7 +153,7 @@ export const usernameAvailableProcedure = procedure(
                             FROM (SELECT 1
                                     FROM users
                                    WHERE username = ${username}
-                                     AND id != ${user_id}
+                                     AND CASE WHEN ${user_id}::INTEGER IS NULL THEN TRUE ELSE id != ${user_id} END
                                    UNION ALL
                                   SELECT 1
                                     FROM pending_user_registrations
@@ -186,7 +186,7 @@ export const emailAvailableProcedure = procedure(
                             FROM (SELECT 1
                                     FROM users
                                    WHERE email = ${email}
-                                     AND id != ${user_id}
+                                     AND CASE WHEN ${user_id}::INTEGER IS NULL THEN TRUE ELSE id != ${user_id} END
                                    UNION ALL
                                   SELECT 1
                                     FROM pending_user_registrations

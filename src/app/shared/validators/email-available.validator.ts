@@ -4,6 +4,7 @@ import { map, Observable, switchMap, timer } from 'rxjs';
 import { Injector } from '@angular/core';
 import { assertInjector } from 'ngxtension/assert-injector';
 import { injectQueryClient } from '@tanstack/angular-query-experimental';
+import { fromPromise } from 'rxjs/internal/observable/innerFrom';
 
 /**
  * Injects a validator function that checks if an email is available.
@@ -18,11 +19,13 @@ export function injectEmailAvailableValidator(injector?: Injector) {
         return (control: AbstractControl): Observable<ValidationErrors | null> =>
             timer(300).pipe(
                 switchMap(() =>
-                    queryClient.ensureQueryData({
-                        queryKey: ['email-available', control.value],
-                        queryFn: () => rpcClient.emailAvailable({ email: control.value }),
-                        staleTime: /* 5min */ 1000 * 60 * 5,
-                    }),
+                    fromPromise(
+                        queryClient.ensureQueryData({
+                            queryKey: ['email-available', control.value],
+                            queryFn: () => rpcClient.emailAvailable({ email: control.value }),
+                            staleTime: /* 5min */ 1000 * 60 * 5,
+                        }),
+                    ),
                 ),
                 map((res) => {
                     if (res.available === 'true') {

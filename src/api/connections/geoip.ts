@@ -19,14 +19,22 @@ export async function getLatLngFromIp(ip: string) {
     }
 
     const ipToUse = IS_ASSESSMENT ? MOCKED_IP : ip;
-
-    return fetch(`http://ip-api.com/json/${ipToUse}`)
+    return fetch(`http://api.hackertarget.com/geoip/?q=${ipToUse}&output=json`)
         .then((response) => response.json())
         .then(async (data) => ({
-            lat: await validateLatitude(data.lat),
-            lng: await validateLongitude(data.lon),
+            lat: await validateLatitude(data.latitude),
+            lng: await validateLongitude(data.longitude),
         }))
         .catch((e) => {
+            if (IS_ASSESSMENT) {
+                console.log(`Error fetching location from ip: ${ipToUse}`, e);
+                console.log('Returning default location for assessment');
+
+                return {
+                    lat: 45.65535637267172,
+                    lng: 0.15913728259653068,
+                };
+            }
             console.log(`Error fetching location from ip: ${ipToUse}`, e);
 
             return null;

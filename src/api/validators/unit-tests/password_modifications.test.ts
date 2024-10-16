@@ -1,6 +1,5 @@
 import { expect, test } from 'vitest';
 import { validateNewPassword } from '@api/validators/password_modifications.validators';
-import { validateOffset } from '@api/validators/page.validators';
 
 // -- NEW PASSWORD TESTS -- //
 test('[INVALID] [NEWPASSWORD]: pass -> pass', async () => {

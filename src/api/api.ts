@@ -54,6 +54,10 @@ import {
     getPrincipalProfileProcedure,
     patchPrincipalProfileProcedure,
 } from '@api/procedures/principal-profile.procedures';
+import {
+    createPasswordModificationProcedure,
+    deletePasswordModificationProcedure,
+} from '@api/procedures/password_modification.procedure';
 
 export const apiRouter = Router();
 
@@ -98,6 +102,8 @@ const rpcRouter = createProcedureRouter([
     getConversationsProcedure,
     postMessageProcedure,
     canChatWithUserProcedure,
+    deletePasswordModificationProcedure,
+    createPasswordModificationProcedure,
 ]);
 
 export type RpcRouter = typeof rpcRouter;

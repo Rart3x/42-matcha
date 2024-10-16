@@ -8,5 +8,6 @@ export async function validateNewPassword(newPass?: string, password?: string) {
     if (newPass === password) {
         throw badRequest();
     }
-    return password;
+
+    return newPass;
 }

@@ -6,53 +6,54 @@ import { injectRpcClient } from '@app/core/http/rpc-client';
 import { RouterLink } from '@angular/router';
 import { injectQuery } from '@tanstack/angular-query-experimental';
 import { SnackBarService } from '@app/core/services/snack-bar.service';
+import { EmailRoutedLayoutComponent } from '@app/shared/layouts/email-routed-layout/email-routed-layout.component';
+import { AlertComponent } from '@app/shared/components/alert/alert.component';
 
 @Component({
     selector: 'app-confirm-email-modification-page',
     standalone: true,
-    imports: [MatIcon, MatProgressSpinner, RouterLink, MatAnchor],
+    imports: [
+        MatIcon,
+        MatProgressSpinner,
+        RouterLink,
+        MatAnchor,
+        EmailRoutedLayoutComponent,
+        AlertComponent,
+    ],
     template: `
-        <div class="grid grow place-content-center rounded-t-xlarge bg-surface p-4 text-on-surface">
-            <div class="flex flex-col items-center">
-                <mat-icon class="!h-fit !w-fit text-center text-6xl">email</mat-icon>
-                <h3 class="pb-8 text-4xl font-bold">Confirm your email</h3>
-
-                <div class="flex h-48 w-96 flex-col items-center">
-                    @if (confirm.isPending()) {
-                        <mat-spinner diameter="45" class="mb-8"></mat-spinner>
-                        <p class="text-balance text-lg">Confirming your email address...</p>
-                    }
-                    @if (confirm.isError()) {
-                        <p class="text-balance text-lg">Confirmation failed. Invalid link.</p>
-                        <a
-                            mat-stroked-button
-                            routerLink="/login"
-                            [state]="{ username: username() }"
-                            class="bg-primary mt-4 rounded-md px-4 py-2 text-white"
-                        >
-                            Continue
-                        </a>
-                    }
-                    @if (confirm.isSuccess()) {
-                        <p class="text-balance text-lg">Your email address has been confirmed.</p>
-                        <a
-                            mat-stroked-button
-                            routerLink="/login"
-                            [state]="{ username: username() }"
-                            class="bg-primary mt-4 rounded-md px-4 py-2 text-white"
-                        >
-                            Continue
-                        </a>
-                    }
-                </div>
-            </div>
-        </div>
+        <app-email-routed-layout title="Confirm Email" icon="email">
+            @if (confirm.isPending()) {
+                <mat-spinner diameter="45" class="mb-8 self-center" />
+                <p class="self-center text-balance text-lg">Confirming your email address...</p>
+            }
+            @if (failed()) {
+                <app-alert>
+                    <ng-container heading>Confirmation failed</ng-container>
+                    Invalid link.
+                </app-alert>
+                <a
+                    mat-stroked-button
+                    routerLink="/login"
+                    [state]="{ username: username() }"
+                    class="mt-4 rounded-md bg-primary px-4 py-2 text-white"
+                >
+                    Back to login
+                </a>
+            }
+            @if (confirmed()) {
+                <p class="text-balance text-lg">Your email address has been confirmed.</p>
+                <a
+                    mat-stroked-button
+                    routerLink="/login"
+                    [state]="{ username: username() }"
+                    class="mt-4 rounded-md bg-primary px-4 py-2 text-white"
+                >
+                    Back to login
+                </a>
+            }
+        </app-email-routed-layout>
     `,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    host: {
-        role: 'main',
-        class: 'min-w-screen relative flex flex-col  min-h-screen gap-6 overflow-auto p-4 pb-0 medium:p-6 medium:pb-0 bg-surface-container',
-    },
 })
 export class ConfirmEmailModificationPageComponent {
     #rpc = injectRpcClient();
@@ -68,6 +69,9 @@ export class ConfirmEmailModificationPageComponent {
             this.#snackbar.enqueueSnackBar('Failed to confirm email address.');
         },
     }));
+
+    confirmed = computed(() => this.confirm.isSuccess());
+    failed = computed(() => this.confirm.isError());
 
     token = input.required<string>();
 

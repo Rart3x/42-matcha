@@ -3,6 +3,9 @@ module.exports = {
     content: ['./src/**/*.{html,ts}'],
     theme: {
         extend: {
+            minWidth: {
+                screen: '100vw',
+            },
             borderRadius: {
                 xlarge: '1.75rem',
                 '4xl': '2rem',

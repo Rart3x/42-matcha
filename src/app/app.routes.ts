@@ -36,6 +36,13 @@ export const routes: Routes = [
             ).then((m) => m.ConfirmEmailModificationPageComponent),
     },
     {
+        path: 'reset-password/:token',
+        loadComponent: () =>
+            import('@app/features/email-confirmation-pages/reset-password-page.component').then(
+                (m) => m.ResetPasswordPageComponent,
+            ),
+    },
+    {
         path: '',
         loadComponent: () =>
             import('@app/shared/layouts/navigation-layout.component').then(

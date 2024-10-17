@@ -111,7 +111,7 @@ const rightToLeftTransition = () => [
             class="hidden w-[500px] overflow-x-hidden web-landscape:grid [&>*]:[grid-area:1/1]"
             aria-hidden="true"
         >
-            <div class="bg-surface h-full w-[92%] rounded-xlarge"></div>
+            <div class="h-full w-[92%] rounded-xlarge bg-surface"></div>
             <div class="grid h-full grid-rows-[auto_1fr]">
                 <app-logo />
                 <div class="relative grid place-content-center">
@@ -131,12 +131,12 @@ const rightToLeftTransition = () => [
         </div>
 
         <!-- Right panel (main content) -->
-        <div class="text-on-surface grid flex-grow grid-rows-[auto_1fr]">
+        <div class="grid flex-grow grid-rows-[auto_1fr] text-on-surface">
             <!-- Top bar -->
             <div class="flex items-center">
                 <app-logo class="web-landscape:hidden" />
                 <div class="flex grow items-baseline justify-end gap-1">
-                    @if (page() === 'login') {
+                    @if (page() === 'login' || page() === 'request-password-reset') {
                         <span class="hidden medium:inline"> Don't have an account? </span>
                         <a mat-button routerLink="/register">Sign up</a>
                     }
@@ -172,6 +172,8 @@ const rightToLeftTransition = () => [
             transition('register => login', leftToRightTransition()),
             transition('register => registration-successful', leftToRightTransition()),
             transition('registration-successful => login', leftToRightTransition()),
+            transition('login => request-password-reset', rightToLeftTransition()),
+            transition('request-password-reset => login', leftToRightTransition()),
         ]),
     ],
 })

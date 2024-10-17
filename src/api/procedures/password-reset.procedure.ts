@@ -20,16 +20,26 @@ export const requirePasswordResetProcedure = procedure(
         const email = await validateEmail(params.email);
 
         const [result]: [{ token: string; username: string }?] = await sql`
-               INSERT INTO pending_password_resets (user_id)
-               SELECT users.id AS user_id
-                 FROM users
-                          -- Join with pending_password_resets to ensure that the user does not already have a pending reset
-                          LEFT JOIN pending_password_resets
-                          ON pending_password_resets.user_id = users.id AND pending_password_resets.expires_at > NOW()
-                WHERE email = ${email}
-                  -- Exclude users who have already requested a password reset
-                  AND pending_password_resets.token IS NULL
-            RETURNING pending_password_resets.token AS token, users.username AS username
+              WITH new_reset AS ( 
+                  INSERT INTO pending_password_resets (user_id) SELECT users.id AS user_id
+                      FROM users
+                               -- Join with pending_password_resets to ensure that the user does not already have a pending reset
+                               LEFT JOIN pending_password_resets
+                               ON pending_password_resets.user_id =
+                                  users.id AND
+                                  pending_password_resets.expires_at >
+                                  NOW()
+                     WHERE email = ${email}
+                       -- Exclude users who have already requested a password reset
+                       AND pending_password_resets.token IS NULL 
+                    RETURNING 
+                        pending_password_resets.token AS token, 
+                        pending_password_resets.user_id AS user_id
+                )
+            SELECT new_reset.token AS token, users.username AS username
+              FROM new_reset
+                       INNER JOIN users
+                       ON users.id = new_reset.user_id;
         `;
 
         if (!result) {

@@ -114,6 +114,9 @@ import { AlertComponent } from '@app/shared/components/alert/alert.component';
                     Meet new people
                 }
             </button>
+            <a mat-button class="btn-secondary" routerLink="/request-password-reset">
+                Forgot password?
+            </a>
         </form>
     `,
     host: {

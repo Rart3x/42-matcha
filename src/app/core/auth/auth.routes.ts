@@ -23,6 +23,13 @@ export const routes: Routes = [
                         (m) => m.RegistrationSuccessfulPageComponent,
                     ),
             },
+            {
+                path: 'request-password-reset',
+                loadComponent: () =>
+                    import('./pages/request-password-reset-page.component').then(
+                        (m) => m.RequestPasswordResetPageComponent,
+                    ),
+            },
         ],
     },
 ];

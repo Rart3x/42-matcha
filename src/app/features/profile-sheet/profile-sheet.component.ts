@@ -183,16 +183,18 @@ import { SnackBarService } from '@app/core/services/snack-bar.service';
                         Liked
                     </button>
                 } @else {
-                    <button
-                        type="button"
-                        mat-flat-button
-                        class="btn-primary"
-                        matTooltip="like user"
-                        (click)="likeUserMutation.mutate()"
-                    >
-                        <mat-icon>favorite</mat-icon>
-                        Like
-                    </button>
+                    <div [matTooltip]="canLike() ? 'like user' : 'add profile picture first'">
+                        <button
+                            type="button"
+                            mat-flat-button
+                            class="btn-primary"
+                            (click)="likeUserMutation.mutate()"
+                            [disabled]="!canLike()"
+                        >
+                            <mat-icon>favorite</mat-icon>
+                            Like
+                        </button>
+                    </div>
                 }
 
                 <!-- chat button -->
@@ -281,6 +283,8 @@ export class ProfileSheetComponent {
     heading = computed(() => this.data()?.username ?? 'Profile');
     fullName = computed(() => `${this.data()?.first_name} ${this.data()?.last_name}`);
     tags = computed(() => this.data()?.tags ?? ([] as string[]));
+
+    canLike = computed(() => this.data()?.can_like);
 
     connection_status = computed(() =>
         this.data()?.likes_principal

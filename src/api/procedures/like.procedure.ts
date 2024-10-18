@@ -3,6 +3,7 @@ import { sql } from '@api/connections/database.connection';
 import { usePrincipalUser } from '@api/hooks/auth.hooks';
 import { validateLimit, validateOffset } from '@api/validators/page.validators';
 import { validateUserId } from '@api/validators/profile.validators';
+import { badRequest } from '@api/errors/bad-request.error';
 
 /**
  * Like a user
@@ -17,12 +18,25 @@ export const createLikeProcedure = procedure(
 
         const liked_id = await validateUserId(params.liked_id);
 
-        await sql`
-        INSERT INTO
-            likes (liker_user_id, liked_user_id)
-        VALUES
-            (${liker_id}, ${liked_id})
-        ;`;
+        await sql.begin(async (sql) => {
+            // check if the principal user has profile picture
+
+            const [principal_user_picture] = await sql`
+                SELECT id
+                  FROM pictures
+                 WHERE user_id = ${liker_id}
+                   AND position = 0
+                ;`;
+
+            if (!principal_user_picture) {
+                throw badRequest();
+            }
+
+            await sql`
+                INSERT INTO likes (liker_user_id, liked_user_id)
+                VALUES (${liker_id}, ${liked_id})
+                ;`;
+        });
 
         return { message: 'ok' };
     },
@@ -42,12 +56,11 @@ export const deleteLikeProcedure = procedure(
         const liked_id = await validateUserId(params.liked_id);
 
         await sql`
-        DELETE
-        FROM likes
-        WHERE
-              liker_user_id = ${liker_id}
-          AND liked_user_id = ${liked_id}
-        ;`;
+            DELETE
+              FROM likes
+             WHERE liker_user_id = ${liker_id}
+               AND liked_user_id = ${liked_id}
+            ;`;
 
         return { message: 'ok' };
     },
@@ -78,24 +91,15 @@ export const getPrincipalUserLikesProcedure = procedure(
                 biography: string;
             }[]
         >`
-        SELECT
-            liker.id,
-            liker.username,
-            liker.first_name,
-            liker.last_name,
-            liker.age,
-            liker.biography
-        FROM likes
-            -- Get users who liked the principal user
-            INNER JOIN reachable_users(${principal_user_id}) AS liker
-                ON liker.id = likes.liker_user_id
-        WHERE
-            likes.liked_user_id = ${principal_user_id}
-        ORDER BY
-            likes.created_at DESC,
-            liker.username
-        OFFSET ${offset} LIMIT ${limit}
-        ;`;
+            SELECT liker.id, liker.username, liker.first_name, liker.last_name, liker.age, liker.biography
+              FROM likes
+                       -- Get users who liked the principal user
+                       INNER JOIN reachable_users(${principal_user_id}) AS liker
+                       ON liker.id = likes.liker_user_id
+             WHERE likes.liked_user_id = ${principal_user_id}
+             ORDER BY likes.created_at DESC, liker.username
+            OFFSET ${offset} LIMIT ${limit}
+            ;`;
 
         return {
             users,
